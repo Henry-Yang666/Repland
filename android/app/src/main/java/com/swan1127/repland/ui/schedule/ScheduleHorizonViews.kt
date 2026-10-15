@@ -10,12 +10,13 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.FilterChip
+import com.swan1127.repland.ui.components.DesignFilterChip as FilterChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,8 +64,8 @@ fun WeekScheduleView(
 ) {
     val weekStart = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val days = (0..6).map { weekStart.plusDays(it.toLong()) }
-    Text("本周节奏", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-    Text("${weekStart.format(WeekDateFormatter)}–${days.last().format(WeekDateFormatter)} · 用一周看负荷、截止与留白，而不是重复日视图。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text("本周安排", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+    Text("${weekStart.format(WeekDateFormatter)}–${days.last().format(WeekDateFormatter)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(12.dp))
     val weekEntries = days.flatMap { day -> ScheduleTimeline.entries(day, weeklyBlocks, dateOverrides, planSegments, tasks, semesterFirstWeekMonday) }
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large) {
@@ -75,9 +76,9 @@ fun WeekScheduleView(
         }
     }
     Spacer(Modifier.height(10.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         days.forEach { day ->
             val entries = ScheduleTimeline.entries(
@@ -105,18 +106,17 @@ private fun WeekDayColumn(
     tracks: List<RhythmTrack>,
 ) {
     Surface(
-        modifier = Modifier.width(152.dp),
+        modifier = Modifier.fillMaxWidth(),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
         shape = MaterialTheme.shapes.large,
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(date.format(WeekdayFormatter), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(date.format(WeekDateFormatter), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            val taskCount = entries.count { it.kind == TimelineKind.TASK }
-            Text("${entries.size} 项 · $taskCount 个任务", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (entries.isEmpty()) {
-                Text("留白", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("${date.format(WeekdayFormatter)}  ${date.format(WeekDateFormatter)}", style = MaterialTheme.typography.labelLarge)
+                Text(if (entries.isEmpty()) "暂无安排" else "${entries.size} 项", style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (entries.isNotEmpty()) {
                 entries.take(5).forEach { entry ->
                     CompactEvent(entry, onClick = { onOpenEntry(entry.id) }, trackName = tracks.firstOrNull { it.id == entry.trackId }?.name)
                 }
@@ -170,8 +170,10 @@ fun MonthScheduleView(
     val month = YearMonth.from(date)
     val first = month.atDay(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val days = (0 until 42).map { first.plusDays(it.toLong()) }
-    Text("月度节奏", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-    Text("同一个月用不同问题阅读：哪里拥挤、推进到哪、时间给了什么、哪些还需处理。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val monthEntries = days.associateWith { day -> ScheduleTimeline.entries(day, weeklyBlocks, dateOverrides, planSegments, tasks, semesterFirstWeekMonday) }
+    val maxLoadMinutes = monthEntries.values.maxOfOrNull { entries -> entries.sumOf { it.endMinute - it.startMinute } } ?: 0
+    Text("${month.year}年${month.monthValue}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+    Text("查看每天的安排，点日期进入日程。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(12.dp))
     Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         MonthProjection.entries.forEach { option ->
@@ -179,6 +181,8 @@ fun MonthScheduleView(
         }
     }
     Spacer(Modifier.height(10.dp))
+    if (projection == MonthProjection.LOAD) Text("已安排时长 · 颜色越深，安排越多", style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
     val weekdays = listOf("一", "二", "三", "四", "五", "六", "日")
     Row(Modifier.fillMaxWidth()) {
         weekdays.forEach { Text(it, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -191,7 +195,8 @@ fun MonthScheduleView(
                         date = day,
                         inMonth = day.month == month.month,
                         selected = day == date,
-                        entries = ScheduleTimeline.entries(day, weeklyBlocks, dateOverrides, planSegments, tasks, semesterFirstWeekMonday),
+                        entries = monthEntries.getValue(day),
+                        maxLoadMinutes = maxLoadMinutes,
                         tasks = tasks,
                         projection = projection,
                         onClick = { onSelectDate(day) },
@@ -219,10 +224,11 @@ private fun RowScope.MonthDayCell(
     entries: List<TimelineEntry>,
     tasks: List<Task>,
     projection: MonthProjection,
+    maxLoadMinutes: Int,
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.weight(1f).height(68.dp).clickable(onClick = onClick).testTag("month-date-$date"),
+        modifier = Modifier.weight(1f).heightIn(min = 68.dp).clickable(onClick = onClick).testTag("month-date-$date"),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
         shape = MaterialTheme.shapes.small,
     ) {
@@ -232,19 +238,21 @@ private fun RowScope.MonthDayCell(
                 style = MaterialTheme.typography.labelMedium,
                 color = if (inMonth) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
             )
-            MonthCellSignal(entries, tasks, projection)
+            MonthCellSignal(entries, tasks, projection, maxLoadMinutes)
         }
     }
 }
 
 @Composable
-private fun MonthCellSignal(entries: List<TimelineEntry>, tasks: List<Task>, projection: MonthProjection) {
+private fun MonthCellSignal(entries: List<TimelineEntry>, tasks: List<Task>, projection: MonthProjection, maxLoadMinutes: Int) {
     val taskMap = tasks.associateBy(Task::id)
     when (projection) {
         MonthProjection.LOAD -> {
-            val fraction = (entries.sumOf { it.endMinute - it.startMinute } / 480f).coerceIn(0f, 1f)
+            val minutes = entries.sumOf { it.endMinute - it.startMinute }
+            val fraction = (minutes.toFloat() / maxLoadMinutes.coerceAtLeast(1)).coerceIn(0f, 1f)
             Spacer(Modifier.fillMaxWidth().height(8.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + fraction * 0.72f), MaterialTheme.shapes.extraSmall))
-            Text("${(fraction * 8).toInt()} / 8", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(when { minutes == 0 -> "—"; minutes < 60 -> "${minutes}m"; minutes % 60 == 0 -> "${minutes / 60}h"; else -> "${minutes / 60}h${minutes % 60}" },
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         MonthProjection.PROGRESS -> {
             val taskEntries = entries.filter { it.kind == TimelineKind.TASK }

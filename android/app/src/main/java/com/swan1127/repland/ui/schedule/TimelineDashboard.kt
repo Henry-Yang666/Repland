@@ -29,10 +29,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
+import com.swan1127.repland.ui.components.DesignButton as Button
+import com.swan1127.repland.ui.components.DesignOutlinedButton as OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import com.swan1127.repland.ui.components.DesignFilterChip as FilterChip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +45,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +60,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.swan1127.repland.ui.theme.LocalReducedMotion
+import com.swan1127.repland.ui.theme.MotionDisclosure
+import com.swan1127.repland.ui.theme.MotionPage
+import com.swan1127.repland.domain.model.TaskPriority
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -113,6 +121,7 @@ private data class PendingCourse(
 private enum class TimelineViewMode { MERGED, SPLIT }
 
 /** A multi-track projection of the confirmed schedule; no timer here records execution. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimelineDashboard(
     entries: List<TimelineEntry>,
@@ -134,16 +143,18 @@ fun TimelineDashboard(
     writeError: String? = null,
     persistedTracks: List<RhythmTrack>? = null,
     onTracksChanged: (List<RhythmTrack>) -> Unit = {},
+    taskPriorities: Map<String, TaskPriority> = emptyMap(),
+    completedTaskIds: Set<String> = emptySet(),
+    cancelledTaskIds: Set<String> = emptySet(),
+    clockNow: LocalDateTime? = null,
 ) {
     var customTracks by remember { mutableStateOf(emptyList<RhythmTrack>()) }
     val definitions = persistedTracks ?: customTracks
     val projection = RhythmTracks.project(entries, definitions)
     val projectedEntries = if (persistedTracks == null) entries else projection.entries
     val context = LocalContext.current
-    val motionScale = remember(context) {
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
-    }
-    var now by remember { mutableStateOf(LocalDateTime.now()) }
+    val reducedMotion = LocalReducedMotion.current
+    var now by remember { mutableStateOf(clockNow ?: LocalDateTime.now()) }
     var showTrackComposer by remember { mutableStateOf(false) }
     var newTrackName by remember { mutableStateOf("") }
     var trackError by remember { mutableStateOf<String?>(null) }
@@ -157,12 +168,15 @@ fun TimelineDashboard(
             }
         }
     }
-    var viewMode by rememberSaveable { mutableStateOf(TimelineViewMode.SPLIT) }
+    var viewMode by rememberSaveable { mutableStateOf(TimelineViewMode.MERGED) }
+    var showDisplayOptions by rememberSaveable { mutableStateOf(false) }
+    var showTrackEditor by rememberSaveable { mutableStateOf(false) }
     var showCourseComposer by rememberSaveable { mutableStateOf(false) }
     var pendingCourse by remember { mutableStateOf<PendingCourse?>(null) }
     var selectedEntryId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedEntry = projectedEntries.firstOrNull { it.id == selectedEntryId }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(clockNow) {
+        if (clockNow != null) { now = clockNow; return@LaunchedEffect }
         while (true) {
             now = LocalDateTime.now()
             delay(15_000)
@@ -209,35 +223,22 @@ fun TimelineDashboard(
     }
     val trackOptions = trackNames.zip(trackIds).map { (name, id) -> TimelineTrackOption(id, name) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("日轨道", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text("长按事项可直接移动；时间在左", style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = viewMode == TimelineViewMode.MERGED, onClick = { viewMode = TimelineViewMode.MERGED },
+                label = { Text("总计") }, modifier = Modifier.testTag("schedule-summary-mode"))
+            FilterChip(selected = viewMode == TimelineViewMode.SPLIT, onClick = { viewMode = TimelineViewMode.SPLIT },
+                label = { Text("详细") }, modifier = Modifier.testTag("schedule-detail-mode"), accentIndex = 2)
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = { showEventLibrary = true }, modifier = Modifier.size(48.dp).testTag("schedule-arrange-task")) {
+                Icon(Icons.Outlined.Add, "安排已有事项", tint = MaterialTheme.colorScheme.primary)
             }
-            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(999.dp)) {
-                Text("${entries.size} 项", modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            IconButton(onClick = { showDisplayOptions = !showDisplayOptions }, modifier = Modifier.size(48.dp).testTag("schedule-display-options")) {
+                Icon(Icons.Outlined.MoreVert, if (showDisplayOptions) "收起日程设置" else "日程设置", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
-                selected = viewMode == TimelineViewMode.MERGED,
-                onClick = { viewMode = TimelineViewMode.MERGED },
-                label = { Text("合轨") },
-            )
-            FilterChip(
-                selected = viewMode == TimelineViewMode.SPLIT,
-                onClick = { viewMode = TimelineViewMode.SPLIT },
-                label = { Text("分轨") },
-            )
-            Text(
-                if (viewMode == TimelineViewMode.MERGED) "看时间关系" else "编辑每条轨道",
-                modifier = Modifier.padding(top = 10.dp),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Text(if (viewMode == TimelineViewMode.MERGED) "同时事项从高到低排列，可左右滑动" else "按已设优先级排列，保留原始时间",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        MotionDisclosure(showDisplayOptions) {
         TrackStrip(
             names = trackNames, eventCount = eventObjects.size,
             showComposer = showTrackComposer, draftName = newTrackName,
@@ -262,33 +263,20 @@ fun TimelineDashboard(
                 }
             },
         )
+        }
         if (entries.isEmpty()) {
             Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("给每一种节奏留位置", style = MaterialTheme.typography.titleMedium,
+                    Text("今天还没有具体时段", style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface)
-                    Text("添加课程与任务后，重叠安排会分轨呈现，时间始终一目了然。",
+                    Text("选择已有任务或添加课程，安排到具体时间。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    listOf(
-                        Triple("课程", CourseAccent, 0.78f),
-                        Triple("专注", MaterialTheme.colorScheme.primary, 0.54f),
-                        Triple("休息", RestAccent, 0.36f),
-                    ).forEach { (title, tint, fraction) ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text(title, modifier = Modifier.width(36.dp),
-                                style = MaterialTheme.typography.labelSmall)
-                            Box(Modifier.fillMaxWidth(fraction).height(8.dp)
-                                .background(tint.copy(alpha = 0.65f), RoundedCornerShape(8.dp)))
-                        }
-                    }
-                    Text("轨道示意 · 不代表真实安排", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Button(
                             onClick = { showEventLibrary = true },
                             modifier = Modifier.testTag("empty-event-library-trigger"),
@@ -307,25 +295,26 @@ fun TimelineDashboard(
                 selectedEntryId = entry.id
                 onOpenEntry(entry.id)
             }
-            if (viewMode == TimelineViewMode.SPLIT) {
+            MotionPage(targetKey = viewMode, modifier = Modifier.fillMaxWidth()) {
+                PriorityScheduleCards(visibleEntries, taskPriorities, completedTaskIds, cancelledTaskIds,
+                    detailed = viewMode == TimelineViewMode.SPLIT, now = now, onClick = onEntryClick)
+            }
+            TextButton(onClick = { showTrackEditor = !showTrackEditor }, modifier = Modifier.heightIn(min = 48.dp).testTag("schedule-track-editor")) {
+                Text(if (showTrackEditor) "收起轨道调整" else "调整时间与轨道")
+            }
+            MotionDisclosure(showTrackEditor) {
                 DayTimelineGrid(
                     entries = visibleEntries,
                     trackNames = trackNames,
                     trackIds = trackIds,
                     now = now,
-                    motionDuration = if (motionScale == 0f) 0 else 220,
+                    motionDuration = if (reducedMotion) 0 else 220,
                     pendingCourse = pendingCourse,
                     onPendingCourseDropped = { course, startMinute, trackId ->
                         if (!writeBusy) onCreateCourse(CourseInsertionRequest(course.title, startMinute, course.durationMinutes, trackId)) { pendingCourse = null }
                     },
                     onClick = onEntryClick,
                     onMoveEntry = { entry, minute -> tryMoveEntry(entry, minute) {} },
-                )
-            } else {
-                MergedTimelineGrid(
-                    entries = visibleEntries,
-                    now = now,
-                    onClick = onEntryClick,
                 )
             }
             if (showEventLibrary) {
@@ -353,6 +342,7 @@ fun TimelineDashboard(
                     onBeginDrag = { course ->
                         pendingCourse = course
                         viewMode = TimelineViewMode.SPLIT
+                        showTrackEditor = true
                         showCourseComposer = false
                     },
                 )
@@ -944,7 +934,7 @@ private fun TrackStrip(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text("待安排", style = MaterialTheme.typography.labelMedium)
+                    Text("可安排事项", style = MaterialTheme.typography.labelMedium)
                     Text(eventCount.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 }
             }

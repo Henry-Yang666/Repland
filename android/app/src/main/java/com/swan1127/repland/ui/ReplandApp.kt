@@ -25,6 +25,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +37,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -50,21 +55,31 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.swan1127.repland.ui.components.DesignButton as Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.BorderStroke
+import com.swan1127.repland.ui.theme.LocalReplandVisuals
+import com.swan1127.repland.ui.theme.MotionPage
+import com.swan1127.repland.ui.theme.MotionDisclosure
+import com.swan1127.repland.ui.theme.LocalReducedMotion
+import com.swan1127.repland.ui.theme.ReplandMotion
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import com.swan1127.repland.ui.components.DesignIcons
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.swan1127.repland.ui.components.DesignFilterChip as FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.OutlinedButton
+import com.swan1127.repland.ui.components.DesignNavigationItem
+import com.swan1127.repland.ui.components.DesignOutlinedButton as OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -72,6 +87,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -186,6 +202,7 @@ import com.swan1127.repland.ui.agent.ArrangementAssistantViewModel
 import com.swan1127.repland.ui.tasks.TaskViewModel
 import com.swan1127.repland.ui.tasks.TaskMutationKind
 import com.swan1127.repland.ui.tasks.FeedbackFormValidation
+import com.swan1127.repland.ui.schedule.ScheduleCreateCard
 import com.swan1127.repland.ui.schedule.TimelineDashboard
 import com.swan1127.repland.ui.schedule.WeekScheduleView
 import com.swan1127.repland.ui.schedule.MonthScheduleView
@@ -272,6 +289,7 @@ fun ReplandApp(
     engagementViewModel: EngagementViewModel,
     taskCaptureViewModel: com.swan1127.repland.ui.tasks.TaskCaptureViewModel,
     numericProfileViewModel: com.swan1127.repland.ui.profile.NumericProfileViewModel? = null,
+    personalProfileViewModel: com.swan1127.repland.ui.profile.PersonalProfileViewModel? = null,
 ) {
     val taskCaptureUiState by taskCaptureViewModel.uiState.collectAsStateWithLifecycle()
     val captureLifecycle = LocalLifecycleOwner.current.lifecycle
@@ -523,6 +541,7 @@ fun ReplandApp(
     }
 
     if (selectedTask != null) {
+        MotionPage(targetKey = selectedTask.id, lateral = true) {
         TaskDetailScreen(
             task = selectedTask,
             executionLogs = executionLogs,
@@ -612,6 +631,7 @@ fun ReplandApp(
                 reviewingAgentDraft = planUiState.draft == null
             },
         )
+        }
     } else {
         Scaffold(
             snackbarHost = { androidx.compose.material3.SnackbarHost(captureSnackbar,
@@ -626,11 +646,19 @@ fun ReplandApp(
                     sortEnabled = planningReadsReady && !planUiState.isWorking && planUiState.draft == null && uiState.tasks.any { it.status.isActive },
                     onUndo = planViewModel::undoTaskOrder,
                     onSort = { if (planUiState.draft == null) generatePlanDraft(reorder = true, orderOnly = true) },
-                ) else if (selectedTab != AppTab.AGENT) TopAppBar(
+                ) else if (selectedTab == AppTab.TODAY) {
+                    Surface(color = MaterialTheme.colorScheme.surface) {
+                        Column(Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                            .padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(activeDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd E", Locale.CHINA)),
+                                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                } else if (selectedTab != AppTab.AGENT) TopAppBar(
                     title = {
                         Column {
                             Text(
-                                if (selectedTab == AppTab.TIME) "时间设置" else stringResource(selectedTab.titleRes),
+                                if (selectedTab == AppTab.TIME) "时间设置" else if (selectedTab == AppTab.TODAY) "今天" else stringResource(selectedTab.titleRes),
                                 style = MaterialTheme.typography.titleLarge,
                             )
                             if (selectedTab == AppTab.TODAY) {
@@ -641,6 +669,10 @@ fun ReplandApp(
                                 )
                             }
                         }
+                    },
+                    actions = {
+                        if (selectedTab == AppTab.TODAY) Text("设计副本", modifier = Modifier.padding(end = 20.dp),
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     },
                     navigationIcon = {
                         if (selectedTab == AppTab.TIME) {
@@ -655,19 +687,15 @@ fun ReplandApp(
                 )
             },
             bottomBar = {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
                     AppTab.entries.filter { it != AppTab.TIME }.forEach { tab ->
-                        NavigationBarItem(
+                        DesignNavigationItem(
                             selected = selectedTab == tab,
                             onClick = { selectedTab = tab },
                             modifier = Modifier.testTag("navigation-${tab.name.lowercase()}"),
                             icon = { TabIcon(tab) },
-                            label = { Text(stringResource(tab.shortRes)) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            ),
+                            label = { Text(if (tab == AppTab.TODAY) "日程" else stringResource(tab.shortRes)) },
+                            accentIndex = when (tab) { AppTab.TODAY -> 0; AppTab.TASKS -> 1; AppTab.AGENT -> 2; else -> 4 },
                         )
                     }
                 }
@@ -706,8 +734,10 @@ fun ReplandApp(
                 }
                 // Scaffold places the snackbar above its FAB. Its height alone does not
                 // describe the covered list area, so reserve the actual vertical overlap.
-                Box(Modifier.weight(1f).fillMaxWidth()
-                    .padding(bottom = if (selectedTab == AppTab.TASKS) taskSnackbarInset else 0.dp)) {
+                MotionPage(targetKey = selectedTab, modifier = Modifier.weight(1f).fillMaxWidth()
+                    .padding(bottom = if (selectedTab == AppTab.TASKS) taskSnackbarInset else 0.dp)
+                    .wrapContentSize(Alignment.TopCenter)
+                    .widthIn(max = 720.dp).fillMaxWidth()) {
                 when (selectedTab) {
                     AppTab.TODAY -> TodayScreen(
                         executionSession = executionSession,
@@ -964,6 +994,7 @@ fun ReplandApp(
                         onClearTimetableImport = timeViewModel::clearTimetableImport,
                     )
                     AppTab.MINE -> MineScreen(
+                        personalProfileContent = { personalProfileViewModel?.let { com.swan1127.repland.ui.profile.PersonalProfileSection(it) } },
                         onOpenTimeSettings = { timeReturnTab = AppTab.MINE; selectedTab = AppTab.TIME },
                         onOpenPlanHistory = { showPlanOverview = true },
                         weights = categoryPreferenceUiState.weights,
@@ -1585,13 +1616,13 @@ fun ReplandApp(
 @Composable
 private fun TabIcon(tab: AppTab) {
     val icon = when (tab) {
-        AppTab.TODAY -> Icons.Outlined.DateRange
-        AppTab.TASKS -> Icons.AutoMirrored.Outlined.List
-        AppTab.AGENT -> Icons.Outlined.Add
-        AppTab.TIME -> Icons.Outlined.DateRange
-        AppTab.MINE -> Icons.Outlined.Person
+        AppTab.TODAY -> DesignIcons.Calendar
+        AppTab.TASKS -> DesignIcons.Tasks
+        AppTab.AGENT -> DesignIcons.Assistant
+        AppTab.TIME -> DesignIcons.Calendar
+        AppTab.MINE -> DesignIcons.Profile
     }
-    Icon(icon, contentDescription = null)
+    Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
 }
 
 @Composable
@@ -1714,38 +1745,23 @@ private fun TodayScreen(
                 }
             }
         }
-        if (scheduleRange == ScheduleRange.DAY) {
-            item {
-                TodayFocalOverview(
-                    nextEntries = timelineEntries.filter { !it.taskClosed && it.end.isAfter(focusNow) }.sortedBy(TimelineEntry::startMinute),
-                    now = focusNow,
-                    hasExecution = executionSession != null,
-                    canStart = executionReadsReady,
-                    pendingCount = pendingEntries.size,
-                    onOpenPending = { showPending = true },
-                    onStart = onFocusStarted,
-                    unplacedCount = allTasks.count { it.status.isActive && com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, allPlanSegments, focusNow.toLocalDate()) },
-                    onOpenSchedule = {
-                        val prefix = (if (executionSession != null) 1 else 0) +
-                            (if (executionError != null) 1 else 0) + (if (executionFinished) 1 else 0) +
-                            (if (planNeedsUpdate && executionSession == null && !executionFinished) 1 else 0)
-                        scope.launch { listState.scrollToItem(prefix + 2) }
-                    },
-                    onOpenTasks = onOpenTaskLibrary,
-                )
-            }
+        if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
+            item { ScheduleCreateCard(onAdd = onAdd) }
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = scheduleRange == ScheduleRange.DAY, onClick = { scheduleRange = ScheduleRange.DAY }, label = { Text("日") }, modifier = Modifier.testTag("today-timeline"))
-                FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"))
-                FilterChip(selected = scheduleRange == ScheduleRange.MONTH, onClick = { scheduleRange = ScheduleRange.MONTH }, label = { Text("月") }, modifier = Modifier.testTag("month-schedule"))
+                FilterChip(selected = scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW, onClick = { scheduleRange = ScheduleRange.DAY }, label = { Text("日") }, modifier = Modifier.testTag("today-timeline"))
+                FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"), accentIndex = 1)
+                FilterChip(selected = scheduleRange == ScheduleRange.MONTH, onClick = { scheduleRange = ScheduleRange.MONTH }, label = { Text("月") }, modifier = Modifier.testTag("month-schedule"), accentIndex = 3)
             }
         }
-        if (scheduleRange == ScheduleRange.DAY) {
+        if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
             item {
                 TimelineDashboard(
                     entries = timelineEntries,
+                    taskPriorities = allTasks.associate { it.id to it.userPriority },
+                    completedTaskIds = allTasks.filter { it.status == TaskStatus.COMPLETED }.map { it.id }.toSet(),
+                    cancelledTaskIds = allTasks.filter { it.status == TaskStatus.CANCELLED }.map { it.id }.toSet(),
                     persistedTracks = tracks,
                     onTracksChanged = onTracksChanged,
                     mode = engagementMode,
@@ -1804,19 +1820,21 @@ private fun TodayScreen(
             DailyDesk(
                 date = scheduleDate,
                 entries = ScheduleTimeline.entries(scheduleDate, weeklyBlocks, dateOverrides, allPlanSegments, allTasks, semesterFirstWeekMonday),
-                unplacedCount = allTasks.count { it.id !in placedTaskIdsForScheduleDate && it.status.isActive },
-                unplacedTasks = allTasks.filter { it.id !in placedTaskIdsForScheduleDate && it.status.isActive },
+                unplacedCount = allTasks.count { it.status.isActive && com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, allPlanSegments, date) },
+                unplacedTasks = allTasks.filter { it.status.isActive && com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, allPlanSegments, date) },
                 plannedMinutes = planSegments.sumOf { (it.endMinute - it.startMinute).coerceAtLeast(0) },
-                onOpenEntry = onOpenTimelineEntry,
+                onOpenEntry = { entryId ->
+                    onOpenTimelineEntry(entryId)
+                    val task = timelineEntries.firstOrNull { it.id == entryId }?.taskId?.let(taskById::get)
+                    if (task != null) onOpen(task) else scheduleRange = ScheduleRange.DAY
+                },
                 onOpenTask = onOpen,
                 onOpenPlan = { scheduleRange = ScheduleRange.DAY },
                 onAdd = onAdd,
             )
         }
         }
-        if (scheduleRange != ScheduleRange.OVERVIEW) {
-            item { TextButton(onClick = onOpenDailyReview) { Text(stringResource(R.string.open_daily_review)) } }
-        }
+        item { TextButton(onClick = onOpenDailyReview) { Text(stringResource(R.string.open_daily_review)) } }
     }
 }
 
@@ -1832,49 +1850,66 @@ internal fun TodayFocalOverview(
     onOpenPending: () -> Unit,
     onStart: (String) -> Unit,
     canStart: Boolean = true,
+    onAdd: () -> Unit = onOpenTasks,
+    onPlan: () -> Unit = onOpenTasks,
 ) {
+    val visuals = LocalReplandVisuals.current
+    val focusColors = ButtonDefaults.buttonColors(containerColor = visuals.focusAction, contentColor = visuals.onFocusAction)
+    val quietColors = ButtonDefaults.textButtonColors(contentColor = visuals.focusMuted)
     val first = TodayFocus.next(nextEntries, now)
     val sameMoment = first?.let { lead -> nextEntries.count { it.startMinute == lead.startMinute } } ?: 0
     val phase = first?.let { ScheduleTimeline.clock(it, now).phase }
     val segmentId = TodayFocus.startSegment(first)
     Surface(
         modifier = Modifier.fillMaxWidth().testTag("today-focus"),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shape = RoundedCornerShape(22.dp),
+        color = visuals.focusSurface,
+        shape = RoundedCornerShape(20.dp),
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     when (phase) {
                         TimelinePhase.ACTIVE -> "当前时段"
                         TimelinePhase.OVERRUN -> "已超时"
                         TimelinePhase.UPCOMING -> "下一项"
-                        else -> "今天"
+                        else -> "今天的焦点"
                     },
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = visuals.focusMuted,
                 )
             }
-            Text(first?.title ?: "接下来没有安排", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(first?.title ?: "给今天一个好开始", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = visuals.focusText)
             Text(
-                first?.let { "${TimeBlockValidator.formatTime(it.startMinute)}–${TimeBlockValidator.formatTime(it.endMinute)}" } ?: "从任务库选择一件事，再放进日轨道。",
+                first?.let { "${TimeBlockValidator.formatTime(it.startMinute)}–${TimeBlockValidator.formatTime(it.endMinute)}" }
+                    ?: if (unplacedCount > 0) "$unplacedCount 件事待安排，先从最重要的一件开始。" else "先记下想做的事，计划可以慢慢来。",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = visuals.focusMuted,
             )
             if (sameMoment > 1) {
-                Text("同一时段还有 ${sameMoment - 1} 件并行事项", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text("同一时段还有 ${sameMoment - 1} 件并行事项", style = MaterialTheme.typography.bodySmall, color = visuals.focusMuted)
             }
             if (segmentId != null) {
-                Button(onClick = { onStart(segmentId) }, enabled = !hasExecution && canStart, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("today-focus-start")) {
+                Button(onClick = { onStart(segmentId) }, enabled = !hasExecution && canStart, colors = focusColors, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("today-focus-start")) {
                     Text(if (phase == TimelinePhase.UPCOMING) "提前开始专注" else "开始专注")
                 }
-                if (hasExecution) Text("请先返回并结束当前专注，再开始另一项。", style = MaterialTheme.typography.bodySmall)
+                if (hasExecution) Text("请先返回并结束当前专注，再开始另一项。", style = MaterialTheme.typography.bodySmall, color = visuals.focusMuted)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onOpenTasks, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("待安排 $unplacedCount") }
-                TextButton(onClick = onOpenPending, enabled = pendingCount > 0, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("today-focus-pending")) { Text("待确认 $pendingCount") }
+            if (first == null) {
+                Button(onClick = if (unplacedCount > 0) onPlan else onAdd,
+                    colors = focusColors, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("today-next-action")) {
+                    Icon(if (unplacedCount > 0) DesignIcons.Calendar else DesignIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (unplacedCount > 0) "安排任务" else "记录第一件事")
+                }
             }
-            TextButton(onClick = onOpenSchedule, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("today-focus-schedule")) { Text("查看完整日程") }
+            if (first != null || pendingCount > 0) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(colors = quietColors, onClick = onOpenTasks, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("待安排 $unplacedCount") }
+                TextButton(colors = quietColors, onClick = onOpenPending, enabled = pendingCount > 0, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("today-focus-pending")) { Text("待确认 $pendingCount") }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                if (first != null || unplacedCount > 0) TextButton(colors = quietColors, onClick = onAdd, modifier = Modifier.heightIn(min = 48.dp).testTag("today-add-task")) { Icon(DesignIcons.Plus, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("记录任务") }
+                TextButton(colors = quietColors, onClick = onOpenSchedule, modifier = Modifier.heightIn(min = 48.dp).testTag("today-focus-schedule")) { Text("查看日程"); Spacer(Modifier.width(6.dp)); Icon(DesignIcons.ArrowRight, null, Modifier.size(16.dp)) }
+            }
         }
     }
 }
@@ -2105,6 +2140,7 @@ private fun PlannedTaskCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun TasksScreen(
     tasks: List<Task>,
@@ -2132,10 +2168,9 @@ internal fun TasksScreen(
         TaskCenterView.COMPLETED -> tasks.filter { !it.status.isActive }
     }
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -2193,19 +2228,10 @@ private fun TaskControlCenter(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {
-            Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("每件事，都有位置", style = MaterialTheme.typography.titleLarge)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        listOf("进行中" to tasks.count { it.status == TaskStatus.IN_PROGRESS }, "待安排" to inbox.size, "需处理" to attention.size).forEach { (label, count) ->
-                            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(count.toString(), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-                                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                }
-            }
+            Text("${tasks.size} 件未完成 · ${tasks.count { it.status == TaskStatus.IN_PROGRESS }} 件进行中" +
+                if (attention.isNotEmpty()) " · ${attention.size} 件需处理" else "",
+                modifier = Modifier.padding(vertical = 8.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         listOf("需要处理" to attention, "今天" to todayTasks, "待安排" to inbox, "更晚" to later).forEach { (title, group) ->
             if (group.isNotEmpty()) {
@@ -2216,7 +2242,7 @@ private fun TaskControlCenter(
                         modifier = Modifier.testTag("task-group-$title"))
                 }
                 items(if (expandedGroup == title) group else group.take(3), key = Task::id) { task ->
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                         TaskRow(task, { onOpen(task) }, { onStart(task.id) }, emphasis = if (title == "需要处理") TaskRowEmphasis.ATTENTION else TaskRowEmphasis.NORMAL,
                             planningSummary = placementLabels[task.id])
                     }
@@ -2307,6 +2333,7 @@ private fun TaskDetailScreen(
                     Text(
                         text = task.displayName,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleLarge,
                     )
                 },
@@ -2353,7 +2380,6 @@ private fun TaskDetailScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                             )
                             Spacer(Modifier.width(12.dp))
-                            TaskStatusButton(task = task, onStart = { onStart(task.id) }, actionsLocked = actionsLocked)
                         }
                         Spacer(Modifier.height(14.dp))
                         Text(
@@ -2371,10 +2397,17 @@ private fun TaskDetailScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            DetailMetaPill(stringResource(task.category.labelRes()))
-                            DetailMetaPill(stringResource(task.userPriority.labelRes()))
+                            if (task.category != TaskCategory.UNSPECIFIED) DetailMetaPill(stringResource(task.category.labelRes()))
+                            if (task.userPriority != TaskPriority.UNSPECIFIED) DetailMetaPill(stringResource(task.userPriority.labelRes()))
                             task.totalDurationMinutes?.let {
                                 DetailMetaPill(stringResource(R.string.duration_format, it))
+                            }
+                        }
+                        if (task.status == TaskStatus.NOT_STARTED || task.status == TaskStatus.POSTPONED) {
+                            Spacer(Modifier.height(18.dp))
+                            Button(onClick = { onStart(task.id) }, enabled = !actionsLocked,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("start-task")) {
+                                Text("开始这件事")
                             }
                         }
                     }
@@ -2393,9 +2426,9 @@ private fun TaskDetailScreen(
                         task.estimatedDays?.let { stringResource(R.string.estimated_days_format, it) } ?: "预计天数未知",
                     )
                     DetailLine(
-                        stringResource(R.string.duration_minutes_optional),
+                        "预计时长",
                         task.totalDurationMinutes?.let { stringResource(R.string.duration_format, it) }
-                            ?: stringResource(R.string.unscheduled_duration),
+                            ?: "待补充",
                     )
                     task.dueDate?.let {
                         DetailLine(
@@ -2491,7 +2524,16 @@ private fun TaskDetailScreen(
 
 @Composable
 private fun DetailSection(title: String, eyebrow: String? = null, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val reducedMotion = LocalReducedMotion.current
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(14.dp),
+    ) {
+    Column(modifier = Modifier.animateContentSize(
+        tween(if (reducedMotion) 0 else ReplandMotion.Expand, easing = FastOutSlowInEasing),
+    ).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         eyebrow?.let {
             Text(
                 text = it,
@@ -2501,6 +2543,7 @@ private fun DetailSection(title: String, eyebrow: String? = null, content: @Comp
         }
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         content()
+    }
     }
 }
 
@@ -2558,6 +2601,13 @@ private fun PostponementGuidance(
 
 @Composable
 private fun DetailLine(label: String, value: String) {
+    if (LocalDensity.current.fontScale > 1.3f) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text(value, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -2565,9 +2615,9 @@ private fun DetailLine(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(0.4f), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.width(16.dp))
-        Text(value, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+        Text(value, modifier = Modifier.weight(0.6f), fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -2655,7 +2705,7 @@ private fun DetailActions(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (task.status.isActive) {
-            Button(
+            OutlinedButton(
                 onClick = onComplete,
                 enabled = !actionsLocked,
                 modifier = Modifier.fillMaxWidth().testTag("complete-task"),
@@ -4347,6 +4397,7 @@ private fun MineScreen(
     engagementMode: EngagementMode,
     onEngagementModeChange: (EngagementMode) -> Unit,
     numericContent: @Composable () -> Unit = {},
+    personalProfileContent: @Composable () -> Unit = {},
 ) {
     if (isLoading) return
     var showPreferences by rememberSaveable { mutableStateOf(false) }
@@ -4377,6 +4428,7 @@ private fun MineScreen(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        personalProfileContent()
         Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",
             style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("app-version"))
         Text("日常使用", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -4386,9 +4438,6 @@ private fun MineScreen(
         OutlinedButton(onClick = onOpenTimeSettings, modifier = Modifier.fillMaxWidth().testTag("mine-time-settings")) {
             Text("时间设置 · 课程、可用时间与学期")
         }
-        Text("统一工作方式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text("所有安排始终可见，详细信息按需展开。旧版参与方式记录保留在本地历史中，不再改变页面功能。",
-            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             shape = RoundedCornerShape(20.dp),
@@ -4442,7 +4491,7 @@ private fun MineScreen(
             remoteSupported = remoteAiSupported,
         )
         SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences })
-        if (showPreferences) {
+        MotionDisclosure(showPreferences) {
         if (!preferenceState.hasLoaded) Text("尚未读取原权重；下面是默认占位，不是已保存的值。恢复读取后才能保存。",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -4487,7 +4536,7 @@ private fun MineScreen(
         }
         numericContent()
         SettingsDisclosure("关于你的记录", "${profileEvidence.size} 条历史文字记录 · 不作为数值统计", showProfile, { showProfile = !showProfile })
-        if (showProfile) {
+        MotionDisclosure(showProfile) {
         ProfileEvidenceSection(
             evidence = profileEvidence,
             onGenerate = onGenerateProfileEvidence,
@@ -4498,7 +4547,7 @@ private fun MineScreen(
         }
         Text("数据与隐私", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData })
-        if (showData) {
+        MotionDisclosure(showData) {
         LocalDataManagementSection(
             isWorking = isDataWorking,
             result = dataResult,
@@ -4543,8 +4592,9 @@ private fun AiSettingsSection(
 ) {
     var showProviderSettings by rememberSaveable { mutableStateOf(false) }
     Surface(
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(14.dp),
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -4565,7 +4615,7 @@ private fun AiSettingsSection(
                     Text(
                         stringResource(R.string.ai_advisor_description),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Switch(
@@ -4580,7 +4630,7 @@ private fun AiSettingsSection(
                     else R.string.ai_advisor_consent_needed,
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Surface(
                 onClick = { showProviderSettings = true },
@@ -4598,7 +4648,7 @@ private fun AiSettingsSection(
                         modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
-                            PlannerIcons.Send,
+                            DesignIcons.Assistant,
                             contentDescription = null,
                             modifier = Modifier.padding(9.dp),
                             tint = if (providerConfig.hasApiKey) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -4625,7 +4675,7 @@ private fun AiSettingsSection(
             Text(
                 "保存密钥本身不会联网。只有你在助手或任务建议中确认请求后，才会发送本次所需的最小上下文。",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

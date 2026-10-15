@@ -6,6 +6,7 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -30,12 +31,13 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import com.swan1127.repland.ui.components.DesignButton as Button
+import com.swan1127.repland.ui.components.DesignFilterChip as FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import com.swan1127.repland.ui.components.DesignOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -82,6 +84,7 @@ import com.swan1127.repland.domain.model.ArrangementOccupiedInterval
 import com.swan1127.repland.domain.model.AssistantSaveReceipt
 import com.swan1127.repland.domain.model.UserNumericInput
 import com.swan1127.repland.ui.components.PlannerIcons
+import com.swan1127.repland.ui.components.DesignIcons
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -342,19 +345,26 @@ fun AgentCenterScreen(
                 }
             }
         }
-        Button(onClick = onFormulatePlan, enabled = canFormulatePlan,
-            modifier = Modifier.fillMaxWidth().height(48.dp).testTag("agent-formulate-plan")) {
-            Text("制定计划")
-        }
-        Text("依据现有任务重新排序并生成计划，确认前不会改动当前安排。",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (!hasExistingTasks) {
-            Text("还没有可规划的任务，先添加一件事再制定计划。", style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = onAddTask, modifier = Modifier.testTag("agent-add-first-task")) { Text("添加第一件事") }
+            TextButton(onClick = onAddTask, modifier = Modifier.testTag("agent-add-first-task")) { Text("先记录任务 →") }
         }
         if (hasExistingTasks && !hasAvailability) {
-            Text("还没有设置可用时间，补充后才能自动安排时段。", style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = onConfigureAvailability, modifier = Modifier.testTag("agent-configure-availability")) { Text("补充可用时间") }
+            Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("先告诉我什么时候有空", style = MaterialTheme.typography.titleSmall)
+                    Text("补充可用时间后，就能为已有任务预览具体时段。", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = onConfigureAvailability, modifier = Modifier.testTag("agent-configure-availability")) { Text("设置可用时间 →") }
+                }
+            }
+        }
+        if (hasExistingTasks) {
+            OutlinedButton(onClick = onFormulatePlan, enabled = canFormulatePlan,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("agent-formulate-plan")) {
+                Text("用已有任务制定计划")
+            }
+            Text("重新排序并预览安排，确认后才应用。", style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         AgentComposer(
             prompt = prompt,
@@ -524,26 +534,26 @@ fun AgentCenterScreen(
 private fun AgentHero(activeDate: LocalDate, occupiedEntries: List<TimelineEntry>, onOpenTimeStudio: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text("安排助手", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-            Text(activeDate.format(DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.SIMPLIFIED_CHINESE)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("安排助手", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+            Text(activeDate.format(DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.SIMPLIFIED_CHINESE)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Surface(onClick = onOpenTimeStudio, modifier = Modifier.size(width = 78.dp, height = 56.dp).testTag("agent-import-timetable"), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+        Surface(onClick = onOpenTimeStudio, modifier = Modifier.size(width = 64.dp, height = 56.dp).testTag("agent-import-timetable"), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(PlannerIcons.Calendar, contentDescription = null, modifier = Modifier.size(19.dp))
+                Icon(DesignIcons.Calendar, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 Text("课表", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
-        ContextPill("今天", PlannerIcons.Schedule)
-        ContextPill("已有 ${occupiedEntries.size} 项", PlannerIcons.Calendar)
-        ContextPill("先预览，后写入", PlannerIcons.Send)
+        ContextPill("${occupiedEntries.size} 项日程", DesignIcons.Calendar)
+        ContextPill("确认后才应用", DesignIcons.Assistant)
     }
 }
 
 @Composable
 private fun ContextPill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(50)) {
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(8.dp)) {
         Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
             Text(label, style = MaterialTheme.typography.labelMedium)
@@ -553,31 +563,39 @@ private fun ContextPill(label: String, icon: androidx.compose.ui.graphics.vector
 
 @Composable
 private fun AgentComposer(prompt: String, willUseAi: Boolean, isWorking: Boolean, canPreview: Boolean = true, onPromptChange: (String) -> Unit, onSeed: (String) -> Unit, onVoice: () -> Unit, onPreview: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(26.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    var showDataScope by rememberSaveable { mutableStateOf(false) }
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.size(42.dp)) {
-                    Icon(PlannerIcons.Send, contentDescription = null, modifier = Modifier.padding(11.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Icon(DesignIcons.Assistant, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("说出你的安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("描述新的安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(if (willUseAi) "理解事项，并根据今日固定安排提出可编辑时段。" else "先拆分事项、时间、时长和并行关系。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            OutlinedTextField(value = prompt, onValueChange = onPromptChange, modifier = Modifier.fillMaxWidth().testTag("agent-prompt"), minLines = 3, maxLines = 5, label = { Text("今天想怎么安排？") }, placeholder = { Text("例如：15:00 复习数据结构 90 分钟；同一时间跑步 40 分钟") })
-            if (willUseAi) Text("生成时发送输入、当日占用/明确可用时段、当前草案、类别偏好，以及最多 50 项未完成任务的名称、类别、时长、状态、优先级、日期和进度。仅提及或草案引用的最多 5 项任务附最近 3 条有效反馈（文字各限 200 字）；不发送任务备注或密钥。无可用时间不自动选时段。", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedTextField(value = prompt, onValueChange = onPromptChange, modifier = Modifier.fillMaxWidth().testTag("agent-prompt"), minLines = 3, maxLines = 5, shape = RoundedCornerShape(12.dp), label = { Text("今天想怎么安排？") }, placeholder = { Text("例如：15:00 复习数据结构 90 分钟；同一时间跑步 40 分钟") })
+            if (willUseAi) {
+                Text("AI 将使用输入和相关任务信息生成预览。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = { showDataScope = !showDataScope }, modifier = Modifier.heightIn(min = 48.dp).testTag("agent-data-scope")) {
+                    Text(if (showDataScope) "收起数据范围" else "查看将发送的数据")
+                }
+                if (showDataScope) Text("生成时发送输入、当日占用/明确可用时段、当前草案、类别偏好，以及最多 50 项未完成任务的名称、类别、时长、状态、优先级、日期和进度。仅提及或草案引用的最多 5 项任务附最近 3 条有效反馈（文字各限 200 字）；不发送任务备注或密钥。无可用时间不自动选时段。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ComposerPreset("安排今天") { onSeed("安排今天") }
-                ComposerPreset("新增事项") { onSeed("新增事项") }
+                ComposerPreset("重排今天") { onSeed("安排今天") }
+                ComposerPreset("只新增任务") { onSeed("新增事项") }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AssistChip(onClick = onVoice, modifier = Modifier.height(44.dp).testTag("agent-voice-input"), label = { Text("语音输入") }, leadingIcon = { Icon(PlannerIcons.Voice, contentDescription = null, modifier = Modifier.size(18.dp)) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.secondaryContainer))
+                AssistChip(onClick = onVoice, modifier = Modifier.heightIn(min = 48.dp).testTag("agent-voice-input"), shape = RoundedCornerShape(10.dp), label = { Text("语音输入") }, leadingIcon = { Icon(PlannerIcons.Voice, contentDescription = null, modifier = Modifier.size(18.dp)) }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.secondaryContainer))
                 Spacer(Modifier.weight(1f))
                 Button(onClick = onPreview, enabled = canPreview && prompt.isNotBlank() && !isWorking, modifier = Modifier.heightIn(min = 48.dp).testTag("agent-preview")) {
-                    Icon(PlannerIcons.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(DesignIcons.ArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(7.dp))
-                    Text(if (isWorking) "处理中…" else if (willUseAi) "发送给助手" else "本地解析")
+                    Text(if (isWorking) "生成中…" else if (willUseAi) "发送并预览" else "本地预览")
                 }
             }
         }
@@ -586,8 +604,10 @@ private fun AgentComposer(prompt: String, willUseAi: Boolean, isWorking: Boolean
 
 @Composable
 private fun ComposerPreset(label: String, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(50), modifier = Modifier.testTag("agent-prompt-$label")) {
-        Text(label, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium)
+    Surface(onClick = onClick, color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(8.dp), modifier = Modifier.heightIn(min = 48.dp).testTag("agent-prompt-$label")) {
+        Box(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+            Text(label, style = MaterialTheme.typography.labelMedium)
+        }
     }
 }
 

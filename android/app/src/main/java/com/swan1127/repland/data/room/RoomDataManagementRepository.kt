@@ -9,6 +9,7 @@ import com.swan1127.repland.domain.ports.DataManagementRepository
 
 class RoomDataManagementRepository(
     private val database: ReplandDatabase,
+    private val clearPersonalProfile: suspend () -> Unit = {},
 ) : DataManagementRepository {
     override suspend fun snapshot(): LocalDataSnapshot = database.withTransaction {
         val tasks = database.taskDao().getAll().map(TaskEntity::toDomain)
@@ -45,6 +46,7 @@ class RoomDataManagementRepository(
     override suspend fun clearAllLocalData() {
         // This is intentionally available only behind the explicit UI confirmation.
         // Room keeps its schema metadata while removing every application-owned table.
-        database.clearAllTables()
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { database.clearAllTables() }
+        clearPersonalProfile()
     }
 }
