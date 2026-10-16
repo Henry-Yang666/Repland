@@ -83,7 +83,8 @@ class AppContainer(context: Context) {
     val profileEvidenceRepository: ProfileEvidenceRepository = RoomProfileEvidenceRepository(database)
     val aiProviderConfigRepository: AiProviderConfigRepository = SecureAiProviderConfigRepository(context)
     val numericProfileRepository = com.swan1127.repland.data.room.RoomNumericProfileRepository(database, aiProviderConfigRepository)
-    val dataManagementRepository: DataManagementRepository = RoomDataManagementRepository(database)
+    val personalProfileStore = com.swan1127.repland.data.profile.LocalPersonalProfileStore(context)
+    val dataManagementRepository: DataManagementRepository = RoomDataManagementRepository(database, personalProfileStore::clear)
     val aiSettingsRepository: AiSettingsRepository = RoomAiSettingsRepository(database.aiSettingsDao())
     val engagementRepository = RoomEngagementRepository(database)
     /** QA/internal share the optional BYOK provider; release stays local-only. */

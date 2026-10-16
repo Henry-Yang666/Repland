@@ -2,14 +2,14 @@ package com.swan1127.repland.ui.components
 
 import androidx.activity.compose.BackHandler
 
-import androidx.compose.animation.AnimatedContent
+import com.swan1127.repland.ui.theme.MotionPage
+import com.swan1127.repland.ui.theme.LocalReducedMotion
+import com.swan1127.repland.ui.theme.ReplandMotion
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -41,7 +41,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material3.Button
+import com.swan1127.repland.ui.components.DesignButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -49,13 +49,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.swan1127.repland.ui.components.DesignFilterChip as FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
-import androidx.compose.material3.OutlinedButton
+import com.swan1127.repland.ui.components.DesignOutlinedButton as OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SheetValue
@@ -137,6 +137,7 @@ fun TaskRow(
             onClick = if (task.status == TaskStatus.NOT_STARTED || task.status == TaskStatus.POSTPONED) onStart else onOpen,
             modifier = Modifier
                 .size(48.dp)
+                .background(statusColor.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
                 .testTag("task-start-${task.id}")
                 .semantics { contentDescription = if (task.status == TaskStatus.NOT_STARTED || task.status == TaskStatus.POSTPONED) "开始 ${task.displayName}" else "查看 ${task.displayName}" },
         ) {
@@ -166,15 +167,14 @@ fun TaskRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                TaskMetaLabel(task.category.captureLabel())
-                TaskMetaLabel(task.userPriority.captureLabel())
-                task.totalDurationMinutes?.let { TaskMetaLabel("${it} 分钟") }
+                if (task.category != TaskCategory.UNSPECIFIED) TaskMetaLabel(task.category.captureLabel())
+                if (task.userPriority != TaskPriority.UNSPECIFIED) TaskMetaLabel(task.userPriority.captureLabel())
             }
             val progress = when (task.status) {
                 TaskStatus.COMPLETED -> 1f
                 else -> (task.progressPercent ?: 0).coerceIn(0, 100) / 100f
             }
-            LinearProgressIndicator(
+            if (progress > 0f || task.status == TaskStatus.IN_PROGRESS) LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 color = statusColor,
@@ -316,6 +316,7 @@ fun TaskCaptureSheet(
 ) {
     var localDraft by rememberSaveable(stateSaver = CaptureDraftSaver) { mutableStateOf(TaskCaptureDraft(text = initialText)) }
     val current = draft ?: localDraft
+    val reducedMotion = LocalReducedMotion.current
     val imeBridge = remember { CaptureImeBridge() }
     val sheetScope = rememberCoroutineScope()
     var confirmDiscard by rememberSaveable { mutableStateOf(false) }
@@ -397,8 +398,10 @@ fun TaskCaptureSheet(
                         maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
             }
-            Box(Modifier.fillMaxWidth().then(if (compactHeight) Modifier else
-                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()))) {
+            MotionPage(targetKey = current.stage, lateral = true, order = current.stage.ordinal,
+                modifier = Modifier.fillMaxWidth().then(if (compactHeight) Modifier else
+                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()))
+                    .animateContentSize(tween(if (reducedMotion) 0 else ReplandMotion.Expand, easing = FastOutSlowInEasing))) {
                 when (current.stage) {
                     TaskCaptureStage.CAPTURE -> CaptureInputStep(
                         text = current.text,
@@ -445,13 +448,13 @@ fun TaskCaptureSheet(
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 when (current.stage) {
                     TaskCaptureStage.CAPTURE -> {
-                        Button(onClick = { step(TaskCaptureStage.INTENT) }, enabled = current.text.isNotBlank() && !saving,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("task-capture-arrange-today")) { Text("安排今天") }
-                        OutlinedButton(onClick = { save() }, enabled = current.text.isNotBlank() && !saving,
+                        Button(onClick = { save() }, enabled = current.text.isNotBlank() && !saving,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("task-capture-save-inbox")) {
                             Text(if (saving) "正在保存…" else if (current.dueDate != null || current.scheduledForDate != null)
-                                "保存任务（保留已选日期）" else "先保存到待安排")
+                                "保存任务（保留已选日期）" else "保存任务")
                         }
+                        TextButton(onClick = { step(TaskCaptureStage.INTENT) }, enabled = current.text.isNotBlank() && !saving,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("task-capture-arrange-today")) { Text("补充日期与时长") }
                     }
                     TaskCaptureStage.DURATION -> Button(onClick = { save(current.copy(scheduledForDate = LocalDate.now())) },
                         enabled = current.durationIsValid && !saving,
@@ -494,8 +497,8 @@ private fun CaptureInputStep(
     enabled: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("接下来要做什么？", style = MaterialTheme.typography.headlineSmall)
-        Text("先记下，再决定什么时候做。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("先记下一件事", style = MaterialTheme.typography.titleLarge)
+        Text("写一句话就能保存，时间可以稍后安排。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedTextField(
             value = text,
             enabled = enabled,
@@ -503,13 +506,18 @@ private fun CaptureInputStep(
             modifier = Modifier.fillMaxWidth().testTag("task-capture-input"),
             placeholder = { Text("写下任务……") },
             label = { Text("任务内容") },
+            shape = RoundedCornerShape(12.dp),
             minLines = 2,
             maxLines = 4,
         )
-        Text(listOf("${category.captureLabel()}", "${priority.captureLabel()}优先级",
-            if (!draft.durationIsValid) "时长待修改" else draft.selectedDuration?.let { "$it 分钟" } ?: "时长未知",
-            draft.dueDate?.let { "截止 ${taskDateLabel(it)}" } ?: "未设截止日",
-            draft.scheduledForDate?.let { "计划 ${taskDateLabel(it)}" } ?: "未设计划日").joinToString(" · "),
+        val details = listOfNotNull(
+            category.takeIf { it != TaskCategory.UNSPECIFIED }?.captureLabel(),
+            priority.takeIf { it != TaskPriority.UNSPECIFIED }?.let { "${it.captureLabel()}优先级" },
+            if (!draft.durationIsValid) "时长待修改" else draft.selectedDuration?.let { "$it 分钟" },
+            draft.dueDate?.let { "截止 ${taskDateLabel(it)}" },
+            draft.scheduledForDate?.let { "计划 ${taskDateLabel(it)}" },
+        )
+        if (details.isNotEmpty()) Text(details.joinToString(" · "),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = onMore, enabled = enabled && text.isNotBlank(), modifier = Modifier.heightIn(min = 48.dp).testTag("task-capture-more")) {
             Text("修改分类与优先级")

@@ -51,6 +51,8 @@ val releaseSigningValues = listOf(
 val isReleaseSigningConfigured = releaseSigningValues.all { it.isNullOrBlank().not() }
 
 android {
+    // Keep the existing debug CI task; opt into the isolated design test package locally.
+    testBuildType = providers.gradleProperty("replandTestBuildType").orElse("debug").get()
     namespace = "com.swan1127.repland"
     compileSdk {
         version = release(36)
@@ -86,6 +88,13 @@ android {
             versionNameSuffix = "-qa"
             resValue("string", "app_name", "Repland 测试")
         }
+        create("designPreview") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".design"
+            versionNameSuffix = "-design"
+            resValue("string", "app_name", "Repland 设计副本")
+            matchingFallbacks += listOf("debug")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -116,6 +125,7 @@ android {
     sourceSets {
         getByName("debug") { kotlin.directories.add("src/remote/java"); manifest.srcFile("src/remote/AndroidManifest.xml") }
         getByName("internal") { kotlin.directories.add("src/remote/java"); manifest.srcFile("src/remote/AndroidManifest.xml") }
+        getByName("designPreview") { kotlin.directories.add("src/remote/java"); manifest.srcFile("src/designPreview/AndroidManifest.xml") }
     }
     buildFeatures {
         compose = true
@@ -127,6 +137,12 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().withBuildType("designPreview")) { variant ->
+        (variant as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = true
     }
 }
 
@@ -221,4 +237,5 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    add("designPreviewImplementation", libs.androidx.compose.ui.test.manifest)
 }

@@ -61,6 +61,9 @@ class MainActivity : ComponentActivity() {
                         appContainer.taskRepository, appContainer.aiSettingsRepository, appContainer.aiProviderConfigRepository,
                         appContainer.numericProfileAdvisor, appContainer.numericProfileAdvisor !== com.swan1127.repland.domain.model.NoOpNumericProfileAdvisor),
                 )
+                val personalProfileViewModel: com.swan1127.repland.ui.profile.PersonalProfileViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.profile.PersonalProfileViewModel.Factory(appContainer.personalProfileStore),
+                )
                 val dataManagementViewModel: DataManagementViewModel = viewModel(
                     factory = DataManagementViewModel.Factory(appContainer.dataManagementRepository),
                 )
@@ -100,6 +103,7 @@ class MainActivity : ComponentActivity() {
                     engagementViewModel,
                     taskCaptureViewModel,
                     numericProfileViewModel,
+                    personalProfileViewModel,
                 )
             }
         }
