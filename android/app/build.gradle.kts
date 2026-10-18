@@ -138,6 +138,9 @@ android {
             isIncludeAndroidResources = true
         }
     }
+    lint {
+        abortOnError = true
+    }
 }
 
 androidComponents {

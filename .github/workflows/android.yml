@@ -15,6 +15,7 @@ jobs:
   build-and-unit-test:
     name: Build and unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -31,11 +32,50 @@ jobs:
       - name: Build debug and internal artifacts, then run unit tests
         working-directory: android
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleInternal :app:testDebugUnitTest :app:verifyOfflineMvpBoundary
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            android/app/build/reports/tests/testDebugUnitTest/
+            android/app/build/test-results/testDebugUnitTest/
+          retention-days: 14
+
+  android-lint:
+    name: Android Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install compile SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Run Android Lint on debug and internal variants
+        working-directory: android
+        run: ./gradlew --no-daemon :app:lintDebug :app:lintInternal
+      - name: Upload Android Lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-reports
+          path: |
+            android/app/build/reports/lint-results-debug.*
+            android/app/build/reports/lint-results-internal.*
+          retention-days: 14
 
   instrumented-test-api-26:
     name: Instrumented tests (API 26)
     needs: build-and-unit-test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -48,11 +88,37 @@ jobs:
           packages: platform-tools emulator
       - name: Install compile SDK
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Enable and verify KVM acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo udevadm settle
+          if [[ ! -r /dev/kvm || ! -w /dev/kvm ]]; then
+            echo "::error::The runner must have read/write access to /dev/kvm for API 26 tests."
+            exit 1
+          fi
+          "$ANDROID_HOME/emulator/emulator" -accel-check
+      - name: Build app and test APKs before starting the emulator
+        working-directory: android
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
       - name: Run connected tests on the minimum-support regression emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 26
           target: google_apis
           arch: x86
+          ram-size: 2048M
+          disable-linux-hw-accel: 'false'
+          emulator-options: -accel on -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
           working-directory: android
           script: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+      - name: Upload instrumented test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-reports-api-26
+          path: |
+            android/app/build/reports/androidTests/connected/
+            android/app/build/outputs/androidTest-results/connected/
+          retention-days: 14

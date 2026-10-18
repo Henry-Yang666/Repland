@@ -61,6 +61,10 @@ cd android
 
 ## 自动化与真实设备回归
 
-GitHub Actions 在 API 26 模拟器上执行仪器测试，并在每次推送和拉取请求执行 debug、internal、单元测试和仪器测试。发布候选还必须按 [TESTING.md](TESTING.md) 在真实设备完成通知、后台、时区、文件访问和升级迁移回归。
+GitHub Actions 在每次推送和拉取请求执行 debug、internal 构建、单元测试、独立的 Android Lint 和 API 26 仪器测试。Lint 检查 debug 与 internal 两种构建，发现错误即失败，不通过新增 baseline 或忽略规则屏蔽问题。各项检查无论成功与否都会上传对应测试或 Lint 报告。
+
+主分支保护应将 `Build and unit tests`、`Android Lint` 和 `Instrumented tests (API 26)` 设为必需状态检查。API 26 任务在启动模拟器前构建 APK，并明确验证 KVM 硬件加速；无加速时直接报错，避免软件模拟卡住安装而没有实际执行测试。
+
+发布候选还必须按 [TESTING.md](TESTING.md) 在真实设备完成通知、后台、时区、文件访问和升级迁移回归。
 
 当前不接入崩溃报告或分析 SDK。若未来新增，必须先满足 [PRIVACY.md](PRIVACY.md) 的数据说明和用户同意要求。
