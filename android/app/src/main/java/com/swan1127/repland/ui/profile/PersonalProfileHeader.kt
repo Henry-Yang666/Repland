@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
@@ -48,7 +49,7 @@ import com.swan1127.repland.ui.components.DesignButton
 import com.swan1127.repland.ui.components.DesignClickableSurface
 import com.swan1127.repland.ui.components.DesignIcons
 import com.swan1127.repland.ui.theme.LocalReducedMotion
-import com.swan1127.repland.ui.theme.replandAccent
+import com.swan1127.repland.ui.theme.replandSettingsAccent
 
 @Composable
 fun PersonalProfileSection(viewModel: PersonalProfileViewModel) {
@@ -79,16 +80,17 @@ fun PersonalProfileHeader(
     var editing by rememberSaveable { mutableStateOf(false) }
     var draft by rememberSaveable { mutableStateOf("") }
     var validation by rememberSaveable { mutableStateOf<String?>(null) }
-    val accent = replandAccent(2)
+    val accent = replandSettingsAccent(0)
     val enabled = profile != null && !operation.loading && !operation.working
     val reduced = LocalReducedMotion.current
     Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth().testTag("personal-profile-card")) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.background(Brush.linearGradient(listOf(accent.surface, MaterialTheme.colorScheme.surfaceContainerLow)))
+            .padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DesignClickableSurface(onClick = onPickAvatar, enabled = enabled, shape = RectangleShape, color = Color.Transparent,
                     modifier = Modifier.size(80.dp).testTag("personal-profile-avatar").semantics { contentDescription = "更换头像" }, pressedScale = .94f) {
-                    Box(Modifier.background(accent.surface, CircleShape)
+                    Box(Modifier.background(accent.highlight, CircleShape)
                         .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape), contentAlignment = Alignment.Center) {
                         AnimatedContent(targetState = profile?.avatar, label = "avatar replacement",
                             transitionSpec = { fadeIn(tween(if (reduced) 0 else 160)) togetherWith fadeOut(tween(if (reduced) 0 else 100)) }) { avatar ->

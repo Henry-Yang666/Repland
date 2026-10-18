@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.swan1127.repland.ui.theme.pressMotion
 import com.swan1127.repland.ui.theme.replandAccent
+import com.swan1127.repland.ui.theme.ReplandAccent
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -110,9 +111,9 @@ fun RowScope.DesignNavigationItem(
     label: @Composable () -> Unit,
     accentIndex: Int,
     modifier: Modifier = Modifier,
+    accent: ReplandAccent = replandAccent(accentIndex),
 ) {
     val source = remember { MutableInteractionSource() }
-    val accent = replandAccent(accentIndex)
     NavigationBarItem(selected = selected, onClick = onClick, icon = icon, label = label,
         modifier = modifier.then(pressMotion(source, true)), interactionSource = source,
         colors = NavigationBarItemDefaults.colors(selectedIconColor = accent.ink,

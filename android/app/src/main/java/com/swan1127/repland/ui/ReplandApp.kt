@@ -64,6 +64,7 @@ import androidx.compose.foundation.BorderStroke
 import com.swan1127.repland.ui.theme.LocalReplandVisuals
 import com.swan1127.repland.ui.theme.MotionPage
 import com.swan1127.repland.ui.theme.replandAccent
+import com.swan1127.repland.ui.theme.replandSettingsAccent
 import com.swan1127.repland.ui.theme.MotionDisclosure
 import com.swan1127.repland.ui.theme.LocalReducedMotion
 import com.swan1127.repland.ui.theme.ReplandMotion
@@ -73,6 +74,10 @@ import androidx.compose.animation.core.tween
 import com.swan1127.repland.ui.components.DesignIcons
 import com.swan1127.repland.ui.components.DesignClickableSurface
 import com.swan1127.repland.ui.components.DesignSectionHeading
+import com.swan1127.repland.ui.components.SettingsGroup
+import com.swan1127.repland.ui.components.SettingsNavigationRow
+import com.swan1127.repland.ui.components.SettingsSwitchRow
+import com.swan1127.repland.ui.components.SettingsDivider
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -108,6 +113,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -743,6 +749,11 @@ fun ReplandApp(
                             icon = { TabIcon(tab) },
                             label = { Text(if (tab == AppTab.TODAY) "日程" else stringResource(tab.shortRes)) },
                             accentIndex = when (tab) { AppTab.TODAY -> 0; AppTab.TASKS -> 1; else -> 2 },
+                            accent = when (tab) {
+                                AppTab.MINE -> replandSettingsAccent()
+                                AppTab.TODAY -> replandAccent(0)
+                                else -> replandAccent(1)
+                            },
                         )
                     }
                 }
@@ -4522,172 +4533,131 @@ private fun MineScreen(
             .verticalScroll(if (showSettings) settingsScroll else profileScroll)
             .testTag(if (showSettings) "mine-settings-page" else "mine-profile-page")
             .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(if (showSettings) 20.dp else 14.dp),
     ) {
         if (!showSettings) {
             personalProfileContent()
-            Text("用户画像", style = MaterialTheme.typography.labelLarge, color = replandAccent(2).ink)
+            Text("用户画像", style = MaterialTheme.typography.labelLarge, color = replandSettingsAccent().ink)
             summaryContent()
             DesignClickableSurface(onClick = onOpenSettings,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).testTag("mine-settings"),
                 shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DesignSectionHeading("设置", Icons.Outlined.Settings, accentIndex = 2, modifier = Modifier.weight(1f))
-                    Icon(DesignIcons.ArrowRight, null, Modifier.size(20.dp), tint = replandAccent(2).ink)
+                    DesignSectionHeading("设置", Icons.Outlined.Settings, accent = replandSettingsAccent(), modifier = Modifier.weight(1f))
+                    Icon(DesignIcons.ArrowRight, null, Modifier.size(20.dp), tint = replandSettingsAccent().ink)
                 }
             }
         } else {
-            Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",
-                style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("app-version"))
-            Text("日常使用", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            automaticPlanningEnabled?.let { enabled ->
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(20.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("自动安排", style = MaterialTheme.typography.titleSmall)
-                            Text("App 打开时维护后续安排，可随时暂停。", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Switch(checked = enabled, onCheckedChange = onAutomaticPlanningChange,
-                            modifier = Modifier.testTag("autonomy-enabled-switch").semantics { contentDescription = "自动安排" })
-                    }
+            SettingsGroup("日常使用", "安排、时间与提醒", DesignIcons.Calendar,
+                modifier = Modifier.testTag("settings-daily-group")) {
+                automaticPlanningEnabled?.let { enabled ->
+                    SettingsSwitchRow("自动安排", "App 打开时维护后续安排，可随时暂停。",
+                        checked = enabled, onCheckedChange = onAutomaticPlanningChange,
+                        modifier = Modifier.testTag("autonomy-enabled-switch").semantics { contentDescription = "自动安排" },
+                        icon = DesignIcons.Tasks)
+                    SettingsDivider()
                 }
+                SettingsNavigationRow("时间设置", "课程、可用时间与学期", DesignIcons.Calendar,
+                    onClick = onOpenTimeSettings, modifier = Modifier.testTag("mine-time-settings"))
+                SettingsDivider()
+                SettingsNavigationRow("计划历史", "查看历史安排与锁定管理", DesignIcons.Clock,
+                    onClick = onOpenPlanHistory, modifier = Modifier.testTag("mine-plan-history"))
+                SettingsDivider()
+                SettingsSwitchRow(stringResource(R.string.local_reminders_title), stringResource(R.string.local_reminders_description),
+                    checked = remindersEnabled, onCheckedChange = onRemindersEnabledChange,
+                    modifier = Modifier.testTag("local-reminders-switch"), icon = DesignIcons.Clock)
+                if (!notificationsAllowed) Text(stringResource(R.string.notification_permission_needed),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(start = 48.dp, end = 12.dp))
             }
-            OutlinedButton(onClick = onOpenPlanHistory, modifier = Modifier.fillMaxWidth().testTag("mine-plan-history")) {
-                Text("计划历史与锁定管理")
-            }
-            OutlinedButton(onClick = onOpenTimeSettings, modifier = Modifier.fillMaxWidth().testTag("mine-time-settings")) {
-                Text("时间设置 · 课程、可用时间与学期")
-            }
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = RoundedCornerShape(20.dp),
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.local_reminders_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            Text(
-                                stringResource(R.string.local_reminders_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Switch(
-                            checked = remindersEnabled,
-                            onCheckedChange = onRemindersEnabledChange,
-                            modifier = Modifier.testTag("local-reminders-switch"),
+            SettingsGroup("智能与个性化", "模型服务与任务偏好", DesignIcons.Assistant, tone = 1,
+                modifier = Modifier.testTag("settings-intelligence-group")) {
+                AiSettingsSection(
+                    aiEnabled = aiEnabled,
+                    aiConsented = aiConsented,
+                    onAiEnabledChange = onAiEnabledChange,
+                    providerConfig = aiProviderConfig,
+                    providerConfigError = aiProviderConfigError,
+                    providerConnectionTest = aiProviderConnectionTest,
+                    onSaveProviderConfig = onSaveAiProviderConfig,
+                    onClearProviderKey = onClearAiProviderKey,
+                    onTestConnection = onTestAiProviderConnection,
+                    remoteSupported = remoteAiSupported,
+                )
+                SettingsDivider()
+                SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences },
+                    icon = DesignIcons.Profile, tone = 1)
+                MotionDisclosure(showPreferences) {
+                    if (!preferenceState.hasLoaded) Text("尚未读取原权重；下面是默认占位，不是已保存的值。恢复读取后才能保存。",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(R.string.category_preferences_intro),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TaskCategory.knownEntries.forEach { category ->
+                        OutlinedTextField(
+                            value = editableWeights.getValue(category),
+                            onValueChange = { value ->
+                                editableWeights = editableWeights + (category to value)
+                                preferencesEdited = true
+                                showValidationError = false
+                            },
+                            enabled = !preferenceState.isSaving,
+                            modifier = Modifier.fillMaxWidth().testTag("category-weight-${category.name}"),
+                            label = { Text(stringResource(category.labelRes())) },
+                            suffix = { Text(stringResource(R.string.percent_suffix)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
                         )
                     }
-                    if (!notificationsAllowed) {
+                    if (showValidationError) {
                         Text(
-                            stringResource(R.string.notification_permission_needed),
-                            style = MaterialTheme.typography.bodySmall,
+                            stringResource(R.string.category_preferences_error),
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
+                    Button(
+                        onClick = {
+                            if (valid) onSave(parsedWeights) else showValidationError = true
+                        },
+                        enabled = preferenceState.isTrusted && !preferenceState.isSaving,
+                        modifier = Modifier.fillMaxWidth().testTag("category-preferences-save"),
+                    ) { Text(if (preferenceState.isSaving) "保存中…" else stringResource(R.string.save_category_preferences)) }
+                    preferenceState.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("category-preferences-error").semantics { liveRegion = LiveRegionMode.Polite }) }
+                    preferenceState.saveReceipt?.let { Text(it, color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.testTag("category-preferences-receipt").semantics { liveRegion = LiveRegionMode.Polite }) }
                 }
             }
-            Text("智能与个性化", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            AiSettingsSection(
-                aiEnabled = aiEnabled,
-                aiConsented = aiConsented,
-                onAiEnabledChange = onAiEnabledChange,
-                providerConfig = aiProviderConfig,
-                providerConfigError = aiProviderConfigError,
-                providerConnectionTest = aiProviderConnectionTest,
-                onSaveProviderConfig = onSaveAiProviderConfig,
-                onClearProviderKey = onClearAiProviderKey,
-                onTestConnection = onTestAiProviderConnection,
-                remoteSupported = remoteAiSupported,
-            )
-            SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences })
-            MotionDisclosure(showPreferences) {
-            if (!preferenceState.hasLoaded) Text("尚未读取原权重；下面是默认占位，不是已保存的值。恢复读取后才能保存。",
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(
-                stringResource(R.string.category_preferences_intro),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            TaskCategory.knownEntries.forEach { category ->
-                OutlinedTextField(
-                    value = editableWeights.getValue(category),
-                    onValueChange = { value ->
-                        editableWeights = editableWeights + (category to value)
-                        preferencesEdited = true
-                        showValidationError = false
-                    },
-                    enabled = !preferenceState.isSaving,
-                    modifier = Modifier.fillMaxWidth().testTag("category-weight-${category.name}"),
-                    label = { Text(stringResource(category.labelRes())) },
-                    suffix = { Text(stringResource(R.string.percent_suffix)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                )
+            SettingsGroup("数据与隐私", "本机资料与备份", DesignIcons.Profile, tone = 2,
+                modifier = Modifier.testTag("settings-data-group")) {
+                SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData }, tone = 2)
+                MotionDisclosure(showData) {
+                    LocalDataManagementSection(
+                        isWorking = isDataWorking,
+                        result = dataResult,
+                        onExport = onExportLocalData,
+                        onClear = onClearLocalData,
+                    )
+                }
             }
-            if (showValidationError) {
-                Text(
-                    stringResource(R.string.category_preferences_error),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            Button(
-                onClick = {
-                    if (valid) onSave(parsedWeights) else showValidationError = true
-                },
-                enabled = preferenceState.isTrusted && !preferenceState.isSaving,
-                modifier = Modifier.fillMaxWidth().testTag("category-preferences-save"),
-            ) { Text(if (preferenceState.isSaving) "保存中…" else stringResource(R.string.save_category_preferences)) }
-            preferenceState.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.testTag("category-preferences-error").semantics { liveRegion = LiveRegionMode.Polite }) }
-            preferenceState.saveReceipt?.let { Text(it, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.testTag("category-preferences-receipt").semantics { liveRegion = LiveRegionMode.Polite }) }
-            }
-            Text("数据与隐私", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData })
-            MotionDisclosure(showData) {
-            LocalDataManagementSection(
-                isWorking = isDataWorking,
-                result = dataResult,
-                onExport = onExportLocalData,
-                onClear = onClearLocalData,
-            )
-            }
+            Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp).testTag("app-version"))
         }
         Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun SettingsDisclosure(title: String, description: String, expanded: Boolean, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(18.dp),
-    ) {
-        Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.width(12.dp))
-            Text(if (expanded) "收起" else "展开", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-        }
-    }
+private fun SettingsDisclosure(
+    title: String, description: String, expanded: Boolean, onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = DesignIcons.Tasks, tone: Int = 0,
+) {
+    SettingsNavigationRow(title, description, icon, onClick, tone = tone, expanded = expanded)
 }
 
 @Composable
@@ -4705,38 +4675,17 @@ private fun AiSettingsSection(
 ) {
     var showProviderSettings by rememberSaveable { mutableStateOf(false) }
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shape = RoundedCornerShape(14.dp),
+        color = Color.Transparent,
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (!remoteSupported) Text("当前构建使用本地规划，尚不支持远程 AI；保存密钥不会启用联网能力。",
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("ai-build-capability"))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.ai_advisor_title),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        stringResource(R.string.ai_advisor_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = aiEnabled,
-                    onCheckedChange = onAiEnabledChange,
-                    modifier = Modifier.testTag("ai-advisor-switch"),
-                )
-            }
+            SettingsSwitchRow(stringResource(R.string.ai_advisor_title), stringResource(R.string.ai_advisor_description),
+                checked = aiEnabled, onCheckedChange = onAiEnabledChange,
+                modifier = Modifier.testTag("ai-advisor-switch"), tone = 1, icon = DesignIcons.Assistant)
             Text(
                 stringResource(
                     if (aiConsented) R.string.ai_advisor_consent_recorded
@@ -4744,44 +4693,15 @@ private fun AiSettingsSection(
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 60.dp, end = 12.dp),
             )
-            Surface(
-                onClick = { showProviderSettings = true },
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().testTag("ai-provider-settings"),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 12.dp, end = 10.dp, bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Surface(
-                        color = if (providerConfig.hasApiKey) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.size(36.dp),
-                    ) {
-                        Icon(
-                            DesignIcons.Assistant,
-                            contentDescription = null,
-                            modifier = Modifier.padding(9.dp),
-                            tint = if (providerConfig.hasApiKey) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("模型服务", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            if (providerConfig.hasApiKey) "密钥已加密保存在本设备 · ${providerConfig.model}"
-                            else "尚未添加密钥 · 本地结构化解析仍可使用",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    Text("配置", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                }
-            }
+            SettingsDivider()
+            SettingsNavigationRow("模型服务",
+                if (providerConfig.hasApiKey) "密钥已加密保存在本设备 · ${providerConfig.model}"
+                else "尚未添加密钥 · 本地结构化解析仍可使用",
+                Icons.Outlined.Settings,
+                onClick = { showProviderSettings = true }, tone = 1,
+                modifier = Modifier.testTag("ai-provider-settings"))
             if (providerConfigError != null) {
                 Text(providerConfigError, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }

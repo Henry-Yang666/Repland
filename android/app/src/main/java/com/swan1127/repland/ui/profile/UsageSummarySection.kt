@@ -21,7 +21,7 @@ import com.swan1127.repland.ui.components.DesignButton
 import com.swan1127.repland.ui.components.DesignOutlinedButton
 import com.swan1127.repland.ui.components.DesignIcons
 import com.swan1127.repland.ui.components.DesignSectionHeading
-import com.swan1127.repland.ui.theme.replandAccent
+import com.swan1127.repland.ui.theme.replandSettingsAccent
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -37,7 +37,7 @@ fun UsageSummarySection(viewModel: UsageSummaryViewModel) {
 @OptIn(ExperimentalLayoutApi::class)
 internal fun UsageSummaryCard(state: UsageSummaryUiState) {
     var showSources by rememberSaveable { mutableStateOf(false) }
-    val accent = replandAccent(2)
+    val accent = replandSettingsAccent(0)
     Card(
         modifier = Modifier.fillMaxWidth().testTag("usage-summary-card"),
         shape = RoundedCornerShape(24.dp),
@@ -45,7 +45,7 @@ internal fun UsageSummaryCard(state: UsageSummaryUiState) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            DesignSectionHeading("近期使用总结", DesignIcons.Clock, accentIndex = 2)
+            DesignSectionHeading("近期使用总结", DesignIcons.Clock, accent = accent)
             Text(
                 state.text,
                 style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),

@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 
 data class ReplandVisuals(
@@ -43,6 +44,22 @@ private val DarkAccents = listOf(
 fun replandAccent(index: Int): ReplandAccent {
     val accents = if (MaterialTheme.colorScheme.background.luminance() < .2f) DarkAccents else LightAccents
     return accents[Math.floorMod(index, accents.size)]
+}
+
+/** Adjacent blue-green washes connect personal pages without competing colour blocks. */
+@Composable
+fun replandSettingsAccent(index: Int = 0): ReplandAccent {
+    val scheme = MaterialTheme.colorScheme
+    val base = when (Math.floorMod(index, 3)) {
+        1 -> lerp(scheme.primaryContainer, replandAccent(0).surface, .6f)
+        2 -> replandAccent(1).surface
+        else -> scheme.primaryContainer
+    }
+    return ReplandAccent(
+        surface = lerp(base, scheme.surfaceContainerLow, .45f),
+        ink = scheme.primary,
+        highlight = lerp(base, scheme.surfaceContainerLow, .05f),
+    )
 }
 
 val ReplandShapes = Shapes(

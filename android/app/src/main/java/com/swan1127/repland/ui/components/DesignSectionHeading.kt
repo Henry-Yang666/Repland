@@ -16,17 +16,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.swan1127.repland.ui.theme.replandAccent
+import com.swan1127.repland.ui.theme.ReplandAccent
 
 /** Shared visual hierarchy for the new assistant and usage summary. */
 @Composable
 internal fun DesignSectionHeading(
     title: String,
     icon: ImageVector,
-    accentIndex: Int,
+    accentIndex: Int = 0,
     modifier: Modifier = Modifier,
     large: Boolean = false,
+    accent: ReplandAccent = replandAccent(accentIndex),
 ) {
-    val accent = replandAccent(accentIndex)
     Row(modifier, verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Surface(color = accent.surface, shape = RoundedCornerShape(12.dp)) {
