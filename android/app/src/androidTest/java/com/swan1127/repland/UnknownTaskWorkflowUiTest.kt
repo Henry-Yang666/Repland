@@ -13,6 +13,11 @@ import org.junit.Test
 /** Real page -> ViewModel -> Room path in the isolated QA application. */
 class UnknownTaskWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private fun waitTag(tag: String) = rule.waitUntil(15_000) {
         rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
     }

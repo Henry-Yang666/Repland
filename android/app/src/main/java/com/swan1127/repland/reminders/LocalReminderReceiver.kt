@@ -85,6 +85,10 @@ class LocalReminderReceiver : BroadcastReceiver() {
     }
 
     private fun post(context: Context, intent: Intent, kind: ReminderKind) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return
         val taskName = intent.getStringExtra(LocalReminderScheduler.EXTRA_TASK_NAME)
         val (title, content) = when (kind) {
             ReminderKind.SEGMENT_START -> {
@@ -107,16 +111,20 @@ class LocalReminderReceiver : BroadcastReceiver() {
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        NotificationManagerCompat.from(context).notify(
-            intent.dataString.hashCode(),
-            NotificationCompat.Builder(context, LocalReminderScheduler.CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setContentIntent(openApp)
-                .setAutoCancel(true)
-                .build(),
-        )
+        try {
+            NotificationManagerCompat.from(context).notify(
+                intent.dataString.hashCode(),
+                NotificationCompat.Builder(context, LocalReminderScheduler.CHANNEL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .setContentIntent(openApp)
+                    .setAutoCancel(true)
+                    .build(),
+            )
+        } catch (_: SecurityException) {
+            // Notification permission may be revoked after the check above.
+        }
     }
 
     private fun canPostNotifications(context: Context): Boolean =

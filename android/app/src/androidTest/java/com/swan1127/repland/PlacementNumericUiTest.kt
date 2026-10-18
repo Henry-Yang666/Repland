@@ -48,6 +48,7 @@ class PlacementNumericUiTest {
             mode = EngagementMode.GUIDED, onOpenEntry = {}, onOpenTask = {},
             onCreateCourse = { request, saved -> writes++; duration = request.durationMinutes; saved() },
         ) } }
+        rule.onNodeWithTag("schedule-display-options").performClick()
         rule.onNodeWithTag("add-course-trigger").performClick()
         rule.onNodeWithTag("course-title-input").performTextReplacement("数字边界")
         rule.onNodeWithText("手动设时间").performClick()
@@ -97,7 +98,7 @@ class PlacementNumericUiTest {
             eventObjects = listOf(com.swan1127.repland.ui.schedule.TimelineEventObject("chunk29", "长任务", 300)),
             onPlaceEvent = { _, _, _ -> writes++ },
         ) } }
-        rule.onNodeWithTag("event-library-trigger").assertIsDisplayed().performClick()
+        rule.onNodeWithTag("schedule-arrange-task").assertIsDisplayed().performClick()
         rule.onNodeWithTag("event-object-chunk29").performClick()
         rule.onNodeWithText("本次安排 240 分钟").assertExists()
         // 08:00–12:00 fits; the old 300-minute check incorrectly overlapped 12:01.
@@ -116,6 +117,7 @@ class PlacementNumericUiTest {
             entries = listOf(TimelineEntry("restore-course29", "原课程", TimelineKind.COURSE, LocalDate.now(), 540, 600)),
             mode = EngagementMode.GUIDED, onOpenEntry = {}, onOpenTask = {}, onCreateCourse = { _, saved -> writes++; saved() },
         ) } }
+        rule.onNodeWithTag("schedule-display-options").performClick()
         rule.onNodeWithTag("add-course-trigger").performClick()
         rule.onNodeWithTag("course-title-input").performTextReplacement("保留课程")
         rule.onNodeWithText("手动设时间").performClick()

@@ -54,6 +54,7 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import com.swan1127.repland.ui.components.DesignButton as Button
 import androidx.compose.material3.Card
@@ -120,6 +121,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.swan1127.repland.R
@@ -145,6 +147,7 @@ import com.swan1127.repland.domain.model.DateOverrideDraft
 import com.swan1127.repland.domain.model.DateOverrideType
 import com.swan1127.repland.domain.model.DailyReviewSummarizer
 import com.swan1127.repland.domain.model.ExecutionLogEventType
+import com.swan1127.repland.domain.model.ExecutionOutcome
 import com.swan1127.repland.domain.model.ImportedCourse
 import com.swan1127.repland.domain.model.PlanDraft
 import com.swan1127.repland.domain.model.PlanDraftEditor
@@ -197,7 +200,6 @@ import com.swan1127.repland.ui.data.DataManagementViewModel
 import com.swan1127.repland.ui.ai.PlanningAgentViewModel
 import com.swan1127.repland.ui.ai.AiProviderConfigViewModel
 import com.swan1127.repland.ui.ai.AiProviderConnectionTest
-import com.swan1127.repland.ui.agent.AgentCenterScreen
 import com.swan1127.repland.ui.agent.ArrangementAssistantViewModel
 import com.swan1127.repland.ui.tasks.TaskViewModel
 import com.swan1127.repland.ui.tasks.TaskMutationKind
@@ -274,7 +276,7 @@ private fun DataReadNotice(message: String, onRetry: () -> Unit, canRetry: Boole
 private const val POSTPONEMENT_ADVICE_THRESHOLD = 3
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 fun ReplandApp(
     taskViewModel: TaskViewModel,
     timeViewModel: TimeViewModel,
@@ -290,12 +292,26 @@ fun ReplandApp(
     taskCaptureViewModel: com.swan1127.repland.ui.tasks.TaskCaptureViewModel,
     numericProfileViewModel: com.swan1127.repland.ui.profile.NumericProfileViewModel? = null,
     personalProfileViewModel: com.swan1127.repland.ui.profile.PersonalProfileViewModel? = null,
+    autonomyViewModel: com.swan1127.repland.ui.agent.AutonomyViewModel? = null,
+    usageSummaryViewModel: com.swan1127.repland.ui.profile.UsageSummaryViewModel? = null,
 ) {
+    val noAutonomy = remember { kotlinx.coroutines.flow.MutableStateFlow(com.swan1127.repland.ui.agent.AutonomyUiState()) }
+    val autonomy by (autonomyViewModel?.state ?: noAutonomy).collectAsStateWithLifecycle()
+    var showScheduleAssistant by rememberSaveable { mutableStateOf(false) }
     val taskCaptureUiState by taskCaptureViewModel.uiState.collectAsStateWithLifecycle()
     val captureLifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(captureLifecycle, autonomyViewModel) {
+        captureLifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                autonomyViewModel?.onForeground()
+                delay(30_000)
+            }
+        }
+    }
     DisposableEffect(captureLifecycle, taskCaptureViewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) taskCaptureViewModel.retain()
+            if (event == Lifecycle.Event.ON_RESUME) autonomyViewModel?.onForeground()
         }
         captureLifecycle.addObserver(observer)
         onDispose { captureLifecycle.removeObserver(observer) }
@@ -326,7 +342,6 @@ fun ReplandApp(
     val workspaceUiState by planViewModel.workspaceUiState.collectAsStateWithLifecycle()
     val categoryPreferenceUiState by categoryPreferenceViewModel.uiState.collectAsStateWithLifecycle()
     val reminderSettingsUiState by reminderSettingsViewModel.uiState.collectAsStateWithLifecycle()
-    val profileEvidenceUiState by profileEvidenceViewModel.uiState.collectAsStateWithLifecycle()
     val dataManagementUiState by dataManagementViewModel.uiState.collectAsStateWithLifecycle()
     val planningAgentUiState by planningAgentViewModel.uiState.collectAsStateWithLifecycle()
     val aiProviderConfigUiState by aiProviderConfigViewModel.uiState.collectAsStateWithLifecycle()
@@ -346,6 +361,7 @@ fun ReplandApp(
     val arrangementAssistantAccess by arrangementAssistantViewModel.access.collectAsStateWithLifecycle()
     val engagementMode by engagementViewModel.mode.collectAsStateWithLifecycle()
     var activeDate by remember { mutableStateOf(LocalDate.now()) }
+    var scheduleEpochDay by rememberSaveable(activeDate) { mutableStateOf(activeDate.toEpochDay()) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(60_000)
@@ -388,9 +404,31 @@ fun ReplandApp(
         runCatching { speechLauncher.launch(intent) }.onFailure { voiceError = true }
         Unit
     }
+    val tabStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    val assistantStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.TODAY) }
+    var showMineSettings by rememberSaveable { mutableStateOf(false) }
     var timeReturnTab by rememberSaveable { mutableStateOf(AppTab.TODAY) }
+    // Retain the removed enum value only to recover an older saved navigation state.
+    LaunchedEffect(selectedTab, timeReturnTab) {
+        if (selectedTab == AppTab.AGENT) selectedTab = AppTab.TODAY
+        if (timeReturnTab == AppTab.AGENT) timeReturnTab = AppTab.TODAY
+    }
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(usageSummaryViewModel, captureLifecycle, selectedTab, showMineSettings, selectedTaskId) {
+        captureLifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            val profileVisible = selectedTab == AppTab.MINE && !showMineSettings && selectedTaskId == null
+            usageSummaryViewModel?.setVisible(profileVisible)
+            if (profileVisible) try {
+                while (true) {
+                    usageSummaryViewModel?.onForeground()
+                    delay(30_000)
+                }
+            } finally {
+                usageSummaryViewModel?.setVisible(false)
+            }
+        }
+    }
     var taskEditorTargetId by rememberSaveable { mutableStateOf<String?>(null) }
     val taskEditorTarget = taskEditorTargetId?.let { id -> uiState.tasks.firstOrNull { it.id == id } }
     var showTaskEditor by rememberSaveable { mutableStateOf(false) }
@@ -441,8 +479,13 @@ fun ReplandApp(
     val selectedTask = selectedTaskId?.let { id -> uiState.tasks.firstOrNull { it.id == id } }
     // Dialog/sheet handlers are composed later and retain their IME/save protection.
     // At page level, native Back has the same destination as the visible arrow.
-    BackHandler(enabled = selectedTaskId != null || selectedTab == AppTab.TIME) {
-        if (selectedTaskId != null) selectedTaskId = null else selectedTab = timeReturnTab
+    BackHandler(enabled = selectedTaskId != null || selectedTab == AppTab.TIME ||
+        (selectedTab == AppTab.MINE && showMineSettings)) {
+        when {
+            selectedTaskId != null -> selectedTaskId = null
+            selectedTab == AppTab.TIME -> selectedTab = timeReturnTab
+            else -> showMineSettings = false
+        }
     }
     val selectedTaskLogs = remember(selectedTaskId) {
         selectedTaskId?.let(taskViewModel::observeExecutionLogs) ?: flowOf(emptyList())
@@ -570,7 +613,7 @@ fun ReplandApp(
             onCorrectLog = { openTaskMutation(TaskMutationKind.CORRECT, it.taskId, it.id) },
             onReviewAdjustmentDraft = {
                 selectedTaskId = null
-                selectedTab = AppTab.AGENT
+                selectedTab = AppTab.TODAY
                 if (planUiState.draft == null) generatePlanDraft()
             },
             isAiEnabled = planningReadsReady && planningAgentUiState.preferences.isEnabled,
@@ -650,15 +693,16 @@ fun ReplandApp(
                     Surface(color = MaterialTheme.colorScheme.surface) {
                         Column(Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets)
                             .padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(activeDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd E", Locale.CHINA)),
+                            Text(LocalDate.ofEpochDay(scheduleEpochDay).format(DateTimeFormatter.ofPattern("yyyy/MM/dd E", Locale.CHINA)),
+                                modifier = Modifier.testTag("schedule-selected-date"),
                                 style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                         }
                     }
-                } else if (selectedTab != AppTab.AGENT) TopAppBar(
+                } else TopAppBar(
                     title = {
                         Column {
                             Text(
-                                if (selectedTab == AppTab.TIME) "时间设置" else if (selectedTab == AppTab.TODAY) "今天" else stringResource(selectedTab.titleRes),
+                                if (selectedTab == AppTab.TIME) "时间设置" else if (selectedTab == AppTab.MINE && showMineSettings) "设置" else stringResource(selectedTab.titleRes),
                                 style = MaterialTheme.typography.titleLarge,
                             )
                             if (selectedTab == AppTab.TODAY) {
@@ -675,10 +719,10 @@ fun ReplandApp(
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     },
                     navigationIcon = {
-                        if (selectedTab == AppTab.TIME) {
+                        if (selectedTab == AppTab.TIME || (selectedTab == AppTab.MINE && showMineSettings)) {
                             IconButton(
-                                onClick = { selectedTab = timeReturnTab },
-                                modifier = Modifier.testTag("timetable-back"),
+                                onClick = { if (selectedTab == AppTab.TIME) selectedTab = timeReturnTab else showMineSettings = false },
+                                modifier = Modifier.testTag(if (selectedTab == AppTab.TIME) "timetable-back" else "settings-back"),
                             ) {
                                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
                             }
@@ -688,10 +732,10 @@ fun ReplandApp(
             },
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
-                    AppTab.entries.filter { it != AppTab.TIME }.forEach { tab ->
+                    AppTab.entries.filter { it != AppTab.TIME && it != AppTab.AGENT }.forEach { tab ->
                         DesignNavigationItem(
                             selected = selectedTab == tab,
-                            onClick = { selectedTab = tab },
+                            onClick = { selectedTab = tab; if (tab == AppTab.MINE) showMineSettings = false },
                             modifier = Modifier.testTag("navigation-${tab.name.lowercase()}"),
                             icon = { TabIcon(tab) },
                             label = { Text(if (tab == AppTab.TODAY) "日程" else stringResource(tab.shortRes)) },
@@ -710,7 +754,9 @@ fun ReplandApp(
                         )
                     }
 
-                    AppTab.TODAY -> Unit
+                    AppTab.TODAY -> if (autonomyViewModel != null) ScheduleAssistantButton(
+                        onClick = { showScheduleAssistant = true },
+                    )
 
                     AppTab.AGENT -> Unit
 
@@ -735,9 +781,10 @@ fun ReplandApp(
                 // Scaffold places the snackbar above its FAB. Its height alone does not
                 // describe the covered list area, so reserve the actual vertical overlap.
                 MotionPage(targetKey = selectedTab, modifier = Modifier.weight(1f).fillMaxWidth()
-                    .padding(bottom = if (selectedTab == AppTab.TASKS) taskSnackbarInset else 0.dp)
+                    .padding(bottom = if (selectedTab != AppTab.TIME) taskSnackbarInset else 0.dp)
                     .wrapContentSize(Alignment.TopCenter)
                     .widthIn(max = 720.dp).fillMaxWidth()) {
+                tabStateHolder.SaveableStateProvider(selectedTab) {
                 when (selectedTab) {
                     AppTab.TODAY -> TodayScreen(
                         executionSession = executionSession,
@@ -745,11 +792,14 @@ fun ReplandApp(
                         executionReadsReady = executionReadState.isTrusted && uiState.isTrusted && planUiState.isTrusted,
                         onResumeExecution = { showExecutionSession = true },
                         executionFinished = executionFinished,
+                        automaticPlanning = autonomyViewModel != null && autonomy.delegation.enabled,
+                        hasAssistantButton = autonomyViewModel != null,
                         onReplanRemaining = { taskViewModel.dismissSessionResult(); generatePlanDraft() },
                         onDismissExecutionResult = taskViewModel::dismissSessionResult,
-                        planNeedsUpdate = planNeedsUpdate,
+                        planNeedsUpdate = planNeedsUpdate && !(autonomyViewModel != null && autonomy.delegation.enabled),
                         onReviewPlanChanges = { if (planUiState.draft == null) generatePlanDraft() },
-                        date = activeDate,
+                        date = LocalDate.ofEpochDay(scheduleEpochDay),
+                        onDateSelected = { scheduleEpochDay = it.toEpochDay() },
                         tasks = uiState.tasks.filter(Task::isTodayRelevant),
                         allTasks = uiState.tasks,
                         weeklyBlocks = timeUiState.weeklyBlocks,
@@ -803,7 +853,6 @@ fun ReplandApp(
                         onAdd = {
                             showTaskCapture = true
                         },
-                        onOpenPlan = { selectedTab = AppTab.AGENT },
                         onOpenTaskLibrary = { selectedTab = AppTab.TASKS },
                         onPlaceEvent = planViewModel::placeTask,
                         onFocusStarted = { segmentId ->
@@ -927,56 +976,7 @@ fun ReplandApp(
                         },
                     )
 
-                    AppTab.AGENT -> if (workspaceUiState.hasLoaded) AgentCenterScreen(
-                        contextReady = planningReadsReady,
-                        activeDate = activeDate,
-                        occupiedEntries = agentTimelineEntries,
-                        providerRevision = aiProviderConfigUiState.config.updatedAtEpochMillis,
-                        canRefineWithAi = planningReadsReady && arrangementAssistantAccess.isEnabled &&
-                            arrangementAssistantAccess.hasExplicitConsent && aiProviderConfigUiState.config.hasApiKey && aiProviderConfigUiState.supportsRemote,
-                        onRefineWithAi = arrangementAssistantViewModel::refine,
-                        existingTasks = uiState.tasks.filter { it.status.isActive }.take(50).map {
-                            com.swan1127.repland.domain.model.ArrangementExistingTask(it.id, it.displayName, it.category, it.totalDurationMinutes)
-                        },
-                        onRefineWithContext = arrangementAssistantViewModel::refine,
-                        onQueryTasks = { scope -> planViewModel.queryTasks(scope, activeDate) },
-                        onExplainOrder = planViewModel::explainOrder,
-                        onOpenTask = { selectedTaskId = it },
-                        availableIntervals = com.swan1127.repland.domain.model.ArrangementAvailability.forDay(
-                            com.swan1127.repland.domain.model.PlanGenerationInput(uiState.tasks, timeUiState.weeklyBlocks,
-                                timeUiState.dateOverrides, timeUiState.semesterFirstWeekMonday), activeDate, LocalDateTime.now()),
-                        onConfirmChanges = planViewModel::saveAssistantChanges,
-                        saveReceipt = planUiState.assistantReceipt,
-                        onDismissReceipt = planViewModel::dismissAssistantReceipt,
-                        onViewTasks = { selectedTab = AppTab.TASKS },
-                        onViewSchedule = { date -> activeDate = date; selectedTab = AppTab.TODAY },
-                        onSaveTasks = { drafts -> drafts.forEach(taskViewModel::saveTask) },
-                        onConfirmBatch = planViewModel::saveTasksAndPlace,
-                        initialWorkspace = workspaceUiState.assistant,
-                        availableTracks = workspaceUiState.tracks,
-                        hasExistingTasks = !uiState.hasLoaded || uiState.tasks.any { it.status.isActive },
-                        onAddTask = { selectedTab = AppTab.TASKS; showTaskCapture = true },
-                        hasAvailability = !timeUiState.hasLoaded || timeUiState.weeklyBlocks.any { it.kind == TimeBlockKind.AVAILABLE } ||
-                            timeUiState.dateOverrides.any { it.type == DateOverrideType.AVAILABLE && !it.date.isBefore(LocalDate.now()) },
-                        onConfigureAvailability = { planViewModel.dismissError(); showQuickAvailability = true },
-                        contextRevision = PlanningRevision.of(com.swan1127.repland.domain.model.PlanGenerationInput(
-                            uiState.tasks, timeUiState.weeklyBlocks, timeUiState.dateOverrides, timeUiState.semesterFirstWeekMonday,
-                            categoryPreferences = categoryPreferenceUiState.weights), planUiState.currentPlan, planUiState.taskOrder),
-                        onWorkspaceChanged = { value ->
-                            if (planUiState.isTrusted && workspaceUiState.isTrusted) planViewModel.saveAssistantWorkspace(value)
-                        },
-                        isSaving = planUiState.isWorking,
-                        onFormulatePlan = { generatePlanDraft(reorder = true) },
-                        onArrangeExistingToday = { generatePlanDraft(todayOnly = LocalDate.now()) },
-                        canFormulatePlan = planningReadsReady && !planUiState.isWorking && planUiState.draft == null && uiState.tasks.any { it.status.isActive },
-                        onPlaceTask = { taskId, startMinute, endMinute, trackId ->
-                            planViewModel.placeTask(taskId, activeDate, startMinute, endMinute, trackId)
-                        },
-                        onOpenTimeStudio = {
-                            timeReturnTab = AppTab.AGENT
-                            selectedTab = AppTab.TIME
-                        },
-                    )
+                    AppTab.AGENT -> Unit
 
                     AppTab.TIME -> TimeScreen(
                         snackbarBottomInset = snackbarBottomInset,
@@ -994,29 +994,28 @@ fun ReplandApp(
                         onClearTimetableImport = timeViewModel::clearTimetableImport,
                     )
                     AppTab.MINE -> MineScreen(
+                        showSettings = showMineSettings,
+                        onOpenSettings = { showMineSettings = true },
                         personalProfileContent = { personalProfileViewModel?.let { com.swan1127.repland.ui.profile.PersonalProfileSection(it) } },
                         onOpenTimeSettings = { timeReturnTab = AppTab.MINE; selectedTab = AppTab.TIME },
                         onOpenPlanHistory = { showPlanOverview = true },
                         weights = categoryPreferenceUiState.weights,
                         preferenceState = categoryPreferenceUiState,
-                        profileEvidence = profileEvidenceUiState.evidence,
                         isLoading = (categoryPreferenceUiState.isLoading && !categoryPreferenceUiState.hasLoaded) ||
-                            reminderSettingsUiState.isLoading || profileEvidenceUiState.isLoading ||
+                            reminderSettingsUiState.isLoading ||
                             planningAgentUiState.isLoading || aiProviderConfigUiState.isLoading,
                         onSave = categoryPreferenceViewModel::save,
                         remindersEnabled = reminderSettingsUiState.preferences.isEnabled,
                         notificationsAllowed = notificationPermissionGranted,
                         onRemindersEnabledChange = onReminderEnabledChange,
-                        onGenerateProfileEvidence = profileEvidenceViewModel::generate,
-                        onUpdateProfileEvidence = profileEvidenceViewModel::updateConclusion,
-                        onDeleteProfileEvidence = profileEvidenceViewModel::delete,
                         onExportLocalData = {
                             localDataExportLauncher.launch("repland-local-export-${LocalDate.now()}.json")
                         },
                         onClearLocalData = { showClearLocalDataConfirmation = true },
                         isDataWorking = dataManagementUiState.isWorking,
                         dataResult = dataManagementUiState.result,
-                        hasProfileActionError = profileEvidenceUiState.hasActionError,
+                        automaticPlanningEnabled = autonomy.delegation.enabled.takeIf { autonomyViewModel != null && autonomy.ready },
+                        onAutomaticPlanningChange = { autonomyViewModel?.setEnabled(it) },
                         aiEnabled = planningAgentUiState.preferences.isEnabled,
                         aiConsented = planningAgentUiState.preferences.hasExplicitConsent,
                         onAiEnabledChange = onAiEnabledChange,
@@ -1029,10 +1028,36 @@ fun ReplandApp(
                         onTestAiProviderConnection = aiProviderConfigViewModel::testConnection,
                         engagementMode = engagementMode,
                         onEngagementModeChange = engagementViewModel::setMode,
-                        numericContent = { numericProfileViewModel?.let { vm -> com.swan1127.repland.ui.profile.NumericProfileSection(vm, { selectedTaskId = it }) } },
+                        summaryContent = {
+                            if (usageSummaryViewModel != null) com.swan1127.repland.ui.profile.UsageSummarySection(usageSummaryViewModel)
+                            else com.swan1127.repland.ui.profile.UsageSummaryCard(com.swan1127.repland.ui.profile.UsageSummaryUiState(
+                                text = "照常记录任务和进度，这里会自动整理近期的使用情况。", loading = false))
+                        },
                     )
                 }
                 }
+                }
+            }
+        }
+    }
+
+    if (showScheduleAssistant && autonomyViewModel != null) {
+        com.swan1127.repland.ui.agent.AutonomousAssistantSheet(
+            busy = autonomy.busy,
+            onDismiss = { showScheduleAssistant = false },
+        ) {
+            assistantStateHolder.SaveableStateProvider("schedule-assistant") {
+                com.swan1127.repland.ui.agent.AutonomousAssistantScreen(
+                    state = autonomy.copy(ready = autonomy.ready && planningReadsReady,
+                        error = autonomy.error ?: readMessage.takeIf { !planningReadsReady }),
+                    tasks = uiState.tasks,
+                    onSubmit = { text -> autonomyViewModel.submit(text,
+                        planningReadsReady && arrangementAssistantAccess.isEnabled && arrangementAssistantAccess.hasExplicitConsent &&
+                            aiProviderConfigUiState.config.hasApiKey && aiProviderConfigUiState.supportsRemote,
+                        arrangementAssistantViewModel::refine) },
+                    onUndo = autonomyViewModel::undo,
+                    onOpenTask = { if (!autonomy.busy) { showScheduleAssistant = false; selectedTaskId = it } },
+                )
             }
         }
     }
@@ -1613,6 +1638,19 @@ fun ReplandApp(
     }
 }
 
+/** Translate reserved timer outcomes for display; retain stored evidence and other user text. */
+@Composable
+private fun completionResultText(result: String): String {
+    val label = when (result) {
+        ExecutionOutcome.CONTINUE.name -> R.string.execution_result_continue
+        ExecutionOutcome.PARTIAL.name -> R.string.execution_result_partial
+        ExecutionOutcome.COMPLETED.name -> R.string.execution_result_completed
+        ExecutionOutcome.SKIPPED.name -> R.string.execution_result_skipped
+        else -> return result
+    }
+    return stringResource(label)
+}
+
 @Composable
 private fun TabIcon(tab: AppTab) {
     val icon = when (tab) {
@@ -1637,6 +1675,7 @@ private fun TodayScreen(
     planNeedsUpdate: Boolean,
     onReviewPlanChanges: () -> Unit,
     date: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
     tasks: List<Task>,
     allTasks: List<Task>,
     weeklyBlocks: List<WeeklyTimeBlock>,
@@ -1656,7 +1695,6 @@ private fun TodayScreen(
     onStart: (String) -> Unit,
     onOpenDailyReview: () -> Unit,
     onAdd: () -> Unit,
-    onOpenPlan: () -> Unit,
     onOpenTaskLibrary: () -> Unit,
     onPlaceEvent: (String, LocalDate, Int, Int, String) -> Unit,
     onFocusStarted: (String) -> Unit,
@@ -1666,11 +1704,12 @@ private fun TodayScreen(
     onUpdateEntryTime: (TimelineEntry, Int, Int, () -> Unit) -> Unit,
     timelineWriteBusy: Boolean,
     timelineWriteError: String?,
+    automaticPlanning: Boolean = false,
+    hasAssistantButton: Boolean = false,
 ) {
     if (isLoading) return
     var scheduleRange by rememberSaveable { mutableStateOf(ScheduleRange.DAY) }
-    var scheduleEpochDay by rememberSaveable(date) { mutableStateOf(date.toEpochDay()) }
-    val scheduleDate = LocalDate.ofEpochDay(scheduleEpochDay)
+    val scheduleDate = date
     var showPending by rememberSaveable { mutableStateOf(false) }
     var focusNow by remember { mutableStateOf(LocalDateTime.now()) }
     LaunchedEffect(Unit) {
@@ -1711,32 +1750,33 @@ private fun TodayScreen(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("today-page-scroll"),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp,
+            bottom = if (hasAssistantButton) 88.dp else 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (executionSession != null) {
-            item {
+            item(key = "execution-resume") {
                 OutlinedButton(onClick = onResumeExecution, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("resume-execution")) {
                     Text("${if (executionSession.isPaused) "已暂停" else "专注中"} · ${executionSession.taskTitle} · 返回本轮")
                 }
             }
         }
         if (executionError != null) {
-            item { Text(executionError, color = MaterialTheme.colorScheme.error) }
+            item(key = "execution-error") { Text(executionError, color = MaterialTheme.colorScheme.error) }
         }
         if (executionFinished) {
-            item {
+            item(key = "execution-result") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("本轮记录已保存。可依据你确认的进度重新安排剩余任务；确认预览前，原计划不变。")
-                    OutlinedButton(onClick = onReplanRemaining, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("execution-replan")) {
+                    Text(if (automaticPlanning) "本轮记录已保存，后续安排会依据你确认的进度自动更新。" else "本轮记录已保存。可依据你确认的进度重新安排剩余任务；确认预览前，原计划不变。")
+                    if (!automaticPlanning) OutlinedButton(onClick = onReplanRemaining, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("execution-replan")) {
                         Text("预览剩余任务的新安排")
                     }
-                    TextButton(onClick = onDismissExecutionResult, modifier = Modifier.heightIn(min = 48.dp)) { Text("保留原计划") }
+                    TextButton(onClick = onDismissExecutionResult, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (automaticPlanning) "知道了" else "保留原计划") }
                 }
             }
         }
         if (planNeedsUpdate && executionSession == null && !executionFinished) {
-            item {
+            item(key = "plan-needs-update") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("任务或时间信息已变化，当前计划仍保持不变。需要时可重新预览安排。")
                     OutlinedButton(onClick = onReviewPlanChanges, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("review-changed-plan")) {
@@ -1746,9 +1786,35 @@ private fun TodayScreen(
             }
         }
         if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
-            item { ScheduleCreateCard(onAdd = onAdd) }
+            TodayFocus.next(timelineEntries, focusNow)?.let { entry ->
+                item(key = "today-focus-shortcut") {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(if (entry.start.isAfter(focusNow)) "下一项" else "当前时段",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(entry.title, style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text("${TimeBlockValidator.formatTime(entry.startMinute)}–${TimeBlockValidator.formatTime(entry.endMinute)}",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            TodayFocus.startSegment(entry)?.let { segmentId ->
+                                OutlinedButton(onClick = { onFocusStarted(segmentId) },
+                                    enabled = executionSession == null && executionReadsReady,
+                                    modifier = Modifier.heightIn(min = 48.dp).testTag("today-focus-start")) {
+                                    Text(if (entry.start.isAfter(focusNow)) "提前开始专注" else "开始专注")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            item(key = "schedule-create") { ScheduleCreateCard(onAdd = onAdd) }
         }
-        item {
+        item(key = "schedule-range") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW, onClick = { scheduleRange = ScheduleRange.DAY }, label = { Text("日") }, modifier = Modifier.testTag("today-timeline"))
                 FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"), accentIndex = 1)
@@ -1756,7 +1822,9 @@ private fun TodayScreen(
             }
         }
         if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
-            item {
+            // Stable identity keeps display mode and detail state when banners
+            // above the schedule appear or disappear after plan changes.
+            item(key = "schedule-day") {
                 TimelineDashboard(
                     entries = timelineEntries,
                     taskPriorities = allTasks.associate { it.id to it.userPriority },
@@ -1788,7 +1856,7 @@ private fun TodayScreen(
                 )
             }
         } else if (scheduleRange == ScheduleRange.WEEK) {
-            item {
+            item(key = "schedule-week") {
                 WeekScheduleView(
                     date = scheduleDate,
                     weeklyBlocks = weeklyBlocks,
@@ -1802,7 +1870,7 @@ private fun TodayScreen(
                 )
             }
         } else if (scheduleRange == ScheduleRange.MONTH) {
-            item {
+            item(key = "schedule-month") {
                 MonthScheduleView(
                     date = scheduleDate,
                     weeklyBlocks = weeklyBlocks,
@@ -1811,12 +1879,16 @@ private fun TodayScreen(
                     tasks = allTasks,
                     tracks = tracks,
                     semesterFirstWeekMonday = semesterFirstWeekMonday,
-                    onSelectDate = { selectedDate -> scheduleEpochDay = selectedDate.toEpochDay(); scheduleRange = ScheduleRange.DAY },
+                    onSelectDate = { selectedDate ->
+                        onDateSelected(selectedDate)
+                        scheduleRange = ScheduleRange.DAY
+                        scope.launch { listState.scrollToItem(0) }
+                    },
                     onOpenEntry = onOpenTimelineEntry,
                 )
             }
         } else {
-        item {
+        item(key = "schedule-desk") {
             DailyDesk(
                 date = scheduleDate,
                 entries = ScheduleTimeline.entries(scheduleDate, weeklyBlocks, dateOverrides, allPlanSegments, allTasks, semesterFirstWeekMonday),
@@ -1834,7 +1906,7 @@ private fun TodayScreen(
             )
         }
         }
-        item { TextButton(onClick = onOpenDailyReview) { Text(stringResource(R.string.open_daily_review)) } }
+        item(key = "daily-review") { TextButton(onClick = onOpenDailyReview) { Text(stringResource(R.string.open_daily_review)) } }
     }
 }
 
@@ -2054,7 +2126,7 @@ private fun DailyReviewDialog(
                                 progress.progressPercent?.let { percent ->
                                     Text(stringResource(R.string.progress_format, percent))
                                 }
-                                progress.completionResult?.let { result -> Text(result) }
+                                progress.completionResult?.let { result -> Text(completionResultText(result)) }
                             }
                         }
                     }
@@ -2426,7 +2498,7 @@ private fun TaskDetailScreen(
                         task.estimatedDays?.let { stringResource(R.string.estimated_days_format, it) } ?: "预计天数未知",
                     )
                     DetailLine(
-                        "预计时长",
+                        if (task.inputSources.duration == com.swan1127.repland.domain.model.TaskInputSource.PLANNING_ESTIMATE) "规划估算时长" else "预计时长",
                         task.totalDurationMinutes?.let { stringResource(R.string.duration_format, it) }
                             ?: "待补充",
                     )
@@ -2452,7 +2524,7 @@ private fun TaskDetailScreen(
                             DetailLine(stringResource(R.string.completed_content), content)
                         }
                         task.completionResult?.let { result ->
-                            DetailLine(stringResource(R.string.completion_result), result)
+                            DetailLine(stringResource(R.string.completion_result), completionResultText(result))
                         }
                         task.actualDurationMinutes?.let { minutes ->
                             DetailLine(
@@ -2656,7 +2728,7 @@ private fun ExecutionLogCard(log: TaskExecutionLog, onCorrect: () -> Unit, actio
                 DetailLine(stringResource(R.string.completed_content), it)
             }
             log.feedback.completionResult?.let {
-                DetailLine(stringResource(R.string.completion_result), it)
+                DetailLine(stringResource(R.string.completion_result), completionResultText(it))
             }
             log.feedback.actualDurationMinutes?.let {
                 DetailLine(stringResource(R.string.actual_duration_optional), stringResource(R.string.duration_format, it))
@@ -4370,20 +4442,15 @@ private fun MineScreen(
     onOpenPlanHistory: () -> Unit,
     weights: Map<TaskCategory, Int>,
     preferenceState: com.swan1127.repland.ui.preferences.CategoryPreferenceUiState,
-    profileEvidence: List<ProfileEvidence>,
     isLoading: Boolean,
     onSave: (Map<TaskCategory, Int>) -> Unit,
     remindersEnabled: Boolean,
     notificationsAllowed: Boolean,
     onRemindersEnabledChange: (Boolean) -> Unit,
-    onGenerateProfileEvidence: () -> Unit,
-    onUpdateProfileEvidence: (String, String) -> Unit,
-    onDeleteProfileEvidence: (String) -> Unit,
     onExportLocalData: () -> Unit,
     onClearLocalData: () -> Unit,
     isDataWorking: Boolean,
     dataResult: DataManagementResult?,
-    hasProfileActionError: Boolean,
     aiEnabled: Boolean,
     aiConsented: Boolean,
     onAiEnabledChange: (Boolean) -> Unit,
@@ -4396,12 +4463,17 @@ private fun MineScreen(
     onTestAiProviderConnection: () -> Unit,
     engagementMode: EngagementMode,
     onEngagementModeChange: (EngagementMode) -> Unit,
-    numericContent: @Composable () -> Unit = {},
+    summaryContent: @Composable () -> Unit = {},
     personalProfileContent: @Composable () -> Unit = {},
+    automaticPlanningEnabled: Boolean? = null,
+    onAutomaticPlanningChange: (Boolean) -> Unit = {},
+    showSettings: Boolean = false,
+    onOpenSettings: () -> Unit = {},
 ) {
-    if (isLoading) return
+    if (isLoading && showSettings) return
+    val profileScroll = rememberScrollState()
+    val settingsScroll = rememberScrollState()
     var showPreferences by rememberSaveable { mutableStateOf(false) }
-    var showProfile by rememberSaveable { mutableStateOf(false) }
     var showData by rememberSaveable { mutableStateOf(false) }
     val weightsSaver = remember {
         mapSaver<Map<TaskCategory, String>>(
@@ -4424,136 +4496,150 @@ private fun MineScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(if (showSettings) settingsScroll else profileScroll)
+            .testTag(if (showSettings) "mine-settings-page" else "mine-profile-page")
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        personalProfileContent()
-        Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",
-            style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("app-version"))
-        Text("日常使用", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        OutlinedButton(onClick = onOpenPlanHistory, modifier = Modifier.fillMaxWidth().testTag("mine-plan-history")) {
-            Text("计划历史与锁定管理")
-        }
-        OutlinedButton(onClick = onOpenTimeSettings, modifier = Modifier.fillMaxWidth().testTag("mine-time-settings")) {
-            Text("时间设置 · 课程、可用时间与学期")
-        }
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(20.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.local_reminders_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Text(
-                            stringResource(R.string.local_reminders_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+        if (!showSettings) {
+            personalProfileContent()
+            Text("用户画像", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            summaryContent()
+            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).testTag("mine-settings")) {
+                Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("设置")
+            }
+        } else {
+            Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",
+                style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("app-version"))
+            Text("日常使用", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            automaticPlanningEnabled?.let { enabled ->
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(20.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("自动安排", style = MaterialTheme.typography.titleSmall)
+                            Text("App 打开时维护后续安排，可随时暂停。", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(checked = enabled, onCheckedChange = onAutomaticPlanningChange,
+                            modifier = Modifier.testTag("autonomy-enabled-switch").semantics { contentDescription = "自动安排" })
                     }
-                    Switch(
-                        checked = remindersEnabled,
-                        onCheckedChange = onRemindersEnabledChange,
-                        modifier = Modifier.testTag("local-reminders-switch"),
-                    )
-                }
-                if (!notificationsAllowed) {
-                    Text(
-                        stringResource(R.string.notification_permission_needed),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
                 }
             }
-        }
-        Text("智能与个性化", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        AiSettingsSection(
-            aiEnabled = aiEnabled,
-            aiConsented = aiConsented,
-            onAiEnabledChange = onAiEnabledChange,
-            providerConfig = aiProviderConfig,
-            providerConfigError = aiProviderConfigError,
-            providerConnectionTest = aiProviderConnectionTest,
-            onSaveProviderConfig = onSaveAiProviderConfig,
-            onClearProviderKey = onClearAiProviderKey,
-            onTestConnection = onTestAiProviderConnection,
-            remoteSupported = remoteAiSupported,
-        )
-        SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences })
-        MotionDisclosure(showPreferences) {
-        if (!preferenceState.hasLoaded) Text("尚未读取原权重；下面是默认占位，不是已保存的值。恢复读取后才能保存。",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text(
-            stringResource(R.string.category_preferences_intro),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        TaskCategory.knownEntries.forEach { category ->
-            OutlinedTextField(
-                value = editableWeights.getValue(category),
-                onValueChange = { value ->
-                    editableWeights = editableWeights + (category to value)
-                    preferencesEdited = true
-                    showValidationError = false
-                },
-                enabled = !preferenceState.isSaving,
-                modifier = Modifier.fillMaxWidth().testTag("category-weight-${category.name}"),
-                label = { Text(stringResource(category.labelRes())) },
-                suffix = { Text(stringResource(R.string.percent_suffix)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
+            OutlinedButton(onClick = onOpenPlanHistory, modifier = Modifier.fillMaxWidth().testTag("mine-plan-history")) {
+                Text("计划历史与锁定管理")
+            }
+            OutlinedButton(onClick = onOpenTimeSettings, modifier = Modifier.fillMaxWidth().testTag("mine-time-settings")) {
+                Text("时间设置 · 课程、可用时间与学期")
+            }
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = RoundedCornerShape(20.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.local_reminders_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                stringResource(R.string.local_reminders_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = remindersEnabled,
+                            onCheckedChange = onRemindersEnabledChange,
+                            modifier = Modifier.testTag("local-reminders-switch"),
+                        )
+                    }
+                    if (!notificationsAllowed) {
+                        Text(
+                            stringResource(R.string.notification_permission_needed),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+            Text("智能与个性化", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            AiSettingsSection(
+                aiEnabled = aiEnabled,
+                aiConsented = aiConsented,
+                onAiEnabledChange = onAiEnabledChange,
+                providerConfig = aiProviderConfig,
+                providerConfigError = aiProviderConfigError,
+                providerConnectionTest = aiProviderConnectionTest,
+                onSaveProviderConfig = onSaveAiProviderConfig,
+                onClearProviderKey = onClearAiProviderKey,
+                onTestConnection = onTestAiProviderConnection,
+                remoteSupported = remoteAiSupported,
             )
-        }
-        if (showValidationError) {
+            SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences })
+            MotionDisclosure(showPreferences) {
+            if (!preferenceState.hasLoaded) Text("尚未读取原权重；下面是默认占位，不是已保存的值。恢复读取后才能保存。",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
-                stringResource(R.string.category_preferences_error),
-                color = MaterialTheme.colorScheme.error,
+                stringResource(R.string.category_preferences_intro),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        Button(
-            onClick = {
-                if (valid) onSave(parsedWeights) else showValidationError = true
-            },
-            enabled = preferenceState.isTrusted && !preferenceState.isSaving,
-            modifier = Modifier.fillMaxWidth().testTag("category-preferences-save"),
-        ) { Text(if (preferenceState.isSaving) "保存中…" else stringResource(R.string.save_category_preferences)) }
-        preferenceState.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.testTag("category-preferences-error").semantics { liveRegion = LiveRegionMode.Polite }) }
-        preferenceState.saveReceipt?.let { Text(it, color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.testTag("category-preferences-receipt").semantics { liveRegion = LiveRegionMode.Polite }) }
-        }
-        numericContent()
-        SettingsDisclosure("关于你的记录", "${profileEvidence.size} 条历史文字记录 · 不作为数值统计", showProfile, { showProfile = !showProfile })
-        MotionDisclosure(showProfile) {
-        ProfileEvidenceSection(
-            evidence = profileEvidence,
-            onGenerate = onGenerateProfileEvidence,
-            onUpdate = onUpdateProfileEvidence,
-            onDelete = onDeleteProfileEvidence,
-            hasActionError = hasProfileActionError,
-        )
-        }
-        Text("数据与隐私", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData })
-        MotionDisclosure(showData) {
-        LocalDataManagementSection(
-            isWorking = isDataWorking,
-            result = dataResult,
-            onExport = onExportLocalData,
-            onClear = onClearLocalData,
-        )
+            TaskCategory.knownEntries.forEach { category ->
+                OutlinedTextField(
+                    value = editableWeights.getValue(category),
+                    onValueChange = { value ->
+                        editableWeights = editableWeights + (category to value)
+                        preferencesEdited = true
+                        showValidationError = false
+                    },
+                    enabled = !preferenceState.isSaving,
+                    modifier = Modifier.fillMaxWidth().testTag("category-weight-${category.name}"),
+                    label = { Text(stringResource(category.labelRes())) },
+                    suffix = { Text(stringResource(R.string.percent_suffix)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+            }
+            if (showValidationError) {
+                Text(
+                    stringResource(R.string.category_preferences_error),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Button(
+                onClick = {
+                    if (valid) onSave(parsedWeights) else showValidationError = true
+                },
+                enabled = preferenceState.isTrusted && !preferenceState.isSaving,
+                modifier = Modifier.fillMaxWidth().testTag("category-preferences-save"),
+            ) { Text(if (preferenceState.isSaving) "保存中…" else stringResource(R.string.save_category_preferences)) }
+            preferenceState.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.testTag("category-preferences-error").semantics { liveRegion = LiveRegionMode.Polite }) }
+            preferenceState.saveReceipt?.let { Text(it, color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.testTag("category-preferences-receipt").semantics { liveRegion = LiveRegionMode.Polite }) }
+            }
+            Text("数据与隐私", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData })
+            MotionDisclosure(showData) {
+            LocalDataManagementSection(
+                isWorking = isDataWorking,
+                result = dataResult,
+                onExport = onExportLocalData,
+                onClear = onClearLocalData,
+            )
+            }
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -4673,7 +4759,7 @@ private fun AiSettingsSection(
                 Text(providerConfigError, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             Text(
-                "保存密钥本身不会联网。只有你在助手或任务建议中确认请求后，才会发送本次所需的最小上下文。",
+                "开启 AI 并配置模型后，使用总结会根据近期记录自动更新；任务建议与助手使用本次所需的上下文。关闭 AI 可停止后续请求。",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -4705,6 +4791,11 @@ internal fun AiProviderSettingsDialog(
     var baseUrl by remember(config.baseUrl) { mutableStateOf(config.baseUrl) }
     var model by remember(config.model) { mutableStateOf(config.model) }
     var apiKey by remember { mutableStateOf("") }
+    // A successful repository save changes the revision. Failed saves retain the
+    // entered key so the user can correct the fields and retry.
+    LaunchedEffect(config.updatedAtEpochMillis) { apiKey = "" }
+    val hasUnsavedChanges = baseUrl.trim().trimEnd('/') != config.baseUrl ||
+        model.trim() != config.model || apiKey.isNotBlank()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("模型服务配置") },
@@ -4761,7 +4852,10 @@ internal fun AiProviderSettingsDialog(
                     singleLine = true,
                 )
                 if (errorMessage != null) Text(errorMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                when (connectionTest) {
+                if (hasUnsavedChanges) {
+                    Text("配置尚未保存，请先加密保存再测试连接。", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else when (connectionTest) {
                     AiProviderConnectionTest.Idle -> Text("保存密钥后可发送一条不含个人数据的最小请求，验证地址、模型与鉴权。", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     AiProviderConnectionTest.Testing -> Text("正在验证连接…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                     is AiProviderConnectionTest.Connected -> Text("连接成功：${connectionTest.model} 已可用于安排助手。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -4779,7 +4873,7 @@ internal fun AiProviderSettingsDialog(
                 TextButton(onClick = { onSave(baseUrl, model, apiKey) }, modifier = Modifier.testTag("ai-provider-save")) { Text("加密保存") }
                 TextButton(
                     onClick = onTestConnection,
-                    enabled = config.hasApiKey && connectionTest !is AiProviderConnectionTest.Testing,
+                    enabled = config.hasApiKey && !hasUnsavedChanges && connectionTest !is AiProviderConnectionTest.Testing,
                     modifier = Modifier.testTag("ai-provider-test"),
                 ) { Text("测试连接") }
             }

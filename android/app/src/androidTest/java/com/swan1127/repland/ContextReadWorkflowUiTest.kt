@@ -1,9 +1,11 @@
 package com.swan1127.repland
 
 import android.database.sqlite.SQLiteDatabase
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.ui.text.AnnotatedString
 import com.swan1127.repland.domain.model.*
 import com.swan1127.repland.ui.plan.PlanViewModel
 import com.swan1127.repland.ui.preferences.CategoryPreferenceViewModel
@@ -20,6 +22,11 @@ import java.io.File
 
 class ContextReadWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val container get() = (rule.activity.application as ReplandApplication).appContainer.also {
         check(rule.activity.packageName == "com.swan1127.repland.qa")
     }
@@ -89,27 +96,40 @@ class ContextReadWorkflowUiTest {
         }
     }
 
-    @Test fun failed_assistant_workspace_read_keeps_new_input_through_retry_and_recreation() {
+    @Test fun failed_legacy_workspace_read_keeps_quick_input_without_overwriting_persisted_context() {
         val original = runBlocking { container.planRepository.observeAssistantWorkspace().first() }
+        val originalPlan = runBlocking { container.planRepository.observeCurrentPlan().first() }
+        val originalTasks = runBlocking { container.taskRepository.observeTasks().first() }
         try {
-            runBlocking { container.planRepository.saveAssistantWorkspace(AssistantWorkspace(LocalDate.now(), prompt = "原助手文字")) }
+            val legacy = AssistantWorkspace(LocalDate.now(), prompt = "原助手文字")
+            runBlocking { container.planRepository.saveAssistantWorkspace(legacy) }
             val (fault, vm) = planFault()
-            waitTag("navigation-agent"); rule.onNodeWithTag("navigation-agent").performClick(); waitTag("agent-prompt")
-            rule.onNodeWithTag("agent-prompt").performScrollTo().assertTextContains("原助手文字")
-            fill("agent-prompt", "成功读取后输入")
-            rule.waitUntil(10_000) { runBlocking { container.planRepository.observeAssistantWorkspace().first()?.prompt == "成功读取后输入" } }
+            rule.openScheduleAssistant(); waitTag("autonomous-input")
+            // The one-action composer is independent of the removed multi-tool workspace.
+            rule.onNodeWithTag("autonomous-input").assert(
+                SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
+            )
+            fill("autonomous-input", "成功读取后输入")
+            assertEquals(legacy, runBlocking { container.planRepository.observeAssistantWorkspace().first() })
             fault.failedPart.value = "assistant"; rule.waitUntil(10_000) { vm.workspaceUiState.value.readError != null }
-            fill("agent-prompt", "读取失败时保留的新输入")
-            rule.onNodeWithTag("agent-preview").performScrollTo().assertIsNotEnabled()
-            assertEquals("成功读取后输入", runBlocking { container.planRepository.observeAssistantWorkspace().first()?.prompt })
-            rule.activityRule.scenario.recreate(); waitTag("agent-prompt")
-            rule.onNodeWithTag("agent-prompt").performScrollTo().assertTextContains("读取失败时保留的新输入")
+            fill("autonomous-input", "读取失败时保留的新输入")
+            rule.onNodeWithTag("autonomous-submit").performScrollTo().assertIsNotEnabled()
+            rule.onNodeWithTag("autonomous-error").performScrollTo().assertExists()
+            assertEquals(legacy, runBlocking { container.planRepository.observeAssistantWorkspace().first() })
+            rule.activityRule.scenario.recreate(); waitTag("autonomous-input")
+            rule.onNodeWithTag("autonomous-input").performScrollTo().assertTextContains("读取失败时保留的新输入")
+            rule.onNodeWithTag("autonomous-submit").performScrollTo().assertIsNotEnabled()
+            rule.onNodeWithTag("assistant-close").performClick(); gone("assistant-sheet")
             fault.failedPart.value = null; rule.onNodeWithTag("retry-data-read").performClick()
             rule.waitUntil(10_000) { vm.uiState.value.isTrusted && vm.workspaceUiState.value.isTrusted }
-            rule.onNodeWithTag("agent-prompt").performScrollTo().assertTextContains("读取失败时保留的新输入")
-            fill("agent-prompt", "重读成功后保存的输入")
-            rule.waitUntil(10_000) { runBlocking { container.planRepository.observeAssistantWorkspace().first()?.prompt == "重读成功后保存的输入" } }
-            rule.onNodeWithTag("navigation-tasks").performClick()
+            rule.openScheduleAssistant()
+            rule.onNodeWithTag("autonomous-input").performScrollTo().assertTextContains("读取失败时保留的新输入")
+            rule.onNodeWithTag("autonomous-submit").performScrollTo().assertIsEnabled()
+            rule.onNodeWithTag("autonomous-error").assertDoesNotExist()
+            assertEquals(legacy, runBlocking { container.planRepository.observeAssistantWorkspace().first() })
+            assertEquals(originalPlan, runBlocking { container.planRepository.observeCurrentPlan().first() })
+            assertEquals(originalTasks, runBlocking { container.taskRepository.observeTasks().first() })
+            rule.onNodeWithTag("assistant-close").performClick()
         } finally { runBlocking { container.planRepository.saveAssistantWorkspace(original) } }
     }
 
@@ -118,7 +138,7 @@ class ContextReadWorkflowUiTest {
         val originalPlan = runBlocking { container.planRepository.observeCurrentPlan().first() }
         try {
             val (fault, vm) = preferenceFault()
-            waitTag("navigation-mine"); rule.onNodeWithTag("navigation-mine").performClick()
+            rule.openMineSettings()
             rule.onNodeWithText("类别偏好").performScrollTo().performClick(); waitTag("category-weight-COURSE")
             fill("category-weight-COURSE", "-30")
             rule.onNodeWithTag("category-preferences-save").performScrollTo().performClick()

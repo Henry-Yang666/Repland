@@ -16,6 +16,11 @@ import org.junit.Test
 
 class TimeSettingsWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val repo get() = (rule.activity.application as ReplandApplication).appContainer.timeRepository
     private fun waitTag(tag: String) {
         try { rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() } }
@@ -23,7 +28,7 @@ class TimeSettingsWorkflowUiTest {
     }
     private fun gone(tag: String) = rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
     private fun open() {
-        waitTag("navigation-mine"); rule.onNodeWithTag("navigation-mine").performClick()
+        rule.openMineSettings()
         waitTag("mine-time-settings"); rule.onNodeWithTag("mine-time-settings").performScrollTo().performClick()
         waitTag("time-add-weekly")
     }

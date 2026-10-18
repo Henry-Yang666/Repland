@@ -59,6 +59,8 @@ object LocalDataJsonExporter {
         ),
         "profileEvidence" to jsonArray(snapshot.profileEvidence.map(::profileEvidenceJson)),
         "numericProfileRecords" to jsonObject(*snapshot.numericProfileRecords.toSortedMap().map { (key, payload) -> key to jsonString(payload) }.toTypedArray()),
+        "autonomyRecords" to jsonObject(*snapshot.autonomyRecords.toSortedMap().map { (key, payload) -> key to jsonString(payload) }.toTypedArray()),
+        "usageSummaryRecords" to jsonObject(*snapshot.usageSummaryRecords.toSortedMap().map { (key, payload) -> key to jsonString(payload) }.toTypedArray()),
         "engagementMode" to jsonString(snapshot.engagementMode.name),
         "usageEvents" to jsonArray(snapshot.usageEvents.map { event ->
             jsonObject(

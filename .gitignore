@@ -27,3 +27,17 @@ local.properties
 .DS_Store
 Thumbs.db
 .design-preview/
+
+# Local generated assets, emulator data and delivery diagnostics
+/output/
+/.codex-aic-build/
+/.codex-aic-template/
+/.codex-ppt-build/
+
+# Provider credentials and signing material
+.env
+.env.*
+!.env.example
+keystore.properties
+*.jks
+*.keystore

@@ -274,7 +274,7 @@ class AgentCenterUiTest {
         ) } }
         rule.onNodeWithTag("agent-formulate-plan").performClick()
         assertEquals(1, calls)
-        rule.onNodeWithTag("agent-prompt-安排今天").performClick()
+        rule.onNodeWithTag("agent-prompt-重排今天").performClick()
         rule.onNodeWithTag("agent-prompt").assertTextContains("", substring = false)
     }
 
@@ -285,7 +285,7 @@ class AgentCenterUiTest {
             onSaveTasks = { saved += it.size }, onPlaceTask = { _, _, _, _ -> placed++ }, onOpenTimeStudio = {},
         ) } }
         rule.onNodeWithTag("agent-prompt").performTextInput("15:00 复习英语 30 分钟")
-        rule.onNodeWithTag("agent-prompt-新增事项").performClick()
+        rule.onNodeWithTag("agent-prompt-只新增任务").performClick()
         rule.onNodeWithTag("agent-prompt").assertTextContains("15:00 复习英语 30 分钟", substring = false)
         rule.onNodeWithTag("agent-confirm-tasks").performScrollTo().performClick()
         assertEquals(1, saved)
@@ -338,7 +338,7 @@ class AgentCenterUiTest {
             onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
         ) } }
         rule.onNodeWithTag("agent-prompt").performTextInput("Add a task at 16:00")
-        rule.onNodeWithTag("agent-prompt-新增事项").performScrollTo().performClick()
+        rule.onNodeWithTag("agent-prompt-只新增任务").performScrollTo().performClick()
         rule.onNodeWithTag("agent-confirm-tasks").performScrollTo()
         rule.waitForIdle()
         rule.onNodeWithText("确认创建 1 项").assertExists()

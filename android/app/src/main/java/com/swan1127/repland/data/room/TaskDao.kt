@@ -42,4 +42,8 @@ interface TaskDao {
 
     @Update
     suspend fun update(task: TaskEntity)
+
+    /** Used only by guarded whole-operation undo for tasks created by that operation. */
+    @Query("DELETE FROM tasks WHERE id = :id")
+    suspend fun deleteById(id: String)
 }

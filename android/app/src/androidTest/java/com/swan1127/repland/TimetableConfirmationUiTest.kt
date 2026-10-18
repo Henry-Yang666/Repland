@@ -20,13 +20,19 @@ import org.junit.Test
 
 class TimetableConfirmationUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private fun waitTag(tag: String) = rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
     private val repo get() = (rule.activity.application as ReplandApplication).appContainer.timeRepository
     private fun vm(): TimeViewModel = ViewModelProvider(rule.activity)[TimeViewModel::class.java]
     private fun openImportPage() {
-        waitTag("navigation-agent"); rule.onNodeWithTag("navigation-agent").performClick()
-        waitTag("agent-import-timetable"); rule.onNodeWithTag("agent-import-timetable").performClick()
+        rule.openMineSettings()
+        waitTag("mine-time-settings"); rule.onNodeWithTag("mine-time-settings").performScrollTo().performClick()
         waitTag("import-timetable-pdf")
+        rule.onNodeWithTag("import-timetable-pdf").performScrollTo()
     }
     private fun fixture(name: String): File {
         PDFBoxResourceLoader.init(rule.activity)

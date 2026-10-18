@@ -1,6 +1,8 @@
 package com.swan1127.repland
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.*
@@ -45,6 +47,42 @@ class AiProviderSettingsUiTest {
         rule.onNodeWithTag("ai-provider-key").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("地址变化需重新输入密钥").performScrollTo().assertIsDisplayed()
         rule.onNodeWithTag("ai-provider-test").assertIsDisplayed().performClick()
+        assertTrue(tested)
+    }
+
+    @Test fun editing_provider_cannot_test_old_saved_configuration_or_show_its_success() {
+        val config = AiProviderConfig(hasApiKey = true, updatedAtEpochMillis = 1)
+        rule.setContent {
+            ReplandTheme { AiProviderSettingsDialog(config, null,
+                AiProviderConnectionTest.Connected(config.model), {}, { _, _, _ -> }, {}, {}) }
+        }
+        rule.onNodeWithText("连接成功：${config.model} 已可用于安排助手。").performScrollTo().assertExists()
+        rule.onNodeWithTag("ai-provider-model").performScrollTo().performTextReplacement("unsaved-model")
+        rule.onNodeWithTag("ai-provider-test").assertIsNotEnabled()
+        rule.onNodeWithText("连接成功：${config.model} 已可用于安排助手。").assertDoesNotExist()
+        rule.onNodeWithText("配置尚未保存，请先加密保存再测试连接。").performScrollTo().assertExists()
+    }
+
+    @Test fun replacement_key_requires_successful_save_before_connection_test() {
+        var config by androidx.compose.runtime.mutableStateOf(AiProviderConfig(hasApiKey = true, updatedAtEpochMillis = 1))
+        var savedKey: String? = null
+        var tested = false
+        rule.setContent {
+            ReplandTheme { AiProviderSettingsDialog(config, null, AiProviderConnectionTest.Idle, {},
+                { url, model, key ->
+                    savedKey = key
+                    config = config.copy(baseUrl = url, model = model, updatedAtEpochMillis = 2)
+                }, {}, { tested = true }) }
+        }
+        rule.onNodeWithTag("ai-provider-key").performScrollTo().performTextInput("replacement-test-only")
+        rule.onNodeWithTag("ai-provider-test").assertIsNotEnabled()
+        rule.onNodeWithTag("ai-provider-save").performClick()
+        rule.waitForIdle()
+        assertEquals("replacement-test-only", savedKey)
+        rule.onNodeWithTag("ai-provider-key").performScrollTo()
+        assertEquals("", rule.onNodeWithTag("ai-provider-key").fetchSemanticsNode()
+            .config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text)
+        rule.onNodeWithTag("ai-provider-test").assertIsEnabled().performClick()
         assertTrue(tested)
     }
 }

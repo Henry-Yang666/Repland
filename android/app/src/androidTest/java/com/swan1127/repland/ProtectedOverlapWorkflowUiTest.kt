@@ -15,6 +15,11 @@ import java.util.UUID
 /** All five protected constraints through the real time editor and Room. */
 class ProtectedOverlapWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val app get() = (rule.activity.application as ReplandApplication).appContainer
     private fun node(tag: String): SemanticsNodeInteraction {
         rule.waitUntil(20_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
@@ -71,10 +76,22 @@ class ProtectedOverlapWorkflowUiTest {
                     node("month-schedule").performClick()
                     rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-date-$day"))
                     node("month-date-$day").performClick()
+                    rule.openDetailedSchedule()
                     dayOpened = true
                 }
                 if (rule.onAllNodesWithTag("timeline-entry-detail-$entry").fetchSemanticsNodes().isEmpty()) {
-                    rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("timeline-$entry"))
+                    // Each saved plan replaces segment IDs. Wait for the Activity's
+                    // Room observation before locating that newly committed ID.
+                    try {
+                        rule.waitUntil(10_000) {
+                            try {
+                                rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("timeline-$entry"))
+                                true
+                            } catch (_: AssertionError) { false }
+                        }
+                    } catch (failure: Throwable) {
+                        throw AssertionError("kind=$kind entry=$entry\n" + rule.onRoot().printToString(), failure)
+                    }
                     node("timeline-$entry").performTouchInput { click(Offset(center.x, 20f)) }
                 }
                 node("timeline-time-editor-$entry").performClick()

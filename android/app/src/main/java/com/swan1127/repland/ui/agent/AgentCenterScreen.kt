@@ -134,6 +134,7 @@ fun AgentCenterScreen(
     onQueryTasks: (suspend (com.swan1127.repland.domain.model.TaskQueryScope) -> List<com.swan1127.repland.domain.model.Task>)? = null,
     onExplainOrder: (suspend (String) -> com.swan1127.repland.domain.model.LocalPriorityAssessment)? = null,
     onOpenTask: (String) -> Unit = {},
+    quickActions: (@Composable () -> Unit)? = null,
 ) {
     var prompt by rememberSaveable { mutableStateOf(initialWorkspace?.prompt.orEmpty()) }
     var proposals by remember { mutableStateOf(initialWorkspace?.proposals.orEmpty()) }
@@ -333,6 +334,7 @@ fun AgentCenterScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         AgentHero(activeDate, occupiedEntries, onOpenTimeStudio)
+        quickActions?.invoke()
         saveReceipt?.let { receipt ->
             Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }.testTag("agent-save-receipt")) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

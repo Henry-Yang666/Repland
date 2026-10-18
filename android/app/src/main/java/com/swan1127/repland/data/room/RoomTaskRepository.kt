@@ -42,7 +42,7 @@ class RoomTaskRepository(
         save(draft)
     }
 
-    override suspend fun save(draft: TaskDraft) {
+    override suspend fun save(draft: TaskDraft) = database.withTransaction {
         require(TaskDraftValidator.isValid(draft)) { "Invalid task draft." }
         val now = System.currentTimeMillis()
         val existing = if (draft.id == null) null else taskDao.getById(draft.id)
@@ -78,6 +78,15 @@ class RoomTaskRepository(
             } ?: draft.inputSources.encode(),
         )
         taskDao.insert(entity)
+        if (existing == null || entity.copy(updatedAtEpochMillis = existing.updatedAtEpochMillis) != existing) {
+            UsageSummaryRecorder.record(database,
+                if (existing == null) com.swan1127.repland.domain.model.UsageSummaryActionKind.TASK_CREATED
+                else com.swan1127.repland.domain.model.UsageSummaryActionKind.TASK_UPDATED,
+                taskId = entity.id, now = now)
+        }
+        if (existing != null && existing.scheduledForEpochDay != entity.scheduledForEpochDay) {
+            AutonomyManualOverrides(database).dateEdited(existing.id)
+        }
     }
 
     override suspend fun confirmStatus(

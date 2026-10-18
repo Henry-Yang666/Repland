@@ -99,7 +99,7 @@ class PlanDraftPreviewUiTest {
         rule.onNodeWithTag("plan-draft-preview").fetchSemanticsNode()
         rule.onNodeWithText("主线").fetchSemanticsNode()
         rule.onNodeWithText("并行 2").fetchSemanticsNode()
-        rule.onNodeWithTag("draft-segment-segment-main").performClick()
+        rule.onNodeWithTag("draft-segment-summary-segment-main").performScrollTo().performClick()
         rule.onNodeWithText("轨道").fetchSemanticsNode()
     }
 

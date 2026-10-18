@@ -2,7 +2,7 @@ package com.swan1127.repland.domain.model
 
 import java.time.LocalDate
 
-/** A user-owned task. Status transitions are intentionally never delegated to AI. */
+/** A user-owned task. Status changes require explicit user evidence, including a clear language command. */
 data class Task(
     val id: String,
     val description: String,

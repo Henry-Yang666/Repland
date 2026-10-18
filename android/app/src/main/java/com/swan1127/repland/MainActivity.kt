@@ -56,10 +56,10 @@ class MainActivity : ComponentActivity() {
                 val profileEvidenceViewModel: ProfileEvidenceViewModel = viewModel(
                     factory = ProfileEvidenceViewModel.Factory(appContainer.profileEvidenceRepository),
                 )
-                val numericProfileViewModel: com.swan1127.repland.ui.profile.NumericProfileViewModel = viewModel(
-                    factory = com.swan1127.repland.ui.profile.NumericProfileViewModel.Factory(appContainer.numericProfileRepository,
-                        appContainer.taskRepository, appContainer.aiSettingsRepository, appContainer.aiProviderConfigRepository,
-                        appContainer.numericProfileAdvisor, appContainer.numericProfileAdvisor !== com.swan1127.repland.domain.model.NoOpNumericProfileAdvisor),
+                val usageSummaryViewModel: com.swan1127.repland.ui.profile.UsageSummaryViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.profile.UsageSummaryViewModel.Factory(appContainer.usageSummaryRepository,
+                        appContainer.aiSettingsRepository, appContainer.aiProviderConfigRepository, appContainer.usageSummaryAdvisor,
+                        appContainer.usageSummaryAdvisor !== com.swan1127.repland.domain.model.NoOpUsageSummaryAdvisor),
                 )
                 val personalProfileViewModel: com.swan1127.repland.ui.profile.PersonalProfileViewModel = viewModel(
                     factory = com.swan1127.repland.ui.profile.PersonalProfileViewModel.Factory(appContainer.personalProfileStore),
@@ -89,6 +89,10 @@ class MainActivity : ComponentActivity() {
                 val engagementViewModel: EngagementViewModel = viewModel(
                     factory = EngagementViewModel.Factory(appContainer.engagementRepository),
                 )
+                val autonomyViewModel: com.swan1127.repland.ui.agent.AutonomyViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.agent.AutonomyViewModel.Factory(
+                        appContainer.autonomyRepository, appContainer.planningReadService, appContainer.planningOperationService),
+                )
                 ReplandApp(
                     taskViewModel,
                     timeViewModel,
@@ -102,8 +106,9 @@ class MainActivity : ComponentActivity() {
                     arrangementAssistantViewModel,
                     engagementViewModel,
                     taskCaptureViewModel,
-                    numericProfileViewModel,
-                    personalProfileViewModel,
+                    personalProfileViewModel = personalProfileViewModel,
+                    autonomyViewModel = autonomyViewModel,
+                    usageSummaryViewModel = usageSummaryViewModel,
                 )
             }
         }

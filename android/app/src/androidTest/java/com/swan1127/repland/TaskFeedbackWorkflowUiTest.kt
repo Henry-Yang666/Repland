@@ -16,6 +16,11 @@ import java.util.UUID
 
 class TaskFeedbackWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val repo get() = (rule.activity.application as ReplandApplication).appContainer.taskRepository
     private fun waitTag(tag: String) {
         try { rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() } }
@@ -152,13 +157,14 @@ class TaskFeedbackWorkflowUiTest {
         } finally { cleanup(id) }
     }
 
-    @Test fun postponement_plan_preview_dismisses_to_assistant_not_pdf_settings() {
+    @Test fun postponement_plan_preview_dismisses_to_schedule_without_opening_assistant_or_pdf_settings() {
         val (id, name) = seed()
         try {
             runBlocking { repeat(3) { repo.confirmStatus(id, TaskStatus.POSTPONED, TaskFeedback(postponeReason = "明确延期样例")) } }
             open(name); action("postpone-review-plan"); waitTag("plan-draft-preview")
             rule.onNodeWithText("放弃本次调整").performClick(); gone("plan-draft-preview")
-            waitTag("agent-formulate-plan"); rule.onNodeWithTag("agent-formulate-plan").assertExists()
+            waitTag("schedule-assistant-fab"); rule.onNodeWithTag("schedule-assistant-fab").assertExists()
+            rule.onNodeWithTag("assistant-sheet").assertDoesNotExist()
             rule.onNodeWithText("导入固定课程").assertDoesNotExist()
             assertEquals(3, runBlocking { repo.observeTasks().first().single { it.id == id }.postponeCount })
         } finally { cleanup(id) }

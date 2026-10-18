@@ -19,6 +19,11 @@ import java.io.File
 
 class ReadFailureWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val container get() = (rule.activity.application as ReplandApplication).appContainer
     private fun waitTag(tag: String) = rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
     private fun gone(tag: String) = rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
@@ -96,7 +101,7 @@ class ReadFailureWorkflowUiTest {
             val original = runBlocking { container.timeRepository.observeWeeklyBlocks().first().single { it.title == name } }
             val id = original.id; cleanupId = id
             val (fault, vm) = timeFault()
-            waitTag("navigation-mine"); rule.onNodeWithTag("navigation-mine").performClick()
+            rule.openMineSettings()
             waitTag("mine-time-settings"); rule.onNodeWithTag("mine-time-settings").performScrollTo().performClick()
             waitTag("time-add-weekly"); rule.onNodeWithTag("weekly-edit-$id").performScrollTo().performClick()
             waitTag("weekly-block-title"); fill("weekly-block-title", "$name-edited")
@@ -117,24 +122,30 @@ class ReadFailureWorkflowUiTest {
         } finally { cleanupId?.let { runBlocking { container.timeRepository.deleteWeeklyBlock(it) } } }
     }
 
-    @Test fun initial_task_failure_blocks_formulate_and_preview_without_losing_composer_input() {
+    @Test fun initial_task_failure_blocks_quick_execution_without_losing_composer_input_or_writing() {
         val (fault, vm) = taskFault(initialFailure = true)
         rule.waitUntil(10_000) { vm.uiState.value.readError != null }
         val originalPlan = runBlocking { container.planRepository.observeCurrentPlan().first() }
-        waitTag("navigation-agent"); rule.onNodeWithTag("navigation-agent").performClick(); waitTag("agent-prompt")
-        fill("agent-prompt", "新增事项 复习30分钟")
-        rule.onNodeWithTag("agent-formulate-plan").performScrollTo().assertIsNotEnabled()
-        rule.onNodeWithTag("agent-preview").performScrollTo().assertIsNotEnabled()
-        rule.onNodeWithTag("agent-add-first-task").assertDoesNotExist()
-        rule.activityRule.scenario.recreate(); waitTag("agent-prompt")
-        rule.onNodeWithTag("agent-prompt").performScrollTo().assertTextContains("新增事项 复习30分钟")
+        val originalTasks = runBlocking { container.taskRepository.observeTasks().first() }
+        rule.openScheduleAssistant(); waitTag("autonomous-input")
+        fill("autonomous-input", "新增事项 复习30分钟")
+        rule.onNodeWithTag("autonomous-submit").performScrollTo().assertIsNotEnabled().performClick()
+        rule.onNodeWithTag("autonomous-error").performScrollTo().assertExists()
+        rule.activityRule.scenario.recreate(); waitTag("autonomous-input")
+        rule.onNodeWithTag("autonomous-input").performScrollTo().assertTextContains("新增事项 复习30分钟")
+        rule.onNodeWithTag("autonomous-submit").performScrollTo().assertIsNotEnabled()
         assertEquals(originalPlan, runBlocking { container.planRepository.observeCurrentPlan().first() })
+        assertEquals(originalTasks, runBlocking { container.taskRepository.observeTasks().first() })
+        rule.onNodeWithTag("assistant-close").performClick(); gone("assistant-sheet")
         fault.failed.value = false
         rule.onNodeWithTag("retry-data-read").performClick(); rule.waitUntil(10_000) { vm.uiState.value.isTrusted }
-        rule.onNodeWithTag("agent-preview").performScrollTo().assertIsEnabled()
-        // Leave no persistent assistant workspace for subsequent workflow cases.
-        fill("agent-prompt", "")
-        rule.onNodeWithTag("navigation-tasks").performClick()
+        rule.openScheduleAssistant()
+        rule.onNodeWithTag("autonomous-input").performScrollTo().assertTextContains("新增事项 复习30分钟")
+        rule.onNodeWithTag("autonomous-submit").performScrollTo().assertIsEnabled()
+        rule.onNodeWithTag("autonomous-error").assertDoesNotExist()
+        assertEquals(originalTasks, runBlocking { container.taskRepository.observeTasks().first() })
+        assertEquals(originalPlan, runBlocking { container.planRepository.observeCurrentPlan().first() })
+        rule.onNodeWithTag("assistant-close").performClick()
     }
 
     @Test fun persisted_sort_preview_cannot_be_confirmed_during_failed_reads_but_cancel_remains_available() {

@@ -12,20 +12,25 @@ import org.junit.Test
 
 class NativePageNavigationUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private fun waitTag(tag: String) = rule.waitUntil(10_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    @Test fun native_back_returns_to_mine_after_time_page_recreation() {
-        waitTag("navigation-mine"); rule.onNodeWithTag("navigation-mine").performClick()
+    @Test fun native_back_returns_to_settings_after_time_page_recreation() {
+        rule.openMineSettings()
         waitTag("mine-time-settings"); rule.onNodeWithTag("mine-time-settings").performScrollTo().performClick()
         waitTag("time-add-weekly"); rule.activityRule.scenario.recreate(); waitTag("time-add-weekly")
         NativeSheetTestInput.back(rule, "时间设置")
-        waitTag("mine-time-settings"); rule.onNodeWithTag("mine-time-settings").assertExists()
+        waitTag("mine-settings-page"); rule.onNodeWithTag("mine-time-settings").assertExists()
         rule.onNodeWithTag("time-add-weekly").assertDoesNotExist()
     }
 
-    @Test fun native_back_returns_to_assistant_and_sheet_back_does_not_pop_page() {
-        waitTag("navigation-agent"); rule.onNodeWithTag("navigation-agent").performClick()
-        waitTag("agent-import-timetable"); rule.onNodeWithTag("agent-import-timetable").performClick()
+    @Test fun native_back_from_time_edit_sheet_does_not_pop_the_time_page() {
+        rule.openMineSettings()
+        waitTag("mine-time-settings"); rule.onNodeWithTag("mine-time-settings").performScrollTo().performClick()
         waitTag("time-add-weekly"); rule.onNodeWithTag("time-add-weekly").performScrollTo().performClick()
         waitTag("weekly-block-title"); rule.onNodeWithTag("weekly-block-title").performTextReplacement("未提交导航样例")
         rule.activityRule.scenario.recreate(); waitTag("weekly-block-title")
@@ -33,8 +38,44 @@ class NativePageNavigationUiTest {
         rule.waitUntil(10_000) { rule.onAllNodesWithTag("weekly-block-title").fetchSemanticsNodes().isEmpty() }
         rule.onNodeWithTag("time-add-weekly").assertExists()
         NativeSheetTestInput.back(rule, "时间设置")
-        waitTag("agent-import-timetable"); rule.onNodeWithTag("agent-import-timetable").assertExists()
+        waitTag("mine-settings-page"); rule.onNodeWithTag("mine-time-settings").assertExists()
         rule.onNodeWithTag("time-add-weekly").assertDoesNotExist()
+    }
+
+    @Test fun native_back_first_hides_assistant_keyboard_then_closes_sheet_to_schedule() {
+        val previous = NativeSheetTestInput.shell("settings get secure show_ime_with_hard_keyboard")
+        val draft = "返回后保留的助手草稿 ${UUID.randomUUID()}"
+        try {
+            NativeSheetTestInput.shell("settings put secure show_ime_with_hard_keyboard 1")
+            rule.openScheduleAssistant()
+            NativeSheetTestInput.awaitFocusedDialog(rule, "一句话处理")
+            rule.onNodeWithTag("autonomous-input").performScrollTo().performTextReplacement(draft)
+            rule.onNodeWithTag("autonomous-input").performClick().assertIsFocused()
+            rule.waitUntil(10_000) {
+                NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
+            }
+
+            NativeSheetTestInput.shell("input keyevent 4")
+            rule.waitUntil(10_000) {
+                !NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
+            }
+            rule.onNodeWithTag("assistant-sheet").assertExists()
+            rule.onNodeWithTag("autonomous-input").assertTextContains(draft, substring = false)
+
+            NativeSheetTestInput.back(rule, "一句话处理")
+            rule.waitUntil(10_000) {
+                rule.onAllNodesWithTag("assistant-sheet").fetchSemanticsNodes().isEmpty()
+            }
+            waitTag("today-page-scroll")
+            rule.onNodeWithTag("schedule-assistant-fab").assertIsDisplayed()
+            rule.onNodeWithTag("navigation-agent").assertDoesNotExist()
+
+            rule.openScheduleAssistant()
+            rule.onNodeWithTag("autonomous-input").performScrollTo().assertTextContains(draft, substring = false)
+        } finally {
+            NativeSheetTestInput.shell(if (previous == "null") "settings delete secure show_ime_with_hard_keyboard"
+                else "settings put secure show_ime_with_hard_keyboard $previous")
+        }
     }
 
     @Test fun native_back_from_recreated_task_detail_returns_to_task_list() {

@@ -13,6 +13,10 @@ data class PlanningWorkspaceEntity(@PrimaryKey val key: String, val payload: Str
 
 @Dao
 interface PlanningWorkspaceDao {
+    @Query("SELECT * FROM planning_workspace WHERE `key` LIKE 'usage-summary:%' ORDER BY `key`")
+    suspend fun getUsageSummaryExport(): List<PlanningWorkspaceEntity>
+    @Query("SELECT * FROM planning_workspace WHERE `key` LIKE 'autonomy-%' ORDER BY `key`")
+    suspend fun getAutonomyExport(): List<PlanningWorkspaceEntity>
     @Query("SELECT * FROM planning_workspace WHERE `key` LIKE 'numeric-input:%' OR `key` IN ('numeric-snapshot', 'numeric-description') ORDER BY `key`")
     suspend fun getNumericExport(): List<PlanningWorkspaceEntity>
     @Query("SELECT * FROM planning_workspace WHERE `key` LIKE 'numeric-input:%' ORDER BY `key`")

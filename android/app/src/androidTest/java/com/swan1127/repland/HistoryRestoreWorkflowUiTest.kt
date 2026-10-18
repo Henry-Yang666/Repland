@@ -13,6 +13,11 @@ import java.util.UUID
 
 class HistoryRestoreWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val app get() = (rule.activity.application as ReplandApplication).appContainer
     private fun node(tag: String): SemanticsNodeInteraction {
         rule.waitUntil(20_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
@@ -44,7 +49,7 @@ class HistoryRestoreWorkflowUiTest {
             val task = runBlocking { app.taskRepository.observeTasks().first().single { it.id == id } }
             val logs = runBlocking { app.taskRepository.observeExecutionLogs(id).first() }
             val session = runBlocking { app.executionSessionRepository.observeActive().first() }
-            node("navigation-mine").performClick()
+            rule.openMineSettings()
             node("mine-plan-history").performClick()
             rule.onNodeWithTag("history-scroll").performScrollToNode(hasTestTag("history-restore-${original.id}"))
             node("history-restore-${original.id}").performClick()

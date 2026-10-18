@@ -16,6 +16,11 @@ import org.junit.Test
 /** Real Activity -> today's adapter -> ViewModel -> Room; QA package only. */
 class PlacementNumericWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private fun screenshot(name: String) {
         rule.waitForIdle()
         val frame = java.util.concurrent.CountDownLatch(1)
@@ -87,13 +92,9 @@ class PlacementNumericWorkflowUiTest {
         visible("month-schedule").performClick()
         rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-date-$date"))
         visible("month-date-$date").performClick()
-        rule.onNodeWithTag("today-page-scroll").performScrollToNode(
-            hasTestTag("empty-event-library-trigger") or hasTestTag("event-library-trigger"))
-        rule.waitUntil(10_000) { rule.onAllNodesWithTag("empty-event-library-trigger").fetchSemanticsNodes().isNotEmpty() ||
-            rule.onAllNodesWithTag("event-library-trigger").fetchSemanticsNodes().isNotEmpty() }
-        val trigger = if (rule.onAllNodesWithTag("event-library-trigger").fetchSemanticsNodes().isNotEmpty())
-            "event-library-trigger" else "empty-event-library-trigger"
-        visible(trigger).performClick(); waitTag("event-object-$id"); visible("event-object-$id").performClick()
+        rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("schedule-arrange-task"))
+        visible("schedule-arrange-task").performClick()
+        waitTag("event-object-$id"); visible("event-object-$id").performClick()
         rule.onNodeWithText("本次安排 240 分钟").assertExists()
         visible("event-minute-input").performTextReplacement("99")
         visible("event-place-confirm").assertIsNotEnabled().performClick()

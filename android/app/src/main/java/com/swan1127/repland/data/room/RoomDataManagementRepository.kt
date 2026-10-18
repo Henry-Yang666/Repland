@@ -40,6 +40,8 @@ class RoomDataManagementRepository(
             executionSessions = database.planningWorkspaceDao().getExecutionSessions().map { ExecutionSessionCodec.decode(it.payload) },
             taskCaptureDraft = database.planningWorkspaceDao().get("task-capture")?.let { TaskCaptureCodec.decode(it.payload) },
             numericProfileRecords = database.planningWorkspaceDao().getNumericExport().associate { it.key to it.payload },
+            autonomyRecords = database.planningWorkspaceDao().getAutonomyExport().associate { it.key to it.payload },
+            usageSummaryRecords = database.planningWorkspaceDao().getUsageSummaryExport().associate { it.key to it.payload },
         )
     }
 

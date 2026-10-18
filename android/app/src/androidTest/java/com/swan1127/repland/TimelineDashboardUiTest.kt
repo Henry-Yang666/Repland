@@ -68,12 +68,12 @@ class TimelineDashboardUiTest {
         rule.onNodeWithTag("timeline-work").performScrollTo().performClick()
         rule.onNodeWithTag("timeline-entry-detail-work", useUnmergedTree = true).assertExists()
         rule.onNodeWithTag("timeline-note-work", useUnmergedTree = true).assertExists()
-        rule.onNodeWithTag("open-task-work", useUnmergedTree = true).performClick()
+        rule.onNodeWithTag("open-task-work", useUnmergedTree = true).performScrollTo().performClick()
         assertEquals("work", inspected)
         assertEquals("task-one", opened)
 
         rule.onNodeWithTag("timeline-course").performScrollTo().performClick()
-        rule.onNodeWithTag("timeline-note-course", useUnmergedTree = true).performClick()
+        rule.onNodeWithTag("timeline-note-course", useUnmergedTree = true).performScrollTo().performClick()
         assertEquals("course", editRequested)
     }
 

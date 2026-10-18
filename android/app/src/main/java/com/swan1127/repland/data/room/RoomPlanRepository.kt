@@ -215,6 +215,7 @@ class RoomPlanRepository(
             (it.date == now.toLocalDate() && it.endMinute <= now.hour * 60 + now.minute) }
         acceptInTransaction(PlanDraft(now, segments, emptyList(), emptyList(),
             orderedTaskIds = source.orderedTaskIds, hasManualTaskOrder = source.hasManualTaskOrder), restoring = true)
+        UsageSummaryRecorder.record(database, UsageSummaryActionKind.RESTORE, sourceId = planId)
     }
 
     override suspend fun clearCurrentPlan() = applyManualChange(ManualPlanChange.Clear)
@@ -227,6 +228,11 @@ class RoomPlanRepository(
             source.segments.map { it.copy(id = UUID.randomUUID().toString(), planId = nextId,
                 isLocked = if (it.id == segmentId) isLocked else it.isLocked) },
             source.taskOrder.map { it.copy(planId = nextId) })
+        source.segments.first { it.id == segmentId }.takeIf { it.isLocked != isLocked }?.let {
+            UsageSummaryRecorder.record(database, if (isLocked) UsageSummaryActionKind.LOCK else UsageSummaryActionKind.UNLOCK,
+                taskId = it.taskId, sourceId = segmentId)
+        }
+        Unit
     }
 
     override suspend fun placeTask(taskId: String, date: LocalDate, startMinute: Int, endMinute: Int, trackId: String) =
@@ -289,6 +295,21 @@ class RoomPlanRepository(
             nextSegments.map { PlanSegmentEntity(UUID.randomUUID().toString(), nextId, it.taskId, it.date.toEpochDay(),
                 it.startMinute, it.endMinute, it.isLocked, it.trackId) },
             order.mapIndexed { index, id -> PlanTaskOrderEntity(nextId, id, index, source?.taskOrder?.firstOrNull { it.taskId == id }?.isManual ?: true) })
+        val autonomy = AutonomyManualOverrides(database)
+        when (change) {
+            is ManualPlanChange.Place, is ManualPlanChange.Move -> requireNotNull(candidate).let { autonomy.placed(it.taskId, it.date) }
+            is ManualPlanChange.Remove -> autonomy.removed(setOf(requireNotNull(target).taskId))
+            ManualPlanChange.Clear -> autonomy.removed(current.map { it.taskId }.filter { tasks[it]?.status?.isActive == true }.toSet())
+        }
+        if (nextSegments.toSet() != current.toSet()) {
+            val kind = when (change) {
+                is ManualPlanChange.Place -> UsageSummaryActionKind.PLACE
+                is ManualPlanChange.Move -> UsageSummaryActionKind.MOVE
+                is ManualPlanChange.Remove -> UsageSummaryActionKind.REMOVE
+                ManualPlanChange.Clear -> UsageSummaryActionKind.CLEAR
+            }
+            UsageSummaryRecorder.record(database, kind, taskId = candidate?.taskId ?: target?.taskId, sourceId = targetId)
+        }
     }
 
     /** Keeps plan-history order deterministic even when confirmations share one clock millisecond. */

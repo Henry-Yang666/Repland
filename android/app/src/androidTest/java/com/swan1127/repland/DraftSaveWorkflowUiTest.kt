@@ -15,6 +15,11 @@ import java.util.UUID
 
 class DraftSaveWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val container get() = (rule.activity.application as ReplandApplication).appContainer.also {
         check(rule.activity.packageName == "com.swan1127.repland.qa")
     }

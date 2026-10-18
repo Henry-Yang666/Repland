@@ -16,6 +16,7 @@ import org.junit.runner.RunWith
 class ExecutionWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
     @Before fun retain_history_but_remove_previous_placements_owned_by_this_qa_fixture() = runBlocking {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
         check(rule.activity.packageName == "com.swan1127.repland.qa")
         val app = (rule.activity.application as ReplandApplication).appContainer
         val activeTask = app.executionSessionRepository.observeActive().first()?.taskId
@@ -67,7 +68,8 @@ class ExecutionWorkflowUiTest {
         rule.onNodeWithTag("execution-pause-resume").performClick()
         rule.onNodeWithText("返回页面 · 保留本轮").performScrollTo().performClick()
         rule.onNodeWithTag("today-focus-start").performScrollTo().assertIsNotEnabled()
-        rule.onNodeWithTag("resume-execution").performScrollTo().performClick()
+        rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("resume-execution"))
+        rule.onNodeWithTag("resume-execution").assertIsDisplayed().performClick()
         rule.onNodeWithTag("execution-continue").performScrollTo().performClick()
         runBlocking { withTimeout(5_000) { app.executionSessionRepository.observeActive().first { it == null } } }
         assertEquals(planId, runBlocking { app.planRepository.observeCurrentPlan().first()!!.id })
@@ -89,13 +91,15 @@ class ExecutionWorkflowUiTest {
         rule.waitUntil(10_000) { rule.onAllNodesWithTag("resume-execution").fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("accept-plan-draft").assertDoesNotExist()
         assertNull(runBlocking { app.planRepository.observeDraft().first() })
-        rule.onNodeWithTag("resume-execution").performScrollTo().performClick()
+        rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("resume-execution"))
+        rule.onNodeWithTag("resume-execution").assertIsDisplayed().performClick()
         rule.onNodeWithTag("execution-pause-resume").performClick()
         runBlocking { withTimeout(5_000) { app.executionSessionRepository.observeActive().first { it?.isPaused == true } } }
         rule.onNodeWithText("返回页面 · 保留本轮").performScrollTo().performClick()
         rule.activityRule.scenario.recreate()
         rule.waitUntil(10_000) { rule.onAllNodesWithTag("resume-execution").fetchSemanticsNodes().isNotEmpty() }
-        rule.onNodeWithTag("resume-execution").performScrollTo().performClick()
+        rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("resume-execution"))
+        rule.onNodeWithTag("resume-execution").assertIsDisplayed().performClick()
         rule.onNodeWithText("本轮已暂停").assertExists()
         rule.onNodeWithTag("accept-plan-draft").assertDoesNotExist()
         rule.onNodeWithTag("execution-continue").performScrollTo().performClick()

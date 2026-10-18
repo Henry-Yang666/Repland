@@ -15,6 +15,11 @@ import java.util.UUID
 /** Actual navigation and physical clicks; only the QA package is used. */
 class PlanningProtectionWorkflowUiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private fun waitTag(tag: String) = rule.waitUntil(15_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
     private fun visible(tag: String): SemanticsNodeInteraction {
         waitTag(tag)
@@ -45,8 +50,8 @@ class PlanningProtectionWorkflowUiTest {
             waitTag("today-page-scroll")
             rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-schedule"))
             visible("month-schedule").performClick()
-            rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-date-$day"))
-            visible("month-date-$day").performClick()
+            rule.clickScheduleDate(day)
+            rule.openDetailedSchedule()
             fun request() {
                 val tag = "timeline-segment:${segment.id}"
                 rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag(tag))
@@ -109,8 +114,8 @@ class PlanningProtectionWorkflowUiTest {
             waitTag("today-page-scroll")
             rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-schedule"))
             visible("month-schedule").performClick()
-            rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-date-$day"))
-            visible("month-date-$day").performClick()
+            rule.clickScheduleDate(day)
+            rule.openDetailedSchedule()
             fun requestMove() {
                 val tag = "timeline-segment:${segment.id}"
                 rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag(tag))
@@ -132,7 +137,7 @@ class PlanningProtectionWorkflowUiTest {
             val target = moved.segments.single { it.taskId == id }
             assertEquals(start + 15, target.startMinute); assertFalse(target.isLocked)
             assertTrue(runBlocking { app.taskRepository.observeExecutionLogs(id).first() }.isEmpty())
-            visible("navigation-mine").performClick()
+            rule.openMineSettings()
             visible("mine-plan-history").performClick()
             rule.onNodeWithTag("history-scroll").performScrollToNode(hasTestTag("history-lock-${target.id}"))
             visible("history-lock-${target.id}").performClick()

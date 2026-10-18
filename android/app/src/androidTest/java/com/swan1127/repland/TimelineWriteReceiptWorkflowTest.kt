@@ -16,6 +16,11 @@ import java.util.UUID
 /** Actual Activity -> guarded VM -> Room, isolated QA package, retained data. */
 class TimelineWriteReceiptWorkflowTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @org.junit.Before
+    fun use_manual_planning_mode_for_legacy_workflow() {
+        pauseAutomaticPlanningForLegacyWorkflow(rule.activity)
+    }
     private val app get() = (rule.activity.application as ReplandApplication).appContainer
     private fun waitTag(tag: String) = rule.waitUntil(15_000) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
     private fun visible(tag: String): SemanticsNodeInteraction {
@@ -28,6 +33,7 @@ class TimelineWriteReceiptWorkflowTest {
         visible("month-schedule").performClick()
         rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-date-$day"))
         visible("month-date-$day").performClick()
+        rule.openDetailedSchedule()
     }
     private fun freeStart(day: LocalDate): Int = runBlocking {
         val entries=ScheduleTimeline.entries(day, app.timeRepository.observeWeeklyBlocks().first(),

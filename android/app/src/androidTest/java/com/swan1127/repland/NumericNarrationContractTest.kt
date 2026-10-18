@@ -40,6 +40,11 @@ class NumericNarrationContractTest {
         assertFalse(payload.contains("private")); assertFalse(payload.contains("estimate:COURSE")); assertFalse(payload.contains("sources"))
         val raw="""{"requestId":"r","profileVersion":"v","claims":[{"parameterId":"rounds","value":20}],"nextStep":"CONSIDER_SPLITTING"}"""
         assertTrue(NumericNarrationValidator.valid(request,CompatibleNumericProfileAdvisor.decode(raw)))
+        listOf("```json\n$raw\n```", "```\n$raw\n```", "  \n```json\n$raw\n```\n  ").forEach { fenced ->
+            assertEquals(CompatibleNumericProfileAdvisor.decode(raw), CompatibleNumericProfileAdvisor.decode(fenced))
+        }
+        assertTrue(runCatching { CompatibleNumericProfileAdvisor.decode("```json\n" + raw.dropLast(1) + ",\"rating\":80}\n```") }.isFailure)
+        assertTrue(runCatching { CompatibleNumericProfileAdvisor.decode("Here is the result:\n$raw") }.isFailure)
         assertTrue(runCatching { CompatibleNumericProfileAdvisor.decode(raw.dropLast(1)+",\"rating\":80}") }.isFailure)
         assertTrue(runCatching { CompatibleNumericProfileAdvisor.decode(raw.replace("CONSIDER_SPLITTING","SELF_DISCIPLINE")) }.isFailure)
         assertTrue(payload.toByteArray().size < (1..50).joinToString { "private task history with raw execution evidence $it" }.toByteArray().size)

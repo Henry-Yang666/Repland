@@ -76,6 +76,8 @@ class AppContainer(context: Context) {
     val executionSessionRepository = com.swan1127.repland.data.room.RoomExecutionSessionRepository(database)
     val timeRepository: TimeRepository = RoomTimeRepository(database.timeDao())
     val planRepository: PlanRepository = RoomPlanRepository(database)
+    val autonomyRepository: com.swan1127.repland.domain.ports.AutonomyRepository =
+        com.swan1127.repland.data.room.RoomAutonomyRepository(database)
     val categoryPreferenceRepository: CategoryPreferenceRepository =
         RoomCategoryPreferenceRepository(database.categoryPreferenceDao())
     val reminderSettingsRepository: ReminderSettingsRepository =
@@ -86,6 +88,7 @@ class AppContainer(context: Context) {
     val personalProfileStore = com.swan1127.repland.data.profile.LocalPersonalProfileStore(context)
     val dataManagementRepository: DataManagementRepository = RoomDataManagementRepository(database, personalProfileStore::clear)
     val aiSettingsRepository: AiSettingsRepository = RoomAiSettingsRepository(database.aiSettingsDao())
+    val usageSummaryRepository = com.swan1127.repland.data.room.RoomUsageSummaryRepository(database, aiProviderConfigRepository)
     val engagementRepository = RoomEngagementRepository(database)
     /** QA/internal share the optional BYOK provider; release stays local-only. */
     val aiAdvisor: AiAdvisor = runCatching {
@@ -103,6 +106,11 @@ class AppContainer(context: Context) {
         Class.forName("com.swan1127.repland.data.ai.CompatibleNumericProfileAdvisor")
             .getDeclaredConstructor(AiProviderConfigRepository::class.java).newInstance(aiProviderConfigRepository) as com.swan1127.repland.domain.model.NumericProfileAdvisor
     }.getOrDefault(com.swan1127.repland.domain.model.NoOpNumericProfileAdvisor)
+    val usageSummaryAdvisor: com.swan1127.repland.domain.model.UsageSummaryAdvisor = runCatching {
+        Class.forName("com.swan1127.repland.data.ai.CompatibleUsageSummaryAdvisor")
+            .getDeclaredConstructor(AiProviderConfigRepository::class.java, AiSettingsRepository::class.java)
+            .newInstance(aiProviderConfigRepository, aiSettingsRepository) as com.swan1127.repland.domain.model.UsageSummaryAdvisor
+    }.getOrDefault(com.swan1127.repland.domain.model.NoOpUsageSummaryAdvisor)
     val planningReadService = com.swan1127.repland.domain.model.PlanningReadService(taskRepository, timeRepository, planRepository, categoryPreferenceRepository)
     val planningOperationService = com.swan1127.repland.domain.model.PlanningOperationService(planningReadService, planRepository, planDraftGenerator, executionSessionRepository, numericProfileRepository)
     /** Local bounded workflow; it has no repository write capability. */

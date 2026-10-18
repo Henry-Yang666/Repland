@@ -3,7 +3,7 @@ package com.swan1127.repland.domain.model
 import java.time.LocalDate
 
 /** Missing input and legacy defaults never become confirmed evidence merely by being read. */
-enum class TaskInputSource { UNKNOWN, USER_INPUT, ACCEPTED_SUGGESTION, LEGACY_UNVERIFIED }
+enum class TaskInputSource { UNKNOWN, USER_INPUT, ACCEPTED_SUGGESTION, LEGACY_UNVERIFIED, PLANNING_ESTIMATE }
 
 data class TaskInputSources(
     val category: TaskInputSource,

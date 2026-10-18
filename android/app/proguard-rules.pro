@@ -17,6 +17,7 @@
 -keepattributes SourceFile,LineNumberTable,*Annotation*
 -keep class com.swan1127.repland.data.ai.CompatibleAiAdvisor { public <init>(com.swan1127.repland.domain.ports.AiProviderConfigRepository); }
 -keep class com.swan1127.repland.data.ai.CompatibleArrangementAdvisor { public <init>(com.swan1127.repland.domain.ports.AiProviderConfigRepository); }
+-keep class com.swan1127.repland.data.ai.CompatibleUsageSummaryAdvisor { public <init>(com.swan1127.repland.domain.ports.AiProviderConfigRepository, com.swan1127.repland.domain.ports.AiSettingsRepository); }
 -renamesourcefileattribute SourceFile
 
 # Room generates its database implementation at build time. Keeping the database

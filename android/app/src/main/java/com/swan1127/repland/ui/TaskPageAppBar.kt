@@ -56,11 +56,30 @@ internal fun TaskCaptureButton(
     onClick: () -> Unit,
     insets: WindowInsets = WindowInsets.safeDrawing,
 ) {
-    Box(Modifier.testTag("task-add-safe-area").windowInsetsPadding(insets.only(WindowInsetsSides.Horizontal))) {
-        androidx.compose.material3.FloatingActionButton(onClick = onClick, modifier = Modifier.testTag("add-task"),
+    PlannerFloatingButton(onClick, com.swan1127.repland.ui.components.DesignIcons.Plus,
+        "添加任务", "add-task", "task-add-safe-area", insets)
+}
+
+@Composable
+internal fun ScheduleAssistantButton(onClick: () -> Unit) {
+    PlannerFloatingButton(onClick, com.swan1127.repland.ui.components.DesignIcons.Assistant,
+        "一句话处理", "schedule-assistant-fab", "schedule-assistant-safe-area", WindowInsets.safeDrawing)
+}
+
+@Composable
+private fun PlannerFloatingButton(
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String,
+    tag: String,
+    safeAreaTag: String,
+    insets: WindowInsets,
+) {
+    Box(Modifier.testTag(safeAreaTag).windowInsetsPadding(insets.only(WindowInsetsSides.Horizontal))) {
+        androidx.compose.material3.FloatingActionButton(onClick = onClick, modifier = Modifier.testTag(tag),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
             containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-            androidx.compose.material3.Icon(com.swan1127.repland.ui.components.DesignIcons.Plus, contentDescription = "添加任务")
+            androidx.compose.material3.Icon(icon, contentDescription = description)
         }
     }
 }

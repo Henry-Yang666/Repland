@@ -166,6 +166,11 @@ fun TaskRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (task.inputSources.duration == com.swan1127.repland.domain.model.TaskInputSource.PLANNING_ESTIMATE) {
+                Text("规划估算 · ${task.totalDurationMinutes ?: 30} 分钟 · 可修改",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (task.category != TaskCategory.UNSPECIFIED) TaskMetaLabel(task.category.captureLabel())
                 if (task.userPriority != TaskPriority.UNSPECIFIED) TaskMetaLabel(task.userPriority.captureLabel())
