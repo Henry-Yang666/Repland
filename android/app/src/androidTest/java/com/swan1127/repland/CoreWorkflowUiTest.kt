@@ -113,7 +113,8 @@ class CoreWorkflowUiTest {
         clickCapture("task-capture-choose-duration")
         clickCapture("task-capture-duration-custom")
         waitForTag("task-capture-duration-custom-input")
-        composeRule.onNodeWithTag("task-capture-duration-custom-input").performTextInput("45")
+        composeRule.onNodeWithTag("task-capture-duration-custom-input").performScrollTo().performClick().performTextInput("45")
+        composeRule.onNodeWithTag("task-capture-duration-custom-input").assertTextContains("45")
         clickCapture("task-capture-save-duration")
 
         val repository = (composeRule.activity.application as ReplandApplication).appContainer.taskRepository
@@ -327,7 +328,7 @@ class CoreWorkflowUiTest {
         clickCapture("task-capture-choose-duration")
         waitForTag("task-capture-duration-custom")
         clickCapture("task-capture-duration-custom")
-        composeRule.onNodeWithTag("task-capture-duration-custom-input").performTextReplacement("45")
+        composeRule.onNodeWithTag("task-capture-duration-custom-input").performScrollTo().performClick().performTextReplacement("45")
         composeRule.onNodeWithTag("task-capture-close").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("add-task").performClick()
@@ -358,6 +359,7 @@ class CoreWorkflowUiTest {
             composeRule.waitUntil(10_000) {
                 !NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
             }
+            composeRule.waitForIdle()
         }
         val node = composeRule.onNodeWithTag(tag)
         var parent = node.fetchSemanticsNode().parent

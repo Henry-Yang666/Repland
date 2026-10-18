@@ -100,14 +100,23 @@ class PlacementNumericUiTest {
         ) } }
         rule.onNodeWithTag("schedule-arrange-task").assertIsDisplayed().performClick()
         rule.onNodeWithTag("event-object-chunk29").performClick()
+        NativeSheetTestInput.awaitFocusedDialog(rule, "放到日轨道")
         rule.onNodeWithText("本次安排 240 分钟").assertExists()
         // 08:00–12:00 fits; the old 300-minute check incorrectly overlapped 12:01.
         rule.onNodeWithTag("event-place-confirm").assertIsEnabled()
         rule.onNodeWithTag("event-minute-input").performTextReplacement("02")
         rule.onNodeWithTag("event-place-confirm").assertIsNotEnabled()
         rule.onNodeWithTag("event-minute-input").performTextReplacement("00")
-        rule.onNodeWithTag("event-place-confirm").assertIsEnabled().performClick()
-        assertEquals(1, writes)
+        // Finish clock editing before reaching the footer on smaller displays.
+        // The IME is a native window and does not follow Compose's idle clock.
+        if (NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")) {
+            NativeSheetTestInput.shell("input keyevent 4")
+            rule.waitUntil(10_000) {
+                !NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
+            }
+        }
+        rule.onNodeWithTag("event-place-confirm").performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+        rule.runOnIdle { assertEquals(1, writes) }
     }
 
     @Test fun course_raw_duration_and_title_survive_saved_state_restore() {

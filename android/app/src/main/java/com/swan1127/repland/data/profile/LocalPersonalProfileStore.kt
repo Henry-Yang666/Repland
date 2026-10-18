@@ -117,7 +117,10 @@ class LocalPersonalProfileStore(context: Context, storageName: String = "persona
         app.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("Not an image")
         var sample = 1
-        while (max(bounds.outWidth, bounds.outHeight) / sample > DecodeSize) sample *= 2
+        // BitmapFactory only samples by powers of two. Round the sample down,
+        // then scale precisely, so older devices retain the same crop resolution
+        // as ImageDecoder instead of turning a 1600x900 source into 400x225.
+        while (max(bounds.outWidth, bounds.outHeight) / sample / 2 >= DecodeSize) sample *= 2
         val bitmap = app.contentResolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
         } ?: throw IOException("Image not readable")
@@ -135,7 +138,12 @@ class LocalPersonalProfileStore(context: Context, storageName: String = "persona
                 ExifInterface.ORIENTATION_ROTATE_270 -> setRotate(-90f)
             }
         }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true).also { if (it !== bitmap) bitmap.recycle() }
+        val oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            .also { if (it !== bitmap) bitmap.recycle() }
+        val factor = min(1f, DecodeSize.toFloat() / max(oriented.width, oriented.height))
+        return Bitmap.createScaledBitmap(oriented, max(1, (oriented.width * factor).roundToInt()),
+            max(1, (oriented.height * factor).roundToInt()), true)
+            .also { if (it !== oriented) oriented.recycle() }
     }
 
     companion object {

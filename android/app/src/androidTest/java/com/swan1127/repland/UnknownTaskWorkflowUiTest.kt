@@ -32,7 +32,23 @@ class UnknownTaskWorkflowUiTest {
         waitTag("add-task")
         rule.onNodeWithTag("add-task").performClick()
         waitTag("task-capture-input")
+        NativeSheetTestInput.awaitFocusedDialog(rule, "新任务")
         rule.onNodeWithTag("task-capture-input").performTextReplacement(title)
+        // Native IME resizing can place the capture footer outside the visible
+        // viewport on API 26. Finish input, then scroll if the compact sheet needs it.
+        if (NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")) {
+            NativeSheetTestInput.back(rule, "新任务")
+            rule.waitUntil(10_000) {
+                !NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
+            }
+        }
+        rule.waitForIdle()
+        val saveTag = "task-capture-save-inbox"
+        val hasScrollParent = hasTestTag(saveTag) and hasAnyAncestor(
+            SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsActions.ScrollBy))
+        if (rule.onAllNodes(hasScrollParent).fetchSemanticsNodes().isNotEmpty()) {
+            rule.onNodeWithTag(saveTag).performScrollTo()
+        }
         rule.onNodeWithTag("task-capture-save-inbox").assertIsDisplayed().performClick()
         rule.waitUntil(15_000) { runBlocking { container.taskRepository.observeTasks().first().any { it.displayName == title } } }
         val task = runBlocking { container.taskRepository.observeTasks().first().single { it.displayName == title } }

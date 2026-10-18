@@ -367,14 +367,16 @@ fun TaskCaptureSheet(
         val sheetImeVisible = WindowInsets.isImeVisible
         BackHandler {
             if (!saving) {
-                if (sheetImeVisible) { sheetFocus.clearFocus(); sheetKeyboard?.hide() }
+                if (sheetImeVisible) { sheetFocus.clearFocus(force = true); sheetKeyboard?.hide() }
                 else sheetScope.launch { sheetState.hide(); if (!sheetState.isVisible) onDismiss() }
             }
         }
         SideEffect {
             // Read controllers/insets from the dialog, not the underlying Activity window.
             imeBridge.visible = sheetImeVisible
-            imeBridge.hide = { sheetFocus.clearFocus(); sheetKeyboard?.hide() }
+            // Leaving an input must clear even a transient dialog focus path. In Compose
+            // 1.7, non-forced custom-exit traversal can see a parent whose child detached.
+            imeBridge.hide = { sheetFocus.clearFocus(force = true); sheetKeyboard?.hide() }
         }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
         val compactHeight = maxHeight < 480.dp

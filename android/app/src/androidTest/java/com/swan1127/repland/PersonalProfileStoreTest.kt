@@ -21,12 +21,12 @@ import java.util.UUID
 class PersonalProfileStoreTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private fun namespace() = "profile-test-${UUID.randomUUID()}"
-    private fun source(name: String): File {
-        val bitmap = Bitmap.createBitmap(1600, 900, Bitmap.Config.ARGB_8888)
+    private fun source(name: String, width: Int = 1600, height: Int = 900): File {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val file = File(context.cacheDir, "$name.jpg")
         Canvas(bitmap).apply {
             drawColor(Color.RED)
-            drawRect(0f, 450f, 1600f, 900f, Paint().apply { color = Color.BLUE })
+            drawRect(0f, height / 2f, width.toFloat(), height.toFloat(), Paint().apply { color = Color.BLUE })
         }
         file.outputStream().use { assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)) }
         bitmap.recycle()
@@ -51,8 +51,22 @@ class PersonalProfileStoreTest {
             assertEquals(384, store.profile.value!!.avatar!!.height)
             assertTrue(file.delete())
             val reopened = LocalPersonalProfileStore(context, key); reopened.load()
-            assertNotNull(reopened.profile.value!!.avatar)
+            assertEquals(384, reopened.profile.value!!.avatar!!.width)
+            assertEquals(384, reopened.profile.value!!.avatar!!.height)
             assertTrue(File(context.filesDir, "$key-avatar.jpg").length() < 100_000)
+        } finally { store.clear(); file.delete() }
+    }
+
+    @Test fun a_small_source_is_center_cropped_without_being_upscaled() = runBlocking {
+        val key = namespace(); val store = LocalPersonalProfileStore(context, key)
+        val file = source(key, width = 240, height = 180)
+        try {
+            store.saveAvatar(Uri.fromFile(file))
+            val avatar = store.profile.value!!.avatar!!
+            assertEquals(180, avatar.width)
+            assertEquals(180, avatar.height)
+            assertTrue(Color.red(avatar.getPixel(90, 20)) > 200)
+            assertTrue(Color.blue(avatar.getPixel(90, 160)) > 200)
         } finally { store.clear(); file.delete() }
     }
 
@@ -78,6 +92,8 @@ class PersonalProfileStoreTest {
             }
             store.saveAvatar(Uri.fromFile(file))
             val avatar = store.profile.value!!.avatar!!
+            assertEquals(384, avatar.width)
+            assertEquals(384, avatar.height)
             assertTrue(Color.blue(avatar.getPixel(20, 192)) > 200)
             assertTrue(Color.red(avatar.getPixel(364, 192)) > 200)
         } finally { store.clear(); file.delete() }

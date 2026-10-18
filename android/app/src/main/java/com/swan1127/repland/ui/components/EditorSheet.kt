@@ -41,7 +41,7 @@ fun EditorSheet(
         val focus = LocalFocusManager.current
         BackHandler {
             if (!saving) {
-                if (imeVisible) { focus.clearFocus(); keyboard?.hide() }
+                if (imeVisible) { focus.clearFocus(force = true); keyboard?.hide() }
                 else scope.launch { state.hide(); if (!state.isVisible) onDismissRequest() }
             }
         }

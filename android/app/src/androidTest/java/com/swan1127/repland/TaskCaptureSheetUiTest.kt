@@ -23,6 +23,8 @@ class TaskCaptureSheetUiTest {
                 isCustomDuration = true, customDurationText = "45")) }
             TaskCaptureSheet("", {}, { result = it }, draft = capture.value, onDraftChange = { capture.value = it })
         } }
+        rule.onNodeWithTag("task-capture-duration-custom-input")
+            .performScrollTo().assertIsDisplayed().performClick().assertIsFocused()
         listOf("-30", "3.5", "+30", "999999999999", "0", "1441").forEach { raw ->
             rule.onNodeWithTag("task-capture-duration-custom-input").performScrollTo().performTextReplacement(raw)
             rule.onNodeWithTag("task-capture-duration-custom-input").assertTextContains(raw)
@@ -30,8 +32,19 @@ class TaskCaptureSheetUiTest {
             rule.runOnIdle { assertEquals(raw, capture.value.customDurationText); assertNull(result) }
         }
         rule.onNodeWithTag("task-capture-duration-custom-input").performTextReplacement("45")
-        rule.onNodeWithTag("task-capture-save-duration").assertIsEnabled().performClick()
-        assertEquals(45, result!!.totalDurationMinutes)
+        rule.onNodeWithTag("task-capture-duration-custom-input").assertTextContains("45")
+        // The numeric IME is a separate native window on API 26. Finish editing
+        // before tapping the footer, just as a user does when the keyboard covers it.
+        if (NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")) {
+            // With the IME active, native Back targets the keyboard window.
+            NativeSheetTestInput.shell("input keyevent 4")
+            rule.waitUntil(10_000) {
+                !NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
+            }
+        }
+        rule.waitForIdle()
+        rule.onNodeWithTag("task-capture-save-duration").assertIsDisplayed().assertIsEnabled().performClick()
+        rule.runOnIdle { assertEquals(45, result!!.totalDurationMinutes) }
     }
     @Test fun invalid_duration_correction_retains_newly_selected_deadline_without_creating_task() {
         var result: TaskDraft? = null

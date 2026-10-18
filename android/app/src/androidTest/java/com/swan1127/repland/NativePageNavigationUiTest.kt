@@ -34,6 +34,16 @@ class NativePageNavigationUiTest {
         waitTag("time-add-weekly"); rule.onNodeWithTag("time-add-weekly").performScrollTo().performClick()
         waitTag("weekly-block-title"); rule.onNodeWithTag("weekly-block-title").performTextReplacement("未提交导航样例")
         rule.activityRule.scenario.recreate(); waitTag("weekly-block-title")
+        NativeSheetTestInput.awaitFocusedDialog(rule, "添加固定时间")
+        // Recreating a focused editor can restore its IME. Native Back first hides
+        // that keyboard; only the following Back should dismiss the edit sheet.
+        if (NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")) {
+            NativeSheetTestInput.back(rule, "添加固定时间")
+            rule.waitUntil(10_000) {
+                !NativeSheetTestInput.shell("dumpsys input_method").contains("mWindowVisible=true")
+            }
+            rule.onNodeWithTag("weekly-block-title").assertExists()
+        }
         NativeSheetTestInput.back(rule, "添加固定时间")
         rule.waitUntil(10_000) { rule.onAllNodesWithTag("weekly-block-title").fetchSemanticsNodes().isEmpty() }
         rule.onNodeWithTag("time-add-weekly").assertExists()

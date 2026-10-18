@@ -1,5 +1,6 @@
 package com.swan1127.repland
 
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
@@ -14,15 +15,24 @@ class AutonomousAssistantSheetUiTest {
     @get:Rule val rule = createComposeRule()
 
     @Test fun execution_blocks_close_and_native_back_until_the_operation_finishes() {
-        val busy = mutableStateOf(true)
+        val busy = mutableStateOf(false)
         val open = mutableStateOf(true)
         var dismissals = 0
         rule.setContent {
             ReplandTheme {
                 if (open.value) AutonomousAssistantSheet(busy = busy.value,
-                    onDismiss = { dismissals++; open.value = false }) { Text("正在处理事项") }
+                    onDismiss = { dismissals++; open.value = false }) {
+                    Button(onClick = { busy.value = true }, enabled = !busy.value) {
+                        Text(if (busy.value) "正在处理事项" else "开始处理")
+                    }
+                }
             }
         }
+        // Execution begins after the native sheet has opened, as it does when
+        // a user submits a request. Native Back must target that focused dialog.
+        NativeSheetTestInput.awaitFocusedDialog(rule, "一句话处理")
+        rule.onNodeWithText("开始处理").assertIsDisplayed().performClick()
+        rule.onNodeWithText("正在处理事项").assertIsDisplayed()
         rule.onNodeWithTag("assistant-close").assertIsNotEnabled().performClick()
         NativeSheetTestInput.back(rule, "一句话处理")
         rule.waitForIdle()
