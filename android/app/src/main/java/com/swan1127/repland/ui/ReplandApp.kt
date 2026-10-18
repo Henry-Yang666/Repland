@@ -63,6 +63,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.BorderStroke
 import com.swan1127.repland.ui.theme.LocalReplandVisuals
 import com.swan1127.repland.ui.theme.MotionPage
+import com.swan1127.repland.ui.theme.replandAccent
 import com.swan1127.repland.ui.theme.MotionDisclosure
 import com.swan1127.repland.ui.theme.LocalReducedMotion
 import com.swan1127.repland.ui.theme.ReplandMotion
@@ -70,6 +71,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import com.swan1127.repland.ui.components.DesignIcons
+import com.swan1127.repland.ui.components.DesignClickableSurface
+import com.swan1127.repland.ui.components.DesignSectionHeading
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -739,7 +742,7 @@ fun ReplandApp(
                             modifier = Modifier.testTag("navigation-${tab.name.lowercase()}"),
                             icon = { TabIcon(tab) },
                             label = { Text(if (tab == AppTab.TODAY) "日程" else stringResource(tab.shortRes)) },
-                            accentIndex = when (tab) { AppTab.TODAY -> 0; AppTab.TASKS -> 1; AppTab.AGENT -> 2; else -> 4 },
+                            accentIndex = when (tab) { AppTab.TODAY -> 0; AppTab.TASKS -> 1; else -> 2 },
                         )
                     }
                 }
@@ -780,7 +783,13 @@ fun ReplandApp(
                 }
                 // Scaffold places the snackbar above its FAB. Its height alone does not
                 // describe the covered list area, so reserve the actual vertical overlap.
-                MotionPage(targetKey = selectedTab, modifier = Modifier.weight(1f).fillMaxWidth()
+                MotionPage(targetKey = selectedTab to showMineSettings,
+                    lateral = true, order = when (selectedTab) {
+                        AppTab.TODAY -> 0; AppTab.TASKS -> 1
+                        AppTab.MINE -> if (showMineSettings) 3 else 2
+                        AppTab.TIME -> 4; AppTab.AGENT -> 5
+                    },
+                    modifier = Modifier.weight(1f).fillMaxWidth()
                     .padding(bottom = if (selectedTab != AppTab.TIME) taskSnackbarInset else 0.dp)
                     .wrapContentSize(Alignment.TopCenter)
                     .widthIn(max = 720.dp).fillMaxWidth()) {
@@ -1817,8 +1826,8 @@ private fun TodayScreen(
         item(key = "schedule-range") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW, onClick = { scheduleRange = ScheduleRange.DAY }, label = { Text("日") }, modifier = Modifier.testTag("today-timeline"))
-                FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"), accentIndex = 1)
-                FilterChip(selected = scheduleRange == ScheduleRange.MONTH, onClick = { scheduleRange = ScheduleRange.MONTH }, label = { Text("月") }, modifier = Modifier.testTag("month-schedule"), accentIndex = 3)
+                FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"))
+                FilterChip(selected = scheduleRange == ScheduleRange.MONTH, onClick = { scheduleRange = ScheduleRange.MONTH }, label = { Text("月") }, modifier = Modifier.testTag("month-schedule"))
             }
         }
         if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
@@ -2247,9 +2256,11 @@ internal fun TasksScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TaskCenterView.entries.forEach { option ->
-                FilterChip(selected = view == option, onClick = { view = option }, label = { Text(option.label) }, modifier = Modifier.testTag("task-filter-${option.name}"))
+                FilterChip(selected = view == option, onClick = { view = option }, label = { Text(option.label) },
+                    modifier = Modifier.testTag("task-filter-${option.name}"), accentIndex = 1)
             }
         }
+        MotionPage(targetKey = view, modifier = Modifier.weight(1f).fillMaxWidth(), lateral = true, order = view.ordinal) {
         if (!isLoading && visibleTasks.isEmpty()) {
             EmptyState(
                 title = when (view) {
@@ -2268,6 +2279,7 @@ internal fun TasksScreen(
             } else {
                 TaskList(tasks = visibleTasks, onOpen = onOpen, onStart = onStart, placementLabels = placementLabels)
             }
+        }
         }
     }
 }
@@ -2314,7 +2326,7 @@ private fun TaskControlCenter(
                         modifier = Modifier.testTag("task-group-$title"))
                 }
                 items(if (expandedGroup == title) group else group.take(3), key = Task::id) { task ->
-                    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Surface(shape = RoundedCornerShape(20.dp), color = androidx.compose.ui.graphics.Color.Transparent) {
                         TaskRow(task, { onOpen(task) }, { onStart(task.id) }, emphasis = if (title == "需要处理") TaskRowEmphasis.ATTENTION else TaskRowEmphasis.NORMAL,
                             planningSummary = placementLabels[task.id])
                     }
@@ -2367,7 +2379,7 @@ private fun TaskStatusButton(task: Task, onStart: () -> Unit, actionsLocked: Boo
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 private fun TaskDetailScreen(
     task: Task,
     executionLogs: List<TaskExecutionLog>,
@@ -2396,6 +2408,7 @@ private fun TaskDetailScreen(
     onRequestAiAdvice: (PlanningAgentRequestType) -> Unit,
     onReviewAgentDraft: (PlanDraft) -> Unit,
 ) {
+    val accent = replandAccent(1)
     Scaffold(
         snackbarHost = { androidx.compose.material3.SnackbarHost(snackbarHostState,
             modifier = Modifier.onSizeChanged { onSnackbarSize(it.height) }) },
@@ -2436,7 +2449,7 @@ private fun TaskDetailScreen(
             item {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = accent.surface,
                 ) {
                     Column(modifier = Modifier.padding(22.dp)) {
                         Row(
@@ -2449,7 +2462,7 @@ private fun TaskDetailScreen(
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                             Spacer(Modifier.width(12.dp))
                         }
@@ -2457,18 +2470,18 @@ private fun TaskDetailScreen(
                         Text(
                             text = task.displayName,
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         task.description.takeIf { it.isNotBlank() && it != task.displayName }?.let {
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 text = it,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Spacer(Modifier.height(16.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (task.category != TaskCategory.UNSPECIFIED) DetailMetaPill(stringResource(task.category.labelRes()))
                             if (task.userPriority != TaskPriority.UNSPECIFIED) DetailMetaPill(stringResource(task.userPriority.labelRes()))
                             task.totalDurationMinutes?.let {
@@ -2519,7 +2532,7 @@ private fun TaskDetailScreen(
             (task.completionSummary != null || task.completionResult != null ||
                 task.actualDurationMinutes != null || task.progressPercent != null).takeIf { it }?.let {
                 item {
-                    DetailSection(title = stringResource(R.string.latest_feedback), eyebrow = "最近一次记录") {
+                DetailSection(title = stringResource(R.string.latest_feedback), eyebrow = "最近一次记录") {
                         task.completionSummary?.let { content ->
                             DetailLine(stringResource(R.string.completed_content), content)
                         }
@@ -2597,21 +2610,25 @@ private fun TaskDetailScreen(
 @Composable
 private fun DetailSection(title: String, eyebrow: String? = null, content: @Composable () -> Unit) {
     val reducedMotion = LocalReducedMotion.current
+    val accent = replandAccent(1)
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
     ) {
     Column(modifier = Modifier.animateContentSize(
         tween(if (reducedMotion) 0 else ReplandMotion.Expand, easing = FastOutSlowInEasing),
     ).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         eyebrow?.let {
+            Surface(color = accent.highlight, shape = RoundedCornerShape(8.dp)) {
             Text(
                 text = it,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = accent.ink,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
             )
+            }
         }
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         content()
@@ -2775,11 +2792,13 @@ private fun DetailActions(
     isAiEnabled: Boolean,
     onRequestAiAdvice: (PlanningAgentRequestType) -> Unit,
 ) {
+    val mint = replandAccent(1)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (task.status.isActive) {
-            OutlinedButton(
+            Button(
                 onClick = onComplete,
                 enabled = !actionsLocked,
+                colors = ButtonDefaults.buttonColors(containerColor = mint.highlight, contentColor = mint.ink),
                 modifier = Modifier.fillMaxWidth().testTag("complete-task"),
             ) {
                 Text(stringResource(R.string.complete))
@@ -2790,11 +2809,14 @@ private fun DetailActions(
                     enabled = !actionsLocked,
                     modifier = Modifier.weight(1f).testTag("partial-completion"),
                 ) { Text(stringResource(R.string.partial_completion)) }
-                OutlinedButton(onClick = onPostpone, enabled = !actionsLocked, modifier = Modifier.weight(1f).testTag("postpone-task")) {
+                OutlinedButton(onClick = onPostpone, enabled = !actionsLocked,
+                    modifier = Modifier.weight(1f).testTag("postpone-task")) {
                     Text(stringResource(R.string.postpone))
                 }
             }
-            TextButton(onClick = onReplace, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth().testTag("replace-task")) {
+            TextButton(onClick = onReplace, enabled = !actionsLocked,
+                colors = ButtonDefaults.textButtonColors(contentColor = mint.ink),
+                modifier = Modifier.fillMaxWidth().testTag("replace-task")) {
                 Text(stringResource(R.string.replace_task))
             }
         }
@@ -2808,7 +2830,8 @@ private fun DetailActions(
             }
         }
         if (task.status != TaskStatus.REPLACED) {
-            OutlinedButton(onClick = onEdit, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = onEdit, enabled = !actionsLocked,
+                modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.edit_task))
             }
         }
@@ -4503,12 +4526,16 @@ private fun MineScreen(
     ) {
         if (!showSettings) {
             personalProfileContent()
-            Text("用户画像", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text("用户画像", style = MaterialTheme.typography.labelLarge, color = replandAccent(2).ink)
             summaryContent()
-            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).testTag("mine-settings")) {
-                Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("设置")
+            DesignClickableSurface(onClick = onOpenSettings,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).testTag("mine-settings"),
+                shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DesignSectionHeading("设置", Icons.Outlined.Settings, accentIndex = 2, modifier = Modifier.weight(1f))
+                    Icon(DesignIcons.ArrowRight, null, Modifier.size(20.dp), tint = replandAccent(2).ink)
+                }
             }
         } else {
             Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",

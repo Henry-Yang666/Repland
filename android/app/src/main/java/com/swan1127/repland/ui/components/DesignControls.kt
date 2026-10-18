@@ -24,7 +24,10 @@ fun DesignButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     shape: Shape = RoundedCornerShape(12.dp),
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    colors: ButtonColors = ButtonDefaults.buttonColors(
+        containerColor = replandAccent(1).highlight,
+        contentColor = replandAccent(1).ink,
+    ),
     elevation: ButtonElevation? = null,
     border: BorderStroke? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
@@ -75,12 +78,12 @@ fun DesignFilterChip(
         colors = FilterChipDefaults.filterChipColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            selectedContainerColor = accent.surface,
+            selectedContainerColor = accent.highlight,
             selectedLabelColor = accent.ink,
             selectedLeadingIconColor = accent.ink,
         ),
         border = FilterChipDefaults.filterChipBorder(enabled, selected,
-            borderColor = MaterialTheme.colorScheme.outlineVariant, selectedBorderColor = accent.ink.copy(alpha = .2f)))
+            borderColor = MaterialTheme.colorScheme.outlineVariant, selectedBorderColor = accent.highlight))
 }
 
 @Composable
@@ -113,5 +116,5 @@ fun RowScope.DesignNavigationItem(
     NavigationBarItem(selected = selected, onClick = onClick, icon = icon, label = label,
         modifier = modifier.then(pressMotion(source, true)), interactionSource = source,
         colors = NavigationBarItemDefaults.colors(selectedIconColor = accent.ink,
-            selectedTextColor = accent.ink, indicatorColor = accent.surface))
+            selectedTextColor = accent.ink, indicatorColor = accent.highlight))
 }
