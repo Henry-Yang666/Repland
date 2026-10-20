@@ -73,13 +73,19 @@ data class UsageSummaryDocument(
     val windowStart: String = "",
     val windowEnd: String = "",
     val facts: List<UsageSummaryFact> = emptyList(),
-)
+    val contentVersion: Int = CURRENT_CONTENT_VERSION,
+) {
+    companion object {
+        const val CURRENT_CONTENT_VERSION = 4
+    }
+}
 
 data class UsageSummaryAttempt(
     val revision: String,
     val attemptedAt: Long,
     val configurationRevision: String,
     val accessRevision: String,
+    val contentVersion: Int = UsageSummaryDocument.CURRENT_CONTENT_VERSION,
 )
 
 fun interface UsageSummaryAdvisor {
@@ -121,7 +127,7 @@ object UsageSummaryValidator {
 
 /** Describes recorded use, never personality, efficiency, unrecorded work or inferred preferences. */
 object UsageSummaryCalculator {
-    const val RULE = "usage-summary-v1"
+    const val RULE = "usage-summary-v2"
     const val WINDOW_DAYS = 30L
 
     fun calculate(
@@ -303,19 +309,29 @@ object UsageSummaryCalculator {
         val highlights = listOf("task-focus", "tasks-completed", "progress-reports", "execution-length", "manual-adjustments", "tasks-created")
             .mapNotNull { id -> sortedFacts.find { it.id == id }?.text }.take(3)
         val text = if (activity.isEmpty()) {
-            "你可以照常添加任务、安排日程和记录进度。这里会根据最近30天留下的使用记录，自动整理你近期关注的事项与推进节奏。"
+            "你的近期回顾会在这里慢慢展开，随日程、任务和进展的积累自动更新。"
         } else buildString {
-            append("根据最近30天的记录，你在 $days 天里留下了 ${activity.size} 条使用记录。")
-            if (created.isNotEmpty()) append("这期间新建了 ${created.size} 项任务。")
             if (trustedCategories.isNotEmpty()) {
-                val leading = trustedCategories.groupingBy { it.category }.eachCount().maxByOrNull { it.value }!!.key
-                append("有明确分类的记录中，${categoryName(leading)}事项较常见。")
+                val subjects = trustedCategories.map { categoryName(it.category) }.distinct().joinToString("、")
+                append("最近，你在整理${subjects}方面的事情。")
+            } else if (created.isNotEmpty()) {
+                append("最近，你把新的待办记了下来。")
+            } else if (edits.isNotEmpty()) {
+                append("最近，你回头整理了手头的待办。")
+            } else {
+                append("最近，你为手头的事情留下了新的记录。")
             }
-            if (completed.isNotEmpty()) append("已明确完成 ${completed.size} 项任务。")
-            if (progress.isNotEmpty()) append("还记录了 ${progress.size} 次阶段进度。")
-            if (ended.isNotEmpty()) append("已记录的单段执行时长中位数约 ${minutes(NumericProfileCalculator.quantile(ended.map { it.accumulatedMillis / 60_000.0 }, .5)!!)} 分钟，可作为安排分段的参考。")
-            if (changes.isNotEmpty()) append("你也主动调整过 ${changes.size} 次日程，这些选择保留在使用记录中。")
-            append("这份总结只描述已留下的记录，会随新的使用情况更新。")
+            when {
+                completed.isNotEmpty() && progress.isNotEmpty() -> append("任务留下了阶段进展，也有完成的事项收了尾。")
+                completed.isNotEmpty() -> append("已经完成的事情，也在待办中有了清楚的标记。")
+                progress.isNotEmpty() -> append("这段时间里，手头的事情也留下了阶段进展。")
+            }
+            if (ended.isNotEmpty()) append("你也为手头的事情留出了专注时间。")
+            when {
+                changes.isNotEmpty() -> append("安排有过调整，日程也随着你的选择更新。")
+                postpone.isNotEmpty() -> append("有些任务被放到了之后。")
+                cancelled.isNotEmpty() -> append("你也将不再继续的任务标记为取消。")
+            }
         }
         // Calendar movement changes a revision only when evidence enters/leaves the window.
         // Generated descriptions, exact refresh time and system-produced plans never enter it.

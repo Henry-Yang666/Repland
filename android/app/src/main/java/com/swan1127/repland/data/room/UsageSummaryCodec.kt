@@ -38,21 +38,23 @@ object UsageSummaryCodec {
         .put("highlights", JSONArray(value.highlights)).put("sourceFactIds", JSONArray(value.sourceFactIds))
         .put("operationCount", value.operationCount).put("configurationRevision", value.configurationRevision ?: JSONObject.NULL)
         .put("accessRevision", value.accessRevision ?: JSONObject.NULL).put("windowStart", value.windowStart)
-        .put("windowEnd", value.windowEnd).put("facts", facts(value.facts)).toString()
+        .put("windowEnd", value.windowEnd).put("facts", facts(value.facts))
+        .put("contentVersion", value.contentVersion).toString()
 
     fun document(payload: String): UsageSummaryDocument = parse(payload).let {
         UsageSummaryDocument(it.getString("revision"), it.getLong("generatedAt"), it.getString("origin"),
             it.getString("text"), it.getJSONArray("highlights").strings(), it.getJSONArray("sourceFactIds").strings(),
             it.getInt("operationCount"), it.nullable("configurationRevision"), it.nullable("accessRevision"),
-            it.getString("windowStart"), it.getString("windowEnd"), it.facts())
+            it.getString("windowStart"), it.getString("windowEnd"), it.facts(), it.optInt("contentVersion", 1))
     }
 
     fun encode(value: UsageSummaryAttempt): String = row().put("revision", value.revision)
         .put("attemptedAt", value.attemptedAt).put("configurationRevision", value.configurationRevision)
-        .put("accessRevision", value.accessRevision).toString()
+        .put("accessRevision", value.accessRevision).put("contentVersion", value.contentVersion).toString()
 
     fun attempt(payload: String): UsageSummaryAttempt = parse(payload).let {
-        UsageSummaryAttempt(it.getString("revision"), it.getLong("attemptedAt"), it.getString("configurationRevision"), it.getString("accessRevision"))
+        UsageSummaryAttempt(it.getString("revision"), it.getLong("attemptedAt"), it.getString("configurationRevision"),
+            it.getString("accessRevision"), it.optInt("contentVersion", 1))
     }
 
     fun encode(value: UsageSummaryAction): String = row().put("id", value.id).put("kind", value.kind.name)

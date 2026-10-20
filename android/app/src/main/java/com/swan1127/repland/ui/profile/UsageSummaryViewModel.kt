@@ -117,7 +117,8 @@ class UsageSummaryViewModel(
                     val snapshot = input.records.snapshot
                     val availableSources = snapshot.facts.flatMap { it.sourceIds }.toSet()
                     val document = input.records.document?.takeIf { doc ->
-                        remoteSupported && input.access.isEnabled && input.access.hasExplicitConsent && input.provider.hasApiKey &&
+                        doc.contentVersion == UsageSummaryDocument.CURRENT_CONTENT_VERSION &&
+                            remoteSupported && input.access.isEnabled && input.access.hasExplicitConsent && input.provider.hasApiKey &&
                             doc.configurationRevision == input.configurationRevision && doc.accessRevision == input.accessRevision &&
                             doc.facts.isNotEmpty() && doc.facts.flatMap { it.sourceIds }.all { it in availableSources }
                     }

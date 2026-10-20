@@ -133,6 +133,42 @@ class UsageSummaryAutoWorkflowTest {
         } finally { f.close() }
     }
 
+    @Test fun legacy_writing_cache_keeps_evidence_but_refreshes_once_when_profile_becomes_visible() = runBlocking {
+        val f = Fixture()
+        try {
+            f.authorizeAndSeed()
+            val snapshot = f.repository.refresh()
+            val document = UsageSummaryDocument(snapshot.revision, f.now.get(), "AI · old-template",
+                "根据最近30天的记录，新建了1项任务。", emptyList(), snapshot.facts.map { it.id },
+                snapshot.operationCount, UsageSummaryHash.of(f.config.state.value.toString()),
+                UsageSummaryHash.of(f.ai.observe().first().toString()), snapshot.windowStart, snapshot.windowEnd, snapshot.facts)
+            val legacyJson = org.json.JSONObject(UsageSummaryCodec.encode(document)).apply { remove("contentVersion") }
+            f.db.planningWorkspaceDao().put(PlanningWorkspaceEntity(RoomUsageSummaryRepository.DOCUMENT_KEY, legacyJson.toString()))
+            assertEquals(1, f.repository.observeSummary().first()!!.contentVersion)
+            val legacyAttempt = org.json.JSONObject(UsageSummaryCodec.encode(UsageSummaryAttempt(snapshot.revision,
+                f.now.get(), document.configurationRevision!!, document.accessRevision!!))).apply { remove("contentVersion") }
+            f.db.planningWorkspaceDao().put(PlanningWorkspaceEntity(RoomUsageSummaryRepository.ATTEMPT_KEY, legacyAttempt.toString()))
+            assertEquals(1, f.repository.observeAttempt().first()!!.contentVersion)
+
+            val (vm) = f.model()
+            loaded(vm)
+            assertFalse(vm.uiState.value.isAiSummary)
+            assertEquals(snapshot.localSummary, vm.uiState.value.text)
+            assertEquals(snapshot.facts, vm.uiState.value.basis)
+            assertTrue(f.advisor.requests.isEmpty())
+
+            visible(vm, true)
+            generated(f, vm, 1)
+            assertEquals(UsageSummaryDocument.CURRENT_CONTENT_VERSION, f.repository.observeSummary().first()!!.contentVersion)
+            assertEquals(snapshot.facts, vm.uiState.value.basis)
+            visible(vm, false)
+            visible(vm, true)
+            foreground(vm)
+            await("The updated writing template should reuse its cache") { !vm.uiState.value.updating }
+            assertEquals(1, f.advisor.requests.size)
+        } finally { f.close() }
+    }
+
     @Test fun normal_changes_are_coalesced_and_updates_use_operation_and_six_hour_thresholds() = runBlocking {
         val f = Fixture()
         try {

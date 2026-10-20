@@ -35,6 +35,15 @@ class UsageSummaryUpdatePolicyTest {
         assertFalse(request(snapshot(), document(revision = "current", generatedAt = now - 48 * hour)))
     }
 
+    @Test fun an_old_writing_template_refreshes_without_new_operations_but_respects_failure_backoff() {
+        val old = document(revision = "current", generatedAt = now).copy(contentVersion = 1)
+        assertTrue(request(snapshot(), old))
+        val recentFailure = UsageSummaryAttempt("current", now - minute, configuration, access)
+        assertFalse(request(snapshot(), old, recentFailure))
+        assertTrue(request(snapshot(), old, recentFailure.copy(contentVersion = 1)))
+        assertTrue(request(snapshot(), old, recentFailure.copy(attemptedAt = now - 15 * minute)))
+    }
+
     @Test fun a_first_summary_requests_automatically_when_there_are_real_facts() {
         assertTrue(request(snapshot()))
     }

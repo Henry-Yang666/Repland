@@ -9,9 +9,13 @@ object UsageSummaryUpdatePolicy {
     fun shouldRequest(snapshot: UsageSummarySnapshot, document: UsageSummaryDocument?, attempt: UsageSummaryAttempt?,
         configurationRevision: String, accessRevision: String, now: Long): Boolean {
         if (snapshot.facts.isEmpty()) return false
-        val cached = document?.takeIf { it.configurationRevision == configurationRevision && it.accessRevision == accessRevision }
+        val cached = document?.takeIf {
+            it.contentVersion == UsageSummaryDocument.CURRENT_CONTENT_VERSION &&
+                it.configurationRevision == configurationRevision && it.accessRevision == accessRevision
+        }
         if (cached?.revision == snapshot.revision) return false
-        if (attempt != null && attempt.configurationRevision == configurationRevision && attempt.accessRevision == accessRevision &&
+        if (attempt != null && attempt.contentVersion == UsageSummaryDocument.CURRENT_CONTENT_VERSION &&
+            attempt.configurationRevision == configurationRevision && attempt.accessRevision == accessRevision &&
             now - attempt.attemptedAt < RETRY_INTERVAL) return false
         return cached == null || now - cached.generatedAt >= UPDATE_INTERVAL ||
             snapshot.operationCount - cached.operationCount >= SIGNIFICANT_OPERATIONS

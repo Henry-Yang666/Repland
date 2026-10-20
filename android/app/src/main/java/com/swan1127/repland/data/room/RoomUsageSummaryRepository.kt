@@ -130,7 +130,8 @@ class RoomUsageSummaryRepository(
 
     override suspend fun saveSummary(document: UsageSummaryDocument) = database.withTransaction {
         val snapshot = calculate()
-        require(document.revision == snapshot.revision && document.facts == snapshot.facts &&
+        require(document.contentVersion == UsageSummaryDocument.CURRENT_CONTENT_VERSION &&
+            document.revision == snapshot.revision && document.facts == snapshot.facts &&
             document.windowStart == snapshot.windowStart && document.windowEnd == snapshot.windowEnd &&
             document.operationCount == snapshot.operationCount) { "使用记录已变化，旧总结未覆盖当前内容。" }
         require(document.generatedAt in 0..clock() && document.origin.isNotBlank()) { "总结时间或来源无效。" }
@@ -149,7 +150,8 @@ class RoomUsageSummaryRepository(
     }
 
     override suspend fun saveAttempt(attempt: UsageSummaryAttempt) = database.withTransaction {
-        require(attempt.revision == calculate().revision && attempt.attemptedAt in 0..clock()) {
+        require(attempt.contentVersion == UsageSummaryDocument.CURRENT_CONTENT_VERSION &&
+            attempt.revision == calculate().revision && attempt.attemptedAt in 0..clock()) {
             "使用记录已变化，本次请求未发出。"
         }
         requireRemoteAccess(attempt.configurationRevision, attempt.accessRevision)

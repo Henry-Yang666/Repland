@@ -25,7 +25,7 @@ class UsageSummaryTest {
         assertEquals(0, result.operationCount)
         assertTrue(result.facts.isEmpty())
         assertTrue(result.localHighlights.isEmpty())
-        assertTrue(result.localSummary.contains("照常添加任务"))
+        assertTrue(result.localSummary.contains("近期回顾"))
         assertEquals(result.revision, snapshot(time = now + 86_400_000).revision)
     }
 
@@ -36,6 +36,21 @@ class UsageSummaryTest {
         assertEquals(before.revision, after.revision)
         assertEquals(0, after.operationCount)
         assertFalse(after.facts.any { it.id == "tasks-edited" })
+    }
+
+    @Test fun narrative_keeps_statistics_in_evidence_and_does_not_imply_unrecorded_progress() {
+        val createdOnly = snapshot(tasks = listOf(task("one"), task("two"), task("three")))
+        assertEquals(3, createdOnly.facts.single { it.id == "tasks-created" }.count)
+        assertTrue(createdOnly.facts.single { it.id == "tasks-created" }.text.contains("3"))
+        assertFalse(createdOnly.localSummary.any(Char::isDigit))
+        assertFalse(createdOnly.localSummary.contains("进展") || createdOnly.localSummary.contains("完成"))
+
+        val completed = snapshot(tasks = listOf(task()), logs = listOf(log("done", TaskStatus.COMPLETED)),
+            actions = listOf(UsageSummaryAction("moved", UsageSummaryActionKind.MOVE, "physics", "segment", now - 1000)))
+        assertTrue(completed.localSummary.contains("已经完成") && completed.localSummary.contains("安排有过调整"))
+        assertFalse(completed.localSummary.any(Char::isDigit))
+        assertFalse(completed.localSummary.contains("根据记录") || completed.localSummary.contains("分钟"))
+        assertEquals(listOf("action:moved"), completed.facts.single { it.id == "manual-adjustments" }.sourceIds)
     }
 
     @Test fun only_real_ended_sessions_supply_execution_time_and_pause_is_not_added() {
