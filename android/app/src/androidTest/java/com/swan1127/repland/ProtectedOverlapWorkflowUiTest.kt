@@ -74,8 +74,10 @@ class ProtectedOverlapWorkflowUiTest {
                     node("navigation-today").performClick()
                     rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-schedule"))
                     node("month-schedule").performClick()
-                    rule.onNodeWithTag("today-page-scroll").performScrollToNode(hasTestTag("month-date-$day"))
-                    node("month-date-$day").performClick()
+                    // The month cell may sit under the assistant FAB after scrolling.
+                    // Click its exposed position and verify day navigation before
+                    // looking for controls that only exist in the day timeline.
+                    rule.clickScheduleDate(day)
                     rule.openDetailedSchedule()
                     dayOpened = true
                 }
