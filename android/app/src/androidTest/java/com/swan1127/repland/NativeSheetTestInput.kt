@@ -50,23 +50,39 @@ internal object NativeSheetTestInput {
         automation.serviceInfo = automation.serviceInfo.apply {
             flags = flags or android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
         }
-        val root = requireNotNull(automation.rootInActiveWindow)
-        val screenshot = requireNotNull(automation.takeScreenshot())
+        var screenshot: android.graphics.Bitmap? = null
+        var bounds = android.graphics.Rect()
+        var display = android.graphics.Rect()
+        var focused = false
         try {
-            val window = requireNotNull(root.window)
-            val bounds = android.graphics.Rect().also(window::getBoundsInScreen)
-            val display = android.graphics.Rect(0, 0, screenshot.width, screenshot.height)
+            // Compose can be idle while WindowManager is still animating a rotation.
+            // Wait for native geometry rather than accepting the transient 1 px overscan.
+            rule.waitUntil(10_000) {
+                val root = automation.rootInActiveWindow
+                val window = root?.window
+                try {
+                    focused = window?.isFocused == true
+                    bounds = android.graphics.Rect().also { window?.getBoundsInScreen(it) }
+                    screenshot?.recycle()
+                    screenshot = automation.takeScreenshot()
+                    val image = screenshot
+                    display = if (image == null) android.graphics.Rect() else
+                        android.graphics.Rect(0, 0, image.width, image.height)
+                    focused && !bounds.isEmpty && display.contains(bounds)
+                } finally { window?.recycle(); root?.recycle() }
+            }
+            val image = requireNotNull(screenshot)
             val context = InstrumentationRegistry.getInstrumentation().targetContext
             java.io.File(context.getExternalFilesDir(null), "$evidenceName.png").outputStream().use {
-                check(screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
+                check(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
             }
             val contentSize = rule.onNodeWithTag("execution-session").fetchSemanticsNode().layoutInfo.coordinates.size
-            val evidence = "focused=${window.isFocused}; display=$display; window=$bounds; measuredContent=$contentSize"
+            val evidence = "focused=$focused; display=$display; window=$bounds; measuredContent=$contentSize"
             java.io.File(context.getExternalFilesDir(null), "$evidenceName.txt").writeText(evidence)
-            org.junit.Assert.assertTrue(evidence, window.isFocused && display.contains(bounds))
+            org.junit.Assert.assertTrue(evidence, focused && display.contains(bounds))
             org.junit.Assert.assertTrue("Content must fit native window: $evidence", contentSize.width <= bounds.width())
             org.junit.Assert.assertTrue("Content height must fit native window: $evidence", contentSize.height <= bounds.height())
-        } finally { root.recycle(); screenshot.recycle() }
+        } finally { screenshot?.recycle() }
     }
 
     fun assertControlWithinWindow(rule: ComposeTestRule, tag: String, ancestorTag: String? = null) {
