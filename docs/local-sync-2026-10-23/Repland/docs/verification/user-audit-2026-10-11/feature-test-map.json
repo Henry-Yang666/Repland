@@ -1,0 +1,1046 @@
+{
+  "featureCount": 80,
+  "features": [
+    {
+      "id": "E01",
+      "title": "E01 — 开始 / 暂停 / 继续 / 返回保留专注",
+      "documentation": "../../features/E01.md",
+      "referencedTestClasses": [
+        "ExecutionSessionRepositoryTest",
+        "ExecutionSessionUiTest",
+        "ExecutionWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "E02",
+      "title": "E02 — 结束：继续进行 / 部分完成 / 完成 / 跳过",
+      "documentation": "../../features/E02.md",
+      "referencedTestClasses": [
+        "ExecutionSessionTest",
+        "SessionInputWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 8
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "E03",
+      "title": "E03 — 结果后的剩余工作重排 / 取消保留当前计划",
+      "documentation": "../../features/E03.md",
+      "referencedTestClasses": [
+        "ExecutionWorkflowUiTest",
+        "TaskLifecycleValidatorTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "H01",
+      "title": "H01 — 数值画像计算契约与证据边界",
+      "documentation": "../../features/H01.md",
+      "referencedTestClasses": [
+        "Migration20To21Test",
+        "NumericNarrationContractTest",
+        "NumericNarrationValidatorTest",
+        "NumericProfileTest"
+      ],
+      "relatedResults": {
+        "passed": 12
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "H02",
+      "title": "H02 — 数值计算、缓存、来源排除与持久化",
+      "documentation": "../../features/H02.md",
+      "referencedTestClasses": [
+        "Migration20To21Test",
+        "NumericNarrationContractTest",
+        "NumericNarrationValidatorTest",
+        "NumericProfileRepositoryTest",
+        "NumericProfileTest"
+      ],
+      "relatedResults": {
+        "passed": 23
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "H03",
+      "title": "H03 — 用户可见数值与来源",
+      "documentation": "../../features/H03.md",
+      "referencedTestClasses": [
+        "Migration20To21Test",
+        "NumericNarrationContractTest",
+        "NumericNarrationValidatorTest",
+        "NumericProfileTest",
+        "NumericProfileWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "H04",
+      "title": "H04 — 有限只读 AI 现状描述",
+      "documentation": "../../features/H04.md",
+      "referencedTestClasses": [
+        "Migration20To21Test",
+        "NumericNarrationContractTest",
+        "NumericNarrationValidatorTest",
+        "NumericProfileAiWorkflowTest",
+        "NumericProfileTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "H05",
+      "title": "H05 — 任务建议与规划草案联动",
+      "documentation": "../../features/H05.md",
+      "referencedTestClasses": [
+        "Migration20To21Test",
+        "NumericNarrationContractTest",
+        "NumericNarrationValidatorTest",
+        "NumericProfileTest",
+        "NumericProfileWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "H06",
+      "title": "H06 — 画像技术验收与证据记录",
+      "documentation": "../../features/H06.md",
+      "referencedTestClasses": [
+        "Migration20To21Test",
+        "NumericNarrationContractTest",
+        "NumericNarrationValidatorTest",
+        "NumericProfileTest",
+        "NumericProfileWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K01",
+      "title": "K01 — 任务页浮动新增 / 空态添加 / 今日添加",
+      "documentation": "../../features/K01.md",
+      "referencedTestClasses": [
+        "TaskCaptureRepositoryTest",
+        "TaskCaptureSheetUiTest",
+        "TaskCaptureViewModelTest"
+      ],
+      "relatedResults": {
+        "passed": 21
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K02",
+      "title": "K02 — 简短录入、可选类别 / 优先级、稍后补详情",
+      "documentation": "../../features/K02.md",
+      "referencedTestClasses": [
+        "UnknownTaskWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 1
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K03",
+      "title": "K03 — 保存到任务库 / 今日清单、估时、自定义时长、截止日期",
+      "documentation": "../../features/K03.md",
+      "referencedTestClasses": [
+        "CaptureNumericWorkflowUiTest",
+        "TaskCaptureDraftTest"
+      ],
+      "relatedResults": {
+        "passed": 7
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K04",
+      "title": "K04 — 关闭保留草稿、继续填写、确认放弃草稿",
+      "documentation": "../../features/K04.md",
+      "referencedTestClasses": [
+        "CoreWorkflowUiTest",
+        "TaskCaptureRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 15
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K05",
+      "title": "K05 — 软键盘与抽屉返回：先收键盘，再关抽屉",
+      "documentation": "../../features/K05.md",
+      "referencedTestClasses": [
+        "TaskCaptureSheetUiTest"
+      ],
+      "relatedResults": {
+        "passed": 7
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K06",
+      "title": "K06 — 语音识别 → 可编辑文字 → 任务草稿",
+      "documentation": "../../features/K06.md",
+      "referencedTestClasses": [
+        "CoreWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 8
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K07",
+      "title": "K07 — 总览 / 待安排 / 今天 / 逾期 / 已完成筛选",
+      "documentation": "../../features/K07.md",
+      "referencedTestClasses": [
+        "TaskPlanMembershipUiTest"
+      ],
+      "relatedResults": {
+        "passed": 1
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K08",
+      "title": "K08 — 需要处理 / 今天 / 待安排 / 更晚分组、查看全部",
+      "documentation": "../../features/K08.md",
+      "referencedTestClasses": [
+        "PlacementNumericWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 1
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K09",
+      "title": "K09 — 任务行开始、查看已安排日期与时段",
+      "documentation": "../../features/K09.md",
+      "referencedTestClasses": [
+        "CoreWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 8
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K10",
+      "title": "K10 — 右上角自动排序、候选依据 / 上下调整 / 应用",
+      "documentation": "../../features/K10.md",
+      "referencedTestClasses": [
+        "LocalPriorityRankerTest",
+        "PlanDraftPreviewUiTest",
+        "TaskPageAppBarUiTest"
+      ],
+      "relatedResults": {
+        "passed": 21
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K11",
+      "title": "K11 — 撤销最近一次排序",
+      "documentation": "../../features/K11.md",
+      "referencedTestClasses": [
+        "PlanningWorkspaceRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K12",
+      "title": "K12 — 任务详情：说明、时间、优先级、进度、历史",
+      "documentation": "../../features/K12.md",
+      "referencedTestClasses": [
+        "TaskEditorWorkflowUiTest",
+        "TaskFeedbackWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 7
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K13",
+      "title": "K13 — 编辑已有任务：标题、备注、类别、优先级、天数、时长、日期",
+      "documentation": "../../features/K13.md",
+      "referencedTestClasses": [
+        "TaskEditorIntegrityTest",
+        "TaskEditorWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K14",
+      "title": "K14 — 完成整项、恢复已完成 / 已取消任务",
+      "documentation": "../../features/K14.md",
+      "referencedTestClasses": [
+        "TaskLifecycleRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 7
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K15",
+      "title": "K15 — 部分完成（累计进度）、本次反馈、实际耗时可留空",
+      "documentation": "../../features/K15.md",
+      "referencedTestClasses": [
+        "FeedbackFormValidationTest",
+        "TaskFeedbackIntegrityTest",
+        "TaskFeedbackWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 12
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K16",
+      "title": "K16 — 延期原因与主动查看重排建议",
+      "documentation": "../../features/K16.md",
+      "referencedTestClasses": [
+        "TaskFeedbackWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K17",
+      "title": "K17 — 取消任务的明确确认",
+      "documentation": "../../features/K17.md",
+      "referencedTestClasses": [
+        "TaskFeedbackWorkflowUiTest",
+        "TaskLifecycleRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K18",
+      "title": "K18 — 替换任务并保留原历史",
+      "documentation": "../../features/K18.md",
+      "referencedTestClasses": [
+        "TaskFeedbackIntegrityTest",
+        "TaskLifecycleRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 11
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K19",
+      "title": "K19 — 更正既有执行日志",
+      "documentation": "../../features/K19.md",
+      "referencedTestClasses": [
+        "TaskFeedbackIntegrityTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "K20",
+      "title": "K20 — 任务详情“打开对话”、理解 / 估时 / 拆分 / 重排建议",
+      "documentation": "../../features/K20.md",
+      "referencedTestClasses": [
+        "AiAdvisorContractTest",
+        "PlanningAgentWorkflowTest"
+      ],
+      "relatedResults": {
+        "passed": 12
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "N01",
+      "title": "N01 — 四页底栏切换",
+      "documentation": "../../features/N01.md",
+      "referencedTestClasses": [
+        "NativePageNavigationUiTest"
+      ],
+      "relatedResults": {
+        "passed": 3
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "N02",
+      "title": "N02 — 我的 / 助手 → 时间设置 → 返回原页",
+      "documentation": "../../features/N02.md",
+      "referencedTestClasses": [
+        "NativePageNavigationUiTest"
+      ],
+      "relatedResults": {
+        "passed": 3
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "N03",
+      "title": "N03 — 读取失败提示、重试、未可信禁写",
+      "documentation": "../../features/N03.md",
+      "referencedTestClasses": [
+        "ContextReadWorkflowUiTest",
+        "ReadFailureWorkflowUiTest",
+        "SessionReadIntegrityTest"
+      ],
+      "relatedResults": {
+        "passed": 11
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P01",
+      "title": "P01 — 独立“制定计划”",
+      "documentation": "../../features/P01.md",
+      "referencedTestClasses": [
+        "AgentCenterUiTest",
+        "CoreWorkflowUiTest",
+        "PlanningOperationServiceTest"
+      ],
+      "relatedResults": {
+        "passed": 42
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P02",
+      "title": "P02 — 空任务引导、缺可用时间引导",
+      "documentation": "../../features/P02.md",
+      "referencedTestClasses": [
+        "AgentCenterUiTest",
+        "QuickAvailabilityTest"
+      ],
+      "relatedResults": {
+        "passed": 26
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P03",
+      "title": "P03 — 最小可用时间卡、可选每周保存、重新预览",
+      "documentation": "../../features/P03.md",
+      "referencedTestClasses": [
+        "QuickAvailabilityTest",
+        "TimeSettingsWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P04",
+      "title": "P04 — “说出你的安排”输入、语音、生成候选",
+      "documentation": "../../features/P04.md",
+      "referencedTestClasses": [
+        "AgentCenterUiTest",
+        "ArrangementAssistantAccessTest"
+      ],
+      "relatedResults": {
+        "passed": 26
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P05",
+      "title": "P05 — 输入框下“安排今天”",
+      "documentation": "../../features/P05.md",
+      "referencedTestClasses": [
+        "AssistantChangesRepositoryTest",
+        "PlanningOperationServiceTest"
+      ],
+      "relatedResults": {
+        "passed": 19
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P06",
+      "title": "P06 — 输入框下“新增事项”、批量收集",
+      "documentation": "../../features/P06.md",
+      "referencedTestClasses": [
+        "AssistantChangesRepositoryTest",
+        "AssistantSaveReceiptTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P07",
+      "title": "P07 — 任务查询：未完成 / 今天 / 待安排 / 逾期，跳详情",
+      "documentation": "../../features/P07.md",
+      "referencedTestClasses": [
+        "AssistantReadOperationUiTest",
+        "PlanningReadServiceTest"
+      ],
+      "relatedResults": {
+        "passed": 15
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P08",
+      "title": "P08 — 排序解释",
+      "documentation": "../../features/P08.md",
+      "referencedTestClasses": [
+        "AssistantReadOperationUiTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P09",
+      "title": "P09 — 模型意图“制定计划”路由",
+      "documentation": "../../features/P09.md",
+      "referencedTestClasses": [
+        "AgentCenterUiTest"
+      ],
+      "relatedResults": {
+        "passed": 23
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P10",
+      "title": "P10 — 新增 / 已有候选区分，待决定区、删除候选",
+      "documentation": "../../features/P10.md",
+      "referencedTestClasses": [
+        "AgentCenterUiTest",
+        "AssistantChangesRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 31
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P11",
+      "title": "P11 — 候选修改时长 / 起止 / 轨道，重建保留原输入",
+      "documentation": "../../features/P11.md",
+      "referencedTestClasses": [
+        "PlacementNumericUiTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P12",
+      "title": "P12 — 连续补充指令修改同一草案",
+      "documentation": "../../features/P12.md",
+      "referencedTestClasses": [
+        "ArrangementAssistantAdviceValidatorTest",
+        "DebugAgnesArrangementAdvisorParserTest"
+      ],
+      "relatedResults": {
+        "passed": 16
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P13",
+      "title": "P13 — 请求处理中取消、输入 / 配置变化使旧响应失效",
+      "documentation": "../../features/P13.md",
+      "referencedTestClasses": [
+        "AgentCenterUiTest",
+        "CompatibleTransportTest"
+      ],
+      "relatedResults": {
+        "passed": 29
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P14",
+      "title": "P14 — 实际确认、成功数量回执、查看任务 / 安排",
+      "documentation": "../../features/P14.md",
+      "referencedTestClasses": [
+        "AssistantSaveReceiptTest",
+        "PlanningWorkspaceRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 7
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P15",
+      "title": "P15 — 持久化助手正文 / 草案 / 修改指令",
+      "documentation": "../../features/P15.md",
+      "referencedTestClasses": [
+        "InteractionWorkspaceRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P16",
+      "title": "P16 — 规划预览：新旧时段 / 顺序、理由、多日展开",
+      "documentation": "../../features/P16.md",
+      "referencedTestClasses": [
+        "PlanDraftPreviewUiTest",
+        "PlanDraftReviewTest"
+      ],
+      "relatedResults": {
+        "passed": 11
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P17",
+      "title": "P17 — 修改候选顺序、编辑分段、时长 / 日期 / 轨道",
+      "documentation": "../../features/P17.md",
+      "referencedTestClasses": [
+        "DraftSaveIntegrityTest",
+        "DraftSaveWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P18",
+      "title": "P18 — 本次暂不安排、缺信息、容量缺口及处理入口",
+      "documentation": "../../features/P18.md",
+      "referencedTestClasses": [
+        "PlanDraftPreviewUiTest",
+        "TimeConstraintPlannerTest"
+      ],
+      "relatedResults": {
+        "passed": 16
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P19",
+      "title": "P19 — 确认计划、取消 / 保留关闭 / 恢复查看",
+      "documentation": "../../features/P19.md",
+      "referencedTestClasses": [
+        "PlanningIsolationWorkflowUiTest",
+        "PlanningReadFailureTest",
+        "PlanningWorkspaceRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 11
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "P20",
+      "title": "P20 — 历史列表、恢复历史、清除当前计划、锁定 / 解锁段",
+      "documentation": "../../features/P20.md",
+      "referencedTestClasses": [
+        "HistoryRestoreWorkflowUiTest",
+        "PlanRestoreRepositoryTest",
+        "PlanningProtectionWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 13
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S01",
+      "title": "S01 — 版本、版本码、构建来源显示",
+      "documentation": "../../features/S01.md",
+      "referencedTestClasses": [],
+      "relatedResults": {},
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S02",
+      "title": "S02 — 本地提醒开关、系统通知授权与拒绝提示",
+      "documentation": "../../features/S02.md",
+      "referencedTestClasses": [
+        "LocalReminderPlannerTest",
+        "ReminderDeliveryIntegrityTest",
+        "ReminderSettingsRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 5
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S03",
+      "title": "S03 — AI 总开关、首次授权与请求发送说明",
+      "documentation": "../../features/S03.md",
+      "referencedTestClasses": [
+        "AiSettingsRepositoryTest",
+        "ArrangementAssistantAccessTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S04",
+      "title": "S04 — 模型地址 / ID / Key、本机加密保存、清除 Key、测试连接",
+      "documentation": "../../features/S04.md",
+      "referencedTestClasses": [
+        "AiProviderSettingsUiTest",
+        "AiSettingsRepositoryTest",
+        "CompatibleTransportTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S05",
+      "title": "S05 — 类别偏好展开、数字权重、真实保存与反馈",
+      "documentation": "../../features/S05.md",
+      "referencedTestClasses": [
+        "CategoryPreferenceRepositoryTest",
+        "ContextReadWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 5
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S06",
+      "title": "S06 — 关于你的记录：生成、本地证据、修改结论、删除",
+      "documentation": "../../features/S06.md",
+      "referencedTestClasses": [
+        "ProfileEvidenceAndDataManagementRepositoryTest",
+        "ProfileEvidenceGeneratorTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S07",
+      "title": "S07 — 导出本地 JSON，系统选择保存位置、成功 / 失败反馈",
+      "documentation": "../../features/S07.md",
+      "referencedTestClasses": [
+        "LocalDataJsonExporterTest"
+      ],
+      "relatedResults": {
+        "passed": 1
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S08",
+      "title": "S08 — 明确确认清除本地业务数据，取消提醒，防草稿回写",
+      "documentation": "../../features/S08.md",
+      "referencedTestClasses": [
+        "ProfileEvidenceAndDataManagementRepositoryTest",
+        "TaskCaptureViewModelTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S09",
+      "title": "S09 — 每周课程 / 可用 / 休息 / 固定时间新增、编辑、删除",
+      "documentation": "../../features/S09.md",
+      "referencedTestClasses": [
+        "TimeSettingsIntegrityTest",
+        "TimeSettingsWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 8
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S10",
+      "title": "S10 — 单日可用 / 不可用等例外新增、编辑、删除",
+      "documentation": "../../features/S10.md",
+      "referencedTestClasses": [
+        "TimeConstraintRevisionRepositoryTest",
+        "TimeSettingsWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 5
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S11",
+      "title": "S11 — 学期首周周一、学期周展示",
+      "documentation": "../../features/S11.md",
+      "referencedTestClasses": [
+        "TimeSettingsIntegrityTest"
+      ],
+      "relatedResults": {
+        "passed": 5
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S12",
+      "title": "S12 — 课表 PDF 读取、识别预览、选项、钟点核对",
+      "documentation": "../../features/S12.md",
+      "referencedTestClasses": [
+        "PdfTimetableImporterTest",
+        "TimetableConfirmationUiTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S13",
+      "title": "S13 — 导入课程逐项编辑节数、周模式、确认 / 取消 / 去重 / 回执",
+      "documentation": "../../features/S13.md",
+      "referencedTestClasses": [
+        "TimetableConfirmationTest",
+        "TimetableConfirmationUiTest"
+      ],
+      "relatedResults": {
+        "passed": 8
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "S14",
+      "title": "S14 — 系统深浅色、字号 / 横竖屏适配、反馈与触控面积",
+      "documentation": "../../features/S14.md",
+      "referencedTestClasses": [
+        "AiProviderSettingsUiTest",
+        "EditorSheetUiTest",
+        "TaskPageAppBarUiTest",
+        "TodayFocusUiTest"
+      ],
+      "relatedResults": {
+        "passed": 14
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T01",
+      "title": "T01 — 当前 / 下一项、开始执行、完整日程入口",
+      "documentation": "../../features/T01.md",
+      "referencedTestClasses": [
+        "TodayFocusUiTest"
+      ],
+      "relatedResults": {
+        "passed": 5
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T02",
+      "title": "T02 — 今日待安排、待确认与任务库跳转",
+      "documentation": "../../features/T02.md",
+      "referencedTestClasses": [
+        "TaskPlanMembershipUiTest"
+      ],
+      "relatedResults": {
+        "passed": 1
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T03",
+      "title": "T03 — 总览 / 日 / 周 / 月切换、选择日期",
+      "documentation": "../../features/T03.md",
+      "referencedTestClasses": [
+        "ScheduleTimelineTest",
+        "TimelineDashboardUiTest"
+      ],
+      "relatedResults": {
+        "passed": 15
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T04",
+      "title": "T04 — 合轨 / 分轨、时间块、当前时间展示",
+      "documentation": "../../features/T04.md",
+      "referencedTestClasses": [
+        "TimelineDashboardUiTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T05",
+      "title": "T05 — 新建命名轨道、重名反馈、跨页名称一致",
+      "documentation": "../../features/T05.md",
+      "referencedTestClasses": [
+        "InteractionWorkspaceRepositoryTest",
+        "RhythmTracksTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T06",
+      "title": "T06 — 事项库：分类、选任务 / 轨道 / 开始时间、放入安排",
+      "documentation": "../../features/T06.md",
+      "referencedTestClasses": [
+        "PlacementNumericUiTest",
+        "PlacementNumericWorkflowUiTest",
+        "PlacementRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 8
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T07",
+      "title": "T07 — 总预计时长与本次安排时长分别显示",
+      "documentation": "../../features/T07.md",
+      "referencedTestClasses": [
+        "PlacementNumericWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 1
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T08",
+      "title": "T08 — 日轨道新增课程：手动时间 / 待拖入",
+      "documentation": "../../features/T08.md",
+      "referencedTestClasses": [
+        "PlacementNumericUiTest",
+        "TimelineWriteReceiptWorkflowTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T09",
+      "title": "T09 — 点击时间块查看内容、备注、阶段、任务详情",
+      "documentation": "../../features/T09.md",
+      "referencedTestClasses": [
+        "TimelineDashboardUiTest"
+      ],
+      "relatedResults": {
+        "passed": 9
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T10",
+      "title": "T10 — 长按拖动、提前 / 推后 15 分钟、精确修改时间",
+      "documentation": "../../features/T10.md",
+      "referencedTestClasses": [
+        "PlacementRepositoryTest",
+        "TimelineWriteReceiptWorkflowTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T11",
+      "title": "T11 — 时间块编辑详情与备注",
+      "documentation": "../../features/T11.md",
+      "referencedTestClasses": [
+        "TaskEditorWorkflowUiTest",
+        "TimeSettingsWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 4
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T12",
+      "title": "T12 — 移出安排（不删除任务）、进入专注",
+      "documentation": "../../features/T12.md",
+      "referencedTestClasses": [
+        "ExecutionWorkflowUiTest",
+        "PlacementRepositoryTest"
+      ],
+      "relatedResults": {
+        "passed": 3
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T13",
+      "title": "T13 — 今日复盘：安排 / 待确认 / 反馈 / 进度 / 下一项",
+      "documentation": "../../features/T13.md",
+      "referencedTestClasses": [
+        "TaskFeedbackWorkflowUiTest"
+      ],
+      "relatedResults": {
+        "passed": 6
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    },
+    {
+      "id": "T14",
+      "title": "T14 — 复盘中的 Agent 总结",
+      "documentation": "../../features/T14.md",
+      "referencedTestClasses": [
+        "AiAdvisorContractTest",
+        "PlanningAgentWorkflowTest"
+      ],
+      "relatedResults": {
+        "passed": 12
+      },
+      "scopeNote": "关联类结果仅证明其实际断言，不证明该功能全部分支或系统外部服务。"
+    }
+  ]
+}

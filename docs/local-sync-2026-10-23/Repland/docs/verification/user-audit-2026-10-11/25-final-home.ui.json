@@ -1,0 +1,274 @@
+[
+  {
+    "text": "今天",
+    "content-desc": "",
+    "bounds": "[100,385][174,438]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "接下来没有安排",
+    "content-desc": "",
+    "bounds": "[100,459][496,541]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "从任务库选择一件事，再放进日轨道。",
+    "content-desc": "",
+    "bounds": "[100,562][722,615]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待安排 1",
+    "content-desc": "",
+    "bounds": "[245,673][385,726]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待确认 1",
+    "content-desc": "",
+    "bounds": "[695,673][835,726]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "查看完整日程",
+    "content-desc": "",
+    "bounds": "[431,820][650,873]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "日",
+    "content-desc": "",
+    "bounds": "[98,1035][135,1088]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "周",
+    "content-desc": "",
+    "bounds": "[245,1035][282,1088]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "月",
+    "content-desc": "",
+    "bounds": "[392,1035][429,1088]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "日轨道",
+    "content-desc": "",
+    "bounds": "[53,1166][224,1248]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "长按事项可直接移动；时间在左",
+    "content-desc": "",
+    "bounds": "[53,1253][502,1299]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 项",
+    "content-desc": "",
+    "bounds": "[934,1206][1001,1259]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "合轨",
+    "content-desc": "",
+    "bounds": "[95,1368][169,1421]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "分轨",
+    "content-desc": "",
+    "bounds": "[274,1368][348,1421]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "编辑每条轨道",
+    "content-desc": "",
+    "bounds": "[411,1357][605,1403]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "课程 · 专注 · 休息",
+    "content-desc": "",
+    "bounds": "[53,1489][305,1535]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "添加轨道",
+    "bounds": "[85,1588][148,1651]",
+    "class": "android.view.View",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "轨道",
+    "content-desc": "",
+    "bounds": "[159,1596][224,1642]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "课程",
+    "content-desc": "",
+    "bounds": "[309,1596][374,1642]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待安排",
+    "content-desc": "",
+    "bounds": "[459,1596][556,1642]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1",
+    "content-desc": "",
+    "bounds": "[567,1593][588,1646]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "分轨日程 · 3 条轨道",
+    "content-desc": "",
+    "bounds": "[95,1740][408,1793]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "课程",
+    "content-desc": "",
+    "bounds": "[231,1814][442,1860]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "专注",
+    "content-desc": "",
+    "bounds": "[515,1814][726,1860]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "休息",
+    "content-desc": "",
+    "bounds": "[799,1814][1010,1860]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "00:00",
+    "content-desc": "",
+    "bounds": "[53,1928][182,1981]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "01:00",
+    "content-desc": "",
+    "bounds": "[53,1991][182,2044]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "02:00",
+    "content-desc": "",
+    "bounds": "[53,2080][182,2127]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日计划",
+    "content-desc": "",
+    "bounds": "[43,148][270,230]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "10月11日 周日",
+    "content-desc": "",
+    "bounds": "[43,230][259,276]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日",
+    "content-desc": "",
+    "bounds": "[95,2251][160,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务",
+    "content-desc": "",
+    "bounds": "[370,2251][435,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "助手",
+    "content-desc": "",
+    "bounds": "[645,2251][710,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的",
+    "content-desc": "",
+    "bounds": "[920,2251][985,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "text": "清除全部本地数据",
+    "content-desc": "",
+    "bounds": "[183,990][697,1084]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "这会清除本机上的任务、计划、时间约束、执行日志、画像和设置，且无法撤销。已经导出的 JSON 文件不会受到影响。",
+    "content-desc": "",
+    "bounds": "[183,1126][897,1285]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "取消",
+    "content-desc": "",
+    "bounds": "[553,1385][627,1438]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "确认清除",
+    "content-desc": "",
+    "bounds": "[719,1385][865,1438]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

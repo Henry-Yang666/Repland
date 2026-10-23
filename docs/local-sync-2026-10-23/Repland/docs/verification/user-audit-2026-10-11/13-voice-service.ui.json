@@ -1,0 +1,34 @@
+[
+  {
+    "text": "",
+    "content-desc": "Google logo",
+    "bounds": "[430,843][651,917]",
+    "class": "android.widget.ImageView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "Tap to stop listening",
+    "bounds": "[383,959][698,1274]",
+    "class": "android.widget.FrameLayout",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "说出想安排的事",
+    "content-desc": "",
+    "bounds": "[91,1295][989,1368]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "English (United States)",
+    "content-desc": "",
+    "bounds": "[380,1508][700,1621]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

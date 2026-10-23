@@ -1,0 +1,74 @@
+[
+  {
+    "text": "Large files",
+    "content-desc": "",
+    "bounds": "[64,254][368,380]",
+    "class": "android.widget.Button",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "This week",
+    "content-desc": "",
+    "bounds": "[390,254][690,380]",
+    "class": "android.widget.Button",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Recent files",
+    "content-desc": "",
+    "bounds": "[63,380][890,538]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "Grid view",
+    "bounds": "[890,396][1017,522]",
+    "class": "android.widget.Button",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "Show roots",
+    "bounds": "[0,128][147,254]",
+    "class": "android.widget.ImageButton",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Recent",
+    "content-desc": "",
+    "bounds": "[189,155][354,226]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "Search",
+    "bounds": "[827,128][954,254]",
+    "class": "android.widget.Button",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "More options",
+    "bounds": "[954,128][1080,254]",
+    "class": "android.widget.ImageView",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "No items",
+    "content-desc": "",
+    "bounds": "[0,1326][1080,1383]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

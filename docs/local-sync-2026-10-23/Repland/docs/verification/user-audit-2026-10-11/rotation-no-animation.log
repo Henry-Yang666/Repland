@@ -1,0 +1,23 @@
+INSTRUMENTATION_STATUS: class=com.swan1127.repland.SessionInputWorkflowUiTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.swan1127.repland.SessionInputWorkflowUiTest:
+INSTRUMENTATION_STATUS: test=rotating_open_round_keeps_native_viewport_and_partial_input
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.swan1127.repland.SessionInputWorkflowUiTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=rotating_open_round_keeps_native_viewport_and_partial_input
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 8.175
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1

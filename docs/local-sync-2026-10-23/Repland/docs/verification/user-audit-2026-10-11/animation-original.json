@@ -1,0 +1,14 @@
+[
+  {
+    "name": "window_animation_scale",
+    "value": "1.0"
+  },
+  {
+    "name": "transition_animation_scale",
+    "value": "1.0"
+  },
+  {
+    "name": "animator_duration_scale",
+    "value": "1.0"
+  }
+]

@@ -1,0 +1,1 @@
+focused=true; display=Rect(0, 0 - 2400, 1080); window=Rect(29, -348 - 2493, 1390); measuredContent=2272 x 954

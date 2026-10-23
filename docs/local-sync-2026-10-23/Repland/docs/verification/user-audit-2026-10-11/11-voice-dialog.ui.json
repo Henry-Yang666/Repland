@@ -1,0 +1,106 @@
+[
+  {
+    "text": "",
+    "content-desc": "Close sheet",
+    "bounds": "[0,1635][1080,2400]",
+    "class": "android.view.View",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "Drag handle",
+    "bounds": "[498,823][582,834]",
+    "class": "android.view.View",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "新任务",
+    "content-desc": "",
+    "bounds": "[63,913][234,995]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "草稿已保存在此设备，尚未创建任务",
+    "content-desc": "",
+    "bounds": "[63,995][576,1041]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "关闭并保留草稿",
+    "bounds": "[923,946][986,1009]",
+    "class": "android.view.View",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "接下来要做什么？",
+    "content-desc": "",
+    "bounds": "[63,1073][577,1167]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "先记下，再决定什么时候做。",
+    "content-desc": "",
+    "bounds": "[63,1204][539,1257]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务内容",
+    "content-desc": "",
+    "bounds": "[105,1357][273,1420]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "未分类 · 未设置优先级 · 时长未知 · 未设截止日 · 未设计划日",
+    "content-desc": "",
+    "bounds": "[63,1562][909,1608]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "修改分类与优先级",
+    "content-desc": "",
+    "bounds": "[95,1682][386,1735]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "语音输入",
+    "content-desc": "",
+    "bounds": "[95,1845][241,1898]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "安排今天",
+    "content-desc": "",
+    "bounds": "[467,2038][613,2091]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "先保存到待安排",
+    "content-desc": "",
+    "bounds": "[413,2185][668,2238]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

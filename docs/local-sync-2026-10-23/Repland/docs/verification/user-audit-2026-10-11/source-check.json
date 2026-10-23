@@ -1,0 +1,1311 @@
+{
+  "checked": 261,
+  "mismatches": [],
+  "files": [
+    {
+      "path": "android/app/build.gradle.kts",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/proguard-rules.pro",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/AgentCenterUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/AiProviderSettingsUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/AiSettingsRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ArrangementAssistantAccessTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/AssistantChangesRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/AssistantReadOperationUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/AssistantSaveReceiptTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/CaptureNumericWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/CategoryPreferenceRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/CompatibleTransportTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ContextReadIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ContextReadWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/CoreWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/DebugAgnesArrangementAdvisorParserTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/DraftSaveIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/DraftSaveWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/EditorSheetUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/EngagementRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ExampleInstrumentedTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ExecutionSessionRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ExecutionSessionUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ExecutionWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/HistoryRestoreWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/InteractionWorkspaceRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ManualPlanChangeRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/Migration20To21Test.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/Migration5To6Test.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/NativePageNavigationUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/NativeSheetTestInput.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/NumericNarrationContractTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/NumericProfileAiWorkflowTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/NumericProfileRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/NumericProfileWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PdfTimetableImporterTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlacementNumericUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlacementNumericWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlacementRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanDraftPreviewUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanRestoreRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanningIsolationWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanningOperationServiceTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanningProtectionWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanningReadFailureTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanningReadServiceTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/PlanningWorkspaceRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ProfileEvidenceAndDataManagementRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ProtectedOverlapWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/QuickAvailabilityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ReadFailureWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ReadFaultFixtures.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/RecoverableReadViewModelTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ReminderDeliveryIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/ReminderSettingsRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/SessionInputWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/SessionReadIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskCaptureRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskCaptureSheetUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskCaptureViewModelTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskEditorIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskEditorWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskFeedbackIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskFeedbackWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskLifecycleRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskOverviewTestNavigation.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskPageAppBarUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TaskPlanMembershipUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimeConstraintRevisionRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimeSettingsIntegrityTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimeSettingsWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimelineDashboardUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimelineWriteReceiptWorkflowTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimetableConfirmationTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TimetableConfirmationUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/TodayFocusUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/UnavoidableRepositoryTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/swan1127/repland/UnknownTaskWorkflowUiTest.kt",
+      "group": "device",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/MainActivity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ReplandApplication.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/export/LocalDataJsonExporter.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/importer/PdfTimetableImporter.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/AiSettingsDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/AiSettingsEntity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/CategoryPreferenceDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/CategoryPreferenceEntity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/EngagementDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/EngagementEntities.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ExecutionLogDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ExecutionLogEntity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/InteractionWorkspaceCodec.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/NumericProfileCodec.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/PlanDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/PlanEntities.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/PlanningWorkspace.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ProfileEvidenceDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ProfileEvidenceEntity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ReminderSettingsDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ReminderSettingsEntity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/ReplandDatabase.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomAiSettingsRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomCategoryPreferenceRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomDataManagementRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomEngagementRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomExecutionSessionRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomNumericProfileRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomPlanRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomProfileEvidenceRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomReminderSettingsRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomTaskCaptureRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomTaskRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/RoomTimeRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/TaskDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/TaskEntity.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/TimeDao.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/room/TimeEntities.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/data/security/SecureAiProviderConfigRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/AiAdvisorContract.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/AiProviderConfig.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/AiSettings.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ArrangementAssistant.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ArrangementAssistantAdvisor.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ArrangementReadIntent.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/Engagement.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ExecutionSession.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/InteractionWorkspace.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/LocalDataSnapshot.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ManualPlanChange.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/NumericProfile.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlacementValidator.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/Plan.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlanDraftReview.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlanningAgent.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlanningOperationService.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlanningPriority.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlanningReadService.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/PlanningRevision.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ProfileEvidence.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/QuickAvailability.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/Reminders.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/ScheduleTimeline.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/Task.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TaskCaptureDraft.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TaskExecution.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TaskInputSources.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TaskPlanMembership.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TimeArrangement.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TimetableImport.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/TodayFocus.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/model/UserNumericInput.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/AiProviderConfigRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/AiSettingsRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/CategoryPreferenceRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/DataManagementRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/EngagementRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/ExecutionSessionRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/NumericProfileRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/PlanRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/ProfileEvidenceRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/ReminderSettingsRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/TaskCaptureRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/TaskRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/domain/ports/TimeRepository.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/reminders/LocalReminderReceiver.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/reminders/LocalReminderScheduler.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/reminders/ReminderRescheduleReceiver.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/ReplandApp.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/TaskPageAppBar.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/agent/AgentCenterScreen.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/agent/ArrangementAssistantViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/ai/AiProviderConfigViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/ai/PlanningAgentViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/components/AssistantSheet.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/components/EditorSheet.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/components/PlannerIcons.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/components/TaskDatePicker.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/components/TaskExperienceComponents.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/data/DataManagementViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/engagement/EngagementViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/plan/PlanViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/plan/QuickAvailabilityDialog.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/preferences/CategoryPreferenceViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/profile/NumericProfileSection.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/profile/NumericProfileViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/profile/ProfileEvidenceViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/reminders/ReminderSettingsViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/schedule/DailyDesk.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/schedule/ExecutionSessionDialog.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/schedule/ScheduleHorizonViews.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/schedule/TimelineDashboard.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/state/RecoverableRead.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/tasks/FeedbackFormValidation.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/tasks/TaskCaptureViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/tasks/TaskViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/theme/Color.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/theme/Theme.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/theme/Type.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/java/com/swan1127/repland/ui/time/TimeViewModel.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_launcher_background.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_launcher_foreground.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/drawable/repland_icon_background.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/drawable/repland_icon_foreground.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/values/colors.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/values/strings.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/values/themes.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/xml/backup_rules.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/main/res/xml/data_extraction_rules.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/remote/AndroidManifest.xml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/remote/java/com/swan1127/repland/data/ai/CompatibleAiAdvisor.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/remote/java/com/swan1127/repland/data/ai/CompatibleArrangementAdvisor.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/remote/java/com/swan1127/repland/data/ai/CompatibleChatTransport.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/remote/java/com/swan1127/repland/data/ai/CompatibleNumericProfileAdvisor.kt",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/AiAdvisorContractTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/ArrangementAssistantAdviceValidatorTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/ArrangementAssistantInterpreterTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/ArrangementAvailabilityTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/ArrangementOperationContractTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/ExampleUnitTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/FeedbackFormValidationTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/LocalDataJsonExporterTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/LocalPriorityRankerTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/LocalReminderPlannerTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/NumericNarrationValidatorTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/NumericProfilePresentationTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/NumericProfileTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/PlacementValidatorTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/PlanDraftEditorTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/PlanDraftReviewTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/PlanningAgentWorkflowTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/ProfileEvidenceGeneratorTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/RecoverableReadTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/RhythmTracksTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TaskCaptureDraftTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TaskInputSourcesTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TaskLifecycleValidatorTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TaskPlanMembershipTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TimeConstraintPlannerTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TimeEndBoundaryTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/TodayFocusTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/UnavoidablePlanningTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/UserNumericInputTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/domain/model/ExecutionSessionTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/app/src/test/java/com/swan1127/repland/domain/model/ScheduleTimelineTest.kt",
+      "group": "unit",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/build.gradle.kts",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/gradle.properties",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/gradle/libs.versions.toml",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/gradle/wrapper/gradle-wrapper.properties",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    },
+    {
+      "path": "android/settings.gradle.kts",
+      "group": "production",
+      "matchesAcceptedSourceLf": true
+    }
+  ]
+}

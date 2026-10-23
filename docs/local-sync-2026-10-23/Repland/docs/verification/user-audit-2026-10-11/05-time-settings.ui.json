@@ -1,0 +1,170 @@
+[
+  {
+    "text": "导入固定课程",
+    "content-desc": "",
+    "bounds": "[53,359][439,453]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "选择课表 PDF 后先预览识别结果；勾选课程并核对节次时间，确认后才加入固定时间。",
+    "content-desc": "",
+    "bounds": "[53,495][1027,601]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "课表 PDF",
+    "content-desc": "",
+    "bounds": "[106,696][286,760]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "在本机识别学校课表 PDF；先预览、核对并选择，确认后才加入固定时间。",
+    "content-desc": "",
+    "bounds": "[106,797][974,903]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "导入课表 PDF",
+    "content-desc": "",
+    "bounds": "[429,977][652,1030]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "规划时间约束",
+    "content-desc": "",
+    "bounds": "[53,1161][393,1243]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "可用时间用于制定计划；课程、休息和固定事项会避让。修改后需要重新预览并确认，不自动覆盖现有安排。",
+    "content-desc": "",
+    "bounds": "[53,1285][1027,1391]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "课表周次",
+    "content-desc": "",
+    "bounds": "[106,1475][282,1539]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "尚未设置学期第 1 周的周一。带“第几周”的课程暂按每周占用处理，以免排程冲突。",
+    "content-desc": "",
+    "bounds": "[106,1552][843,1640]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "设置",
+    "content-desc": "",
+    "bounds": "[882,1532][956,1585]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "每周常用时间",
+    "content-desc": "",
+    "bounds": "[53,1745][317,1809]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "添加",
+    "content-desc": "",
+    "bounds": "[914,1751][988,1804]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "还没有每周时间；可添加可用时间、课程、休息或固定事项。",
+    "content-desc": "",
+    "bounds": "[53,1882][1027,2008]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "单日例外",
+    "content-desc": "",
+    "bounds": "[53,2081][229,2127]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "添加",
+    "content-desc": "",
+    "bounds": "[914,2087][988,2127]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "返回",
+    "bounds": "[43,181][106,244]",
+    "class": "android.view.View",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "时间设置",
+    "content-desc": "",
+    "bounds": "[148,171][375,253]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日",
+    "content-desc": "",
+    "bounds": "[95,2251][160,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务",
+    "content-desc": "",
+    "bounds": "[370,2251][435,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "助手",
+    "content-desc": "",
+    "bounds": "[645,2251][710,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的",
+    "content-desc": "",
+    "bounds": "[920,2251][985,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]
