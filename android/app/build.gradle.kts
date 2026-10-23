@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.security.MessageDigest
 
 plugins {
     alias(libs.plugins.android.application)
@@ -50,6 +51,8 @@ val releaseSigningValues = listOf(
 val isReleaseSigningConfigured = releaseSigningValues.all { it.isNullOrBlank().not() }
 
 android {
+    // Keep the existing debug CI task; opt into the isolated design test package locally.
+    testBuildType = providers.gradleProperty("replandTestBuildType").orElse("debug").get()
     namespace = "com.swan1127.repland"
     compileSdk {
         version = release(36)
@@ -61,6 +64,9 @@ android {
         targetSdk = 36
         versionCode = replandVersionCode
         versionName = replandVersionName
+        val sourceRevision = providers.exec { commandLine("git", "rev-parse", "--short=12", "HEAD") }
+            .standardOutput.asText.get().trim()
+        buildConfigField("String", "BUILD_SOURCE", "\"$sourceRevision\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -77,6 +83,18 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+            resValue("string", "app_name", "Repland 测试")
+        }
+        create("designPreview") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".design"
+            versionNameSuffix = "-design"
+            resValue("string", "app_name", "Repland 设计副本")
+            matchingFallbacks += listOf("debug")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -88,8 +106,10 @@ android {
         }
         create("internal") {
             initWith(getByName("release"))
-            applicationIdSuffix = ".internal"
+            // Dedicated current-candidate identity: preserve older differently signed installs.
+            applicationIdSuffix = ".current"
             versionNameSuffix = "-internal"
+            resValue("string", "app_name", "Repland 当前版")
             // An installable internal build is always signed. A supplied release key is
             // preferred; the debug key is strictly a local/closed-test fallback.
             signingConfig = releaseSigningConfig ?: signingConfigs.getByName("debug")
@@ -101,14 +121,50 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
+    // Explicit BYOK network boundary: QA + closed internal builds only.
+    sourceSets {
+        getByName("debug") { kotlin.directories.add("src/remote/java"); manifest.srcFile("src/remote/AndroidManifest.xml") }
+        getByName("internal") { kotlin.directories.add("src/remote/java"); manifest.srcFile("src/remote/AndroidManifest.xml") }
+        getByName("designPreview") { kotlin.directories.add("src/remote/java"); manifest.srcFile("src/designPreview/AndroidManifest.xml") }
+    }
     buildFeatures {
         compose = true
+        buildConfig = true
+        resValues = true
     }
     testOptions {
         animationsDisabled = true
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+    lint {
+        abortOnError = true
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().withBuildType("designPreview")) { variant ->
+        (variant as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = true
+    }
+}
+
+tasks.register("recordBuildArtifacts") {
+    mustRunAfter("assembleDebug", "assembleInternal", "connectedDebugAndroidTest")
+    group = "verification"
+    description = "Records version, source revision and SHA-256 of candidate APKs."
+    doLast {
+        val revision = providers.exec { commandLine("git", "rev-parse", "HEAD") }.standardOutput.asText.get().trim()
+        val report = layout.buildDirectory.file("outputs/build-manifest.txt").get().asFile
+        val artifacts = fileTree(layout.buildDirectory.dir("outputs/apk")) { include("**/*.apk") }.files.sortedBy { it.path }
+        report.parentFile.mkdirs()
+        report.writeText("version=$replandVersionName\nversionCode=$replandVersionCode\nsource=$revision\n" +
+            artifacts.joinToString("\n") { file ->
+                val hash = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+                    .joinToString("") { "%02x".format(it) }
+                "${file.name}: $hash"
+            } + "\n")
+        logger.lifecycle("Build manifest: ${report.absolutePath}")
     }
 }
 
@@ -178,10 +234,12 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    add("designPreviewImplementation", libs.androidx.compose.ui.test.manifest)
 }

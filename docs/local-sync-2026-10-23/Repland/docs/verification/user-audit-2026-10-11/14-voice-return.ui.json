@@ -1,0 +1,50 @@
+[
+  {
+    "text": "说出你的安排",
+    "content-desc": "",
+    "bounds": "[183,805][569,899]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "语音由设备选择的识别服务处理，可能联网；请先检查文字，再决定是否创建任务。",
+    "content-desc": "",
+    "bounds": "[183,941][897,1029]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "识别文字（可编辑）",
+    "content-desc": "",
+    "bounds": "[225,1118][603,1181]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "开始语音识别",
+    "content-desc": "",
+    "bounds": "[215,1382][434,1435]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "取消",
+    "content-desc": "",
+    "bounds": "[480,1571][554,1624]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "转成任务草稿",
+    "content-desc": "",
+    "bounds": "[646,1571][865,1624]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

@@ -5,10 +5,10 @@ import kotlin.math.roundToInt
 
 /** User-owned relative weights for the four task categories. */
 object CategoryPreferences {
-    val defaults: Map<TaskCategory, Int> = TaskCategory.entries.associateWith(TaskCategory::defaultWeight)
+    val defaults: Map<TaskCategory, Int> = TaskCategory.knownEntries.associateWith(TaskCategory::defaultWeight)
 
     fun normalized(weights: Map<TaskCategory, Int>): Map<TaskCategory, Int> =
-        TaskCategory.entries.associateWith { category -> weights[category] ?: defaults.getValue(category) }
+        TaskCategory.knownEntries.associateWith { category -> weights[category] ?: defaults.getValue(category) }
 
     fun isValid(weights: Map<TaskCategory, Int>): Boolean {
         val normalized = normalized(weights)
@@ -22,6 +22,7 @@ enum class PriorityReasonKind {
     OVERDUE,
     DEADLINE,
     POSTPONEMENTS,
+    PLANNED_DATE,
     LOCAL_AI_NEUTRAL,
 }
 
@@ -40,15 +41,12 @@ data class LocalPriorityAssessment(
 /**
  * Deterministic local fallback for dynamic priority.
  *
- * The AI-fit portion (45%) is deliberately fixed at neutral 50. The context portion
- * (15%) is instead calculated only from observable deadline and postponement evidence.
+ * V1 uses only observable evidence: priority 35%, deadline 25%, intended day 15%,
+ * postponements 10%, category 10%. AI contributes zero until an audited correction exists.
  */
 object LocalPriorityRanker {
-    private const val AI_NEUTRAL_SCORE = 50.0
-    private const val AI_FIT_WEIGHT = 0.45
-    private const val INITIAL_PRIORITY_WEIGHT = 0.25
-    private const val CATEGORY_WEIGHT = 0.15
-    private const val CONTEXT_WEIGHT = 0.15
+    private const val INITIAL_PRIORITY_WEIGHT = 0.35
+    private const val CATEGORY_WEIGHT = 0.10
 
     fun rank(
         tasks: List<Task>,
@@ -69,6 +67,7 @@ object LocalPriorityRanker {
             .toMap()
         return tasks.sortedWith(
             compareBy<Task> { task -> manualPosition[task.id] ?: Int.MAX_VALUE }
+                .thenByDescending { task -> task.userPriority == TaskPriority.REQUIRED }
                 .thenByDescending { task -> assessments.getValue(task.id).score }
                 .thenByDescending { task -> task.userPriority.score }
                 .thenBy { task -> task.dueDate ?: LocalDate.MAX }
@@ -86,20 +85,20 @@ object LocalPriorityRanker {
         val categoryScore = categoryScore(task.category, categoryPreferences)
         val deadlineScore = deadlineScore(task.dueDate, today)
         val postponementScore = (50 + task.postponeCount * 15).coerceAtMost(100)
-        val contextScore = maxOf(deadlineScore, postponementScore)
+        val plannedDayScore = deadlineScore(task.scheduledForDate, today)
         val score = (
-            AI_NEUTRAL_SCORE * AI_FIT_WEIGHT +
-                task.userPriority.score * INITIAL_PRIORITY_WEIGHT +
+            task.userPriority.score * INITIAL_PRIORITY_WEIGHT +
                 categoryScore * CATEGORY_WEIGHT +
-                contextScore * CONTEXT_WEIGHT
+                deadlineScore * 0.25 + plannedDayScore * 0.15 + postponementScore * 0.10
             ).roundToInt().coerceIn(0, 100)
 
         return LocalPriorityAssessment(
             taskId = task.id,
             score = score,
             reasons = buildList {
-                add(PriorityReason(PriorityReasonKind.INITIAL_PRIORITY, task.userPriority.score))
-                add(PriorityReason(PriorityReasonKind.CATEGORY_PREFERENCE, categoryPreferences.getValue(task.category)))
+                add(PriorityReason(PriorityReasonKind.INITIAL_PRIORITY,
+                    task.userPriority.takeUnless { it == TaskPriority.UNSPECIFIED }?.score))
+                add(PriorityReason(PriorityReasonKind.CATEGORY_PREFERENCE, categoryPreferences[task.category]))
                 if (task.dueDate != null) {
                     val days = java.time.temporal.ChronoUnit.DAYS.between(today, task.dueDate).toInt()
                     add(
@@ -110,7 +109,9 @@ object LocalPriorityRanker {
                     )
                 }
                 if (task.postponeCount > 0) add(PriorityReason(PriorityReasonKind.POSTPONEMENTS, task.postponeCount))
-                add(PriorityReason(PriorityReasonKind.LOCAL_AI_NEUTRAL))
+                task.scheduledForDate?.let { add(PriorityReason(PriorityReasonKind.PLANNED_DATE,
+                    java.time.temporal.ChronoUnit.DAYS.between(today, it).toInt())) }
+                add(PriorityReason(PriorityReasonKind.LOCAL_AI_NEUTRAL, 0))
             },
         )
     }
@@ -119,6 +120,7 @@ object LocalPriorityRanker {
         category: TaskCategory,
         preferences: Map<TaskCategory, Int>,
     ): Double {
+        if (category == TaskCategory.UNSPECIFIED) return 50.0
         val maximum = preferences.values.maxOrNull()?.takeIf { it > 0 } ?: return 0.0
         return preferences.getValue(category).toDouble() / maximum * 100.0
     }
@@ -138,6 +140,7 @@ object LocalPriorityRanker {
 }
 
 enum class UnscheduledReason {
+    USER_DEFERRED,
     TOTAL_CAPACITY_IN_ROLLING_WINDOW,
     CAPACITY_BEFORE_DUE_DATE,
     CAPACITY_IN_ROLLING_WINDOW,

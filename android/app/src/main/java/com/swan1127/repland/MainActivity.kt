@@ -27,7 +27,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             ReplandTheme {
                 val taskViewModel: TaskViewModel = viewModel(
-                    factory = TaskViewModel.Factory(appContainer.taskRepository),
+                    factory = TaskViewModel.Factory(appContainer.taskRepository, appContainer.executionSessionRepository),
+                )
+                val taskCaptureViewModel: com.swan1127.repland.ui.tasks.TaskCaptureViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.tasks.TaskCaptureViewModel.Factory(appContainer.taskCaptureRepository),
                 )
                 val timeViewModel: TimeViewModel = viewModel(
                     factory = TimeViewModel.Factory(
@@ -39,6 +42,9 @@ class MainActivity : ComponentActivity() {
                     factory = PlanViewModel.Factory(
                         appContainer.planRepository,
                         appContainer.planDraftGenerator,
+                        appContainer.timeRepository,
+                        appContainer.taskRepository,
+                        appContainer.planningOperationService,
                     ),
                 )
                 val categoryPreferenceViewModel: CategoryPreferenceViewModel = viewModel(
@@ -49,6 +55,14 @@ class MainActivity : ComponentActivity() {
                 )
                 val profileEvidenceViewModel: ProfileEvidenceViewModel = viewModel(
                     factory = ProfileEvidenceViewModel.Factory(appContainer.profileEvidenceRepository),
+                )
+                val usageSummaryViewModel: com.swan1127.repland.ui.profile.UsageSummaryViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.profile.UsageSummaryViewModel.Factory(appContainer.usageSummaryRepository,
+                        appContainer.aiSettingsRepository, appContainer.aiProviderConfigRepository, appContainer.usageSummaryAdvisor,
+                        appContainer.usageSummaryAdvisor !== com.swan1127.repland.domain.model.NoOpUsageSummaryAdvisor),
+                )
+                val personalProfileViewModel: com.swan1127.repland.ui.profile.PersonalProfileViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.profile.PersonalProfileViewModel.Factory(appContainer.personalProfileStore),
                 )
                 val dataManagementViewModel: DataManagementViewModel = viewModel(
                     factory = DataManagementViewModel.Factory(appContainer.dataManagementRepository),
@@ -69,10 +83,15 @@ class MainActivity : ComponentActivity() {
                     factory = ArrangementAssistantViewModel.Factory(
                         appContainer.aiSettingsRepository,
                         appContainer.arrangementAssistantAdvisor,
+                        appContainer.planningReadService,
                     ),
                 )
                 val engagementViewModel: EngagementViewModel = viewModel(
                     factory = EngagementViewModel.Factory(appContainer.engagementRepository),
+                )
+                val autonomyViewModel: com.swan1127.repland.ui.agent.AutonomyViewModel = viewModel(
+                    factory = com.swan1127.repland.ui.agent.AutonomyViewModel.Factory(
+                        appContainer.autonomyRepository, appContainer.planningReadService, appContainer.planningOperationService),
                 )
                 ReplandApp(
                     taskViewModel,
@@ -86,6 +105,10 @@ class MainActivity : ComponentActivity() {
                     aiProviderConfigViewModel,
                     arrangementAssistantViewModel,
                     engagementViewModel,
+                    taskCaptureViewModel,
+                    personalProfileViewModel = personalProfileViewModel,
+                    autonomyViewModel = autonomyViewModel,
+                    usageSummaryViewModel = usageSummaryViewModel,
                 )
             }
         }

@@ -15,4 +15,10 @@ data class LocalDataSnapshot(
     val profileEvidence: List<ProfileEvidence>,
     val engagementMode: EngagementMode = EngagementMode.GUIDED,
     val usageEvents: List<UsageEvent> = emptyList(),
+    val executionSessions: List<ExecutionSession> = emptyList(),
+    val taskCaptureDraft: TaskCaptureDraft? = null,
+    val numericProfileRecords: Map<String, String> = emptyMap(),
+    val autonomyRecords: Map<String, String> = emptyMap(),
+    val usageSummaryRecords: Map<String, String> = emptyMap(),
+    val learningMemory: LearningMemorySnapshot? = null,
 )

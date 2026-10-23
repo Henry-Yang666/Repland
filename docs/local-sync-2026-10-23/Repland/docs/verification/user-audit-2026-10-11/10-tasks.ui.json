@@ -1,0 +1,290 @@
+[
+  {
+    "text": "总览",
+    "content-desc": "",
+    "bounds": "[95,354][169,407]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待安排",
+    "content-desc": "",
+    "bounds": "[274,354][384,407]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今天",
+    "content-desc": "",
+    "bounds": "[489,354][563,407]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "逾期",
+    "content-desc": "",
+    "bounds": "[668,354][742,407]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "已完成",
+    "content-desc": "",
+    "bounds": "[847,354][957,407]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "每件事，都有位置",
+    "content-desc": "",
+    "bounds": "[106,549][558,631]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "content-desc": "",
+    "bounds": "[106,673][144,750]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "进行中",
+    "content-desc": "",
+    "bounds": "[106,758][203,804]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1",
+    "content-desc": "",
+    "bounds": "[492,673][530,750]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待安排",
+    "content-desc": "",
+    "bounds": "[492,758][589,804]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "content-desc": "",
+    "bounds": "[877,673][915,750]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "需处理",
+    "content-desc": "",
+    "bounds": "[877,758][974,804]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今天",
+    "content-desc": "",
+    "bounds": "[53,868][141,932]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "  1",
+    "content-desc": "",
+    "bounds": "[141,879][179,921]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "开始 QA-final-AI-review",
+    "bounds": "[74,995][200,1121]",
+    "class": "android.widget.Button",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "QA-final-AI-review",
+    "content-desc": "",
+    "bounds": "[221,964][585,1016]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "已安排 · 10月11日 16:00–16:30",
+    "content-desc": "",
+    "bounds": "[221,1021][673,1067]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "未分类",
+    "content-desc": "",
+    "bounds": "[237,1077][325,1114]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "未设置",
+    "content-desc": "",
+    "bounds": "[373,1077][461,1114]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "30 分钟",
+    "content-desc": "",
+    "bounds": "[509,1077][611,1114]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待安排",
+    "content-desc": "",
+    "bounds": "[53,1183][185,1247]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "  1",
+    "content-desc": "",
+    "bounds": "[185,1194][223,1236]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "开始 QA-final-AI-reading",
+    "bounds": "[74,1310][200,1436]",
+    "class": "android.widget.Button",
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "QA-final-AI-reading",
+    "content-desc": "",
+    "bounds": "[221,1279][606,1331]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "待安排 · 30 分钟",
+    "content-desc": "",
+    "bounds": "[221,1336][454,1382]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "未分类",
+    "content-desc": "",
+    "bounds": "[237,1392][325,1429]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "未设置",
+    "content-desc": "",
+    "bounds": "[373,1392][461,1429]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "30 分钟",
+    "content-desc": "",
+    "bounds": "[509,1392][611,1429]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "全部任务",
+    "content-desc": "",
+    "bounds": "[42,171][576,253]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "撤销排序",
+    "content-desc": "",
+    "bounds": "[629,186][775,239]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "自动排序",
+    "content-desc": "",
+    "bounds": "[860,186][1006,239]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日",
+    "content-desc": "",
+    "bounds": "[95,2251][160,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务",
+    "content-desc": "",
+    "bounds": "[370,2251][435,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "助手",
+    "content-desc": "",
+    "bounds": "[645,2251][710,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的",
+    "content-desc": "",
+    "bounds": "[920,2251][985,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "",
+    "content-desc": "添加任务",
+    "bounds": "[933,1980][996,2043]",
+    "class": "android.view.View",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

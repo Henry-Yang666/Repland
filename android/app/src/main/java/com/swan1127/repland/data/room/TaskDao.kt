@@ -23,6 +23,7 @@ interface TaskDao {
                 WHEN 'REQUIRED' THEN 4
                 WHEN 'HIGH' THEN 3
                 WHEN 'MEDIUM' THEN 2
+                WHEN 'UNSPECIFIED' THEN 2
                 ELSE 1
             END DESC,
             createdAtEpochMillis DESC
@@ -41,4 +42,8 @@ interface TaskDao {
 
     @Update
     suspend fun update(task: TaskEntity)
+
+    /** Used only by guarded whole-operation undo for tasks created by that operation. */
+    @Query("DELETE FROM tasks WHERE id = :id")
+    suspend fun deleteById(id: String)
 }

@@ -3,6 +3,9 @@ package com.swan1127.repland.data.export
 import com.swan1127.repland.domain.model.ConfirmedPlan
 import com.swan1127.repland.domain.model.DateOverride
 import com.swan1127.repland.domain.model.LocalDataSnapshot
+import com.swan1127.repland.domain.model.LearningMemoryPointSnapshot
+import com.swan1127.repland.domain.model.LearningMemorySnapshot
+import com.swan1127.repland.domain.model.MemoryState
 import com.swan1127.repland.domain.model.PlannedSegment
 import com.swan1127.repland.domain.model.ProfileEvidence
 import com.swan1127.repland.domain.model.ProfileEvidenceSource
@@ -21,7 +24,22 @@ object LocalDataJsonExporter {
         "format" to jsonString(FORMAT),
         "generatedAtEpochMillis" to snapshot.generatedAtEpochMillis.toString(),
         "tasks" to jsonArray(snapshot.tasks.map(::taskJson)),
+        "taskCaptureDraft" to (snapshot.taskCaptureDraft?.let { d -> jsonObject(
+            "id" to jsonString(d.id), "text" to jsonString(d.text), "stage" to jsonString(d.stage.name),
+            "dueDate" to jsonString(d.dueDate?.toString()), "scheduledForDate" to jsonString(d.scheduledForDate?.toString()),
+            "duration" to d.duration.toString(), "category" to jsonString(d.category.name), "priority" to jsonString(d.priority.name),
+            "isCustomDuration" to d.isCustomDuration.toString(), "customDurationText" to jsonString(d.customDurationText),
+            "categorySource" to jsonString(d.categorySource.name), "prioritySource" to jsonString(d.prioritySource.name),
+        ) } ?: "null"),
         "executionLogs" to jsonArray(snapshot.executionLogs.map(::executionLogJson)),
+        "executionSessions" to jsonArray(snapshot.executionSessions.map { s -> jsonObject(
+            "id" to jsonString(s.id), "taskId" to jsonString(s.taskId), "taskTitle" to jsonString(s.taskTitle),
+            "planId" to jsonString(s.planId), "segmentId" to jsonString(s.segmentId),
+            "targetSeconds" to s.targetSeconds.toString(), "startedAtEpochMillis" to s.startedAtEpochMillis.toString(),
+            "accumulatedMillis" to s.accumulatedMillis.toString(),
+            "runningSinceEpochMillis" to (s.runningSinceEpochMillis?.toString() ?: "null"),
+            "endedAtEpochMillis" to (s.endedAtEpochMillis?.toString() ?: "null"), "outcome" to jsonString(s.outcome?.name),
+        ) }),
         "weeklyTimeBlocks" to jsonArray(snapshot.weeklyTimeBlocks.map(::weeklyBlockJson)),
         "dateOverrides" to jsonArray(snapshot.dateOverrides.map(::dateOverrideJson)),
         "timeConstraintSettings" to jsonObject(
@@ -43,6 +61,9 @@ object LocalDataJsonExporter {
             "consentedAtEpochMillis" to (snapshot.aiPreferences.consentedAtEpochMillis?.toString() ?: "null"),
         ),
         "profileEvidence" to jsonArray(snapshot.profileEvidence.map(::profileEvidenceJson)),
+        "numericProfileRecords" to jsonObject(*snapshot.numericProfileRecords.toSortedMap().map { (key, payload) -> key to jsonString(payload) }.toTypedArray()),
+        "autonomyRecords" to jsonObject(*snapshot.autonomyRecords.toSortedMap().map { (key, payload) -> key to jsonString(payload) }.toTypedArray()),
+        "usageSummaryRecords" to jsonObject(*snapshot.usageSummaryRecords.toSortedMap().map { (key, payload) -> key to jsonString(payload) }.toTypedArray()),
         "engagementMode" to jsonString(snapshot.engagementMode.name),
         "usageEvents" to jsonArray(snapshot.usageEvents.map { event ->
             jsonObject(
@@ -53,7 +74,42 @@ object LocalDataJsonExporter {
                 "subjectId" to jsonString(event.subjectId),
             )
         }),
+        *snapshot.learningMemory?.let { arrayOf("learningMemory" to learningMemoryJson(it)) }.orEmpty(),
     )
+
+    private fun learningMemoryJson(snapshot: LearningMemorySnapshot): String = jsonObject(
+        "version" to snapshot.version.toString(),
+        "referenceEnabled" to snapshot.referenceEnabled.toString(),
+        "gain" to finiteNumber(snapshot.gain),
+        "points" to jsonArray(snapshot.points.map(::learningMemoryPointJson)),
+    )
+
+    private fun learningMemoryPointJson(point: LearningMemoryPointSnapshot): String = jsonObject(
+        "id" to jsonString(point.id),
+        "taskId" to jsonString(point.taskId),
+        "taskTitle" to jsonString(point.taskTitle),
+        "content" to jsonString(point.content),
+        "createdOn" to jsonString(point.createdOn.toString()),
+        "stage" to point.stage.toString(),
+        "memory" to (point.memory?.let(::memoryStateJson) ?: "null"),
+    )
+
+    private fun memoryStateJson(state: MemoryState): String = jsonObject(
+        "capturedOn" to jsonString(state.capturedOn.toString()),
+        "lastEventOn" to jsonString(state.lastEventOn?.toString()),
+        "stabilityDays" to finiteNumber(state.stabilityDays),
+        "difficulty" to finiteNumber(state.difficulty),
+        "difficultySeed" to finiteNumber(state.difficultySeed),
+        "importance" to state.importance.toString(),
+        "reviews" to state.reviews.toString(),
+        "lapses" to state.lapses.toString(),
+        "exposures" to state.exposures.toString(),
+    )
+
+    private fun finiteNumber(value: Double): String {
+        require(value.isFinite()) { "Learning memory contains a non-finite number." }
+        return value.toString()
+    }
 
     private fun taskJson(task: Task): String = jsonObject(
         "id" to jsonString(task.id),
@@ -62,6 +118,14 @@ object LocalDataJsonExporter {
         "category" to jsonString(task.category.name),
         "userPriority" to jsonString(task.userPriority.name),
         "estimatedDays" to task.estimatedDays.toString(),
+        "inputSources" to jsonObject(
+            "category" to jsonString(task.inputSources.category.name),
+            "priority" to jsonString(task.inputSources.priority.name),
+            "estimatedDays" to jsonString(task.inputSources.days.name),
+            "totalDurationMinutes" to jsonString(task.inputSources.duration.name),
+            "dueDate" to jsonString(task.inputSources.dueDate.name),
+            "scheduledForDate" to jsonString(task.inputSources.scheduledDate.name),
+        ),
         "totalDurationMinutes" to jsonNumber(task.totalDurationMinutes),
         "scheduledForDate" to jsonString(task.scheduledForDate?.toString()),
         "dueDate" to jsonString(task.dueDate?.toString()),

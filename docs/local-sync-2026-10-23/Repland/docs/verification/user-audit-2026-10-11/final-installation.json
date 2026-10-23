@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-10-11T22:57:54.1635207+08:00",
+  "packages": [
+    "package:com.swan1127.repland.current"
+  ],
+  "currentPackageMetadata": [
+    "    versionCode=1035 minSdk=24 targetSdk=36",
+    "    versionName=0.1.35-internal",
+    "    lastUpdateTime=2026-10-11 20:42:53",
+    "      firstInstallTime=2026-10-09 23:32:26"
+  ],
+  "installedBaseApkSha256": "9c5a54385aad72ca6e0d8ac2e4477862c83bb93ac4f23acccfd12722267341b2",
+  "expectedSha256": "9c5a54385aad72ca6e0d8ac2e4477862c83bb93ac4f23acccfd12722267341b2",
+  "matches": true,
+  "testPackagesUninstalled": [
+    "com.swan1127.repland.qa.test",
+    "com.swan1127.repland.qa"
+  ]
+}

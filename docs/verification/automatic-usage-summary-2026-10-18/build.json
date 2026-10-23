@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-18",
+  "versionName": "0.1.35",
+  "versionCode": 1035,
+  "variants": [
+    "debug",
+    "designPreview",
+    "debugAndroidTest"
+  ],
+  "build": "passed",
+  "lint": {
+    "Error": 0,
+    "Warning": 78
+  },
+  "offlineBoundary": "passed",
+  "sourceManifest": "source-files.json",
+  "sourceHashFormat": "SHA-256 of source bytes after CRLF-to-LF normalization for text files"
+}

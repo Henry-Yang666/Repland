@@ -1,6 +1,6 @@
 # Repland
 
-Repland is a Chinese-language, single-device task-planning app for personal MVP testing. It turns user-entered tasks and unavailable time into a user-confirmed, actionable plan.
+Repland is a Chinese-language, single-device task-planning app for personal MVP testing. It turns user-entered goals, constraints and real progress into an actionable plan that it can maintain within delegated authority. Terminology reflects the approved first-batch direction of 2026-10-16, not an implementation or test-completion claim; scope and historical decision changes are recorded in [phase-one authorization](docs/AUTONOMY_PHASE1_2026-10-16.md).
 
 ## Product scope
 
@@ -13,12 +13,32 @@ The tasks, constraints, feedback, plans, and history stored on the user's curren
 _Avoid_: Cloud account, cross-device data
 
 **AI suggestion**:
-A non-binding AI recommendation that may analyse a task or propose a planning adjustment through the product's API-connected workflow. It never changes a task's status or applies a plan without user confirmation.
-_Avoid_: Automatic execution, autonomous planning
+A reviewable AI assessment that is distinct from the user’s facts and execution evidence. It can inform an authorized action directly, or remain a suggestion when automatic arrangement is paused or the decision lies outside the delegated scope.
+_Avoid_: User fact, mandatory approval step, unbounded action
 
 **AI decision authorization**:
-A user-facing option available when a planning conflict has multiple acceptable trade-offs. If the user explicitly chooses “由 AI 决定”, Repland may apply the AI's choice within that current decision scope and records it as a new, reversible plan version; this does not enable permanent autonomous planning.
-_Avoid_: Implied authorization, permanent auto-planning
+The user’s permission for the assistant to act on a particular decision or maintain ordinary planning over a stated continuing scope. An explicit, unambiguous command already authorizes that command; it is not inferred from silence or content quoted in a document.
+_Avoid_: Implied consent, authorization from imported text, unlimited authority
+
+**Daily delegation（日常委托）**:
+Continuing user authority to create, estimate, classify and maintain ordinary flexible work within adopted boundaries. It can be paused, does not imply permission to change fixed commitments, and is separate from model-data consent.
+_Avoid_: Unlimited authority, per-task approval, inferred permission
+
+**Planning estimate（规划估计）**:
+An AI- or locally estimated amount of work used for arrangement when a user value is absent. Its source remains distinguishable from user estimates, real effort and personal-profile evidence.
+_Avoid_: User-entered duration, actual duration, fabricated fact
+
+**Local repair（局部重排）**:
+An arrangement change limited first to work and dates affected by a real input change. It preserves fixed commitments, the current execution session and nearby manual intent while reducing unnecessary schedule movement.
+_Avoid_: Whole-week reshuffle on every change, actual postponement event
+
+**Action receipt（操作回执）**:
+A concise account of an applied action, its relevant consequences and any unplaced work. It is tied to the saved result and offers access to correction or operation undo.
+_Avoid_: Success before save, mandatory approval request
+
+**Operation undo（操作撤销）**:
+A targeted reversal of one action’s related task, field and arrangement changes, distinct from historical plan restoration. It preserves subsequent edits and execution facts, so conflicting newer information cannot be overwritten by an old snapshot.
+_Avoid_: Restore all historical state, erase later execution
 
 **Task title**:
 The user-visible name of a task, created when the task is saved. If the user provides a title, it is retained; if the user provides only a task description, AI may generate an editable title from that description.
@@ -33,7 +53,7 @@ An optional ordering statement in a task description, such as “finish A before
 _Avoid_: Hidden hard dependency, full dependency graph in MVP
 
 **Task creation minimum**:
-A task can be saved with a user-provided title or description, a category, and an initial priority. Deadline, expected completion days, and expected total duration are optional additions; missing time information may keep the task pending for automatic time placement.
+A task can be saved with only a user-provided title or short description, from which an editable title can be formed. Category, initial priority, deadline, expected completion days, and expected total duration are optional; missing values remain unknown rather than becoming user choices.
 _Avoid_: Required detailed planning form, rejected task without optional fields
 
 **Category preference settings**:
@@ -41,29 +61,31 @@ The MVP uses four preset categories—课内学习, 课外学习, 办公事务, 
 _Avoid_: Fixed universal category order, unrestricted category taxonomy
 
 **Task-save planning**:
-When a task is saved, Repland may immediately analyse it and produce a planning draft or advice. The result is always reviewable and requires user confirmation before becoming the current plan.
-_Avoid_: Applying an AI plan on save, waiting for a complete form
+The automatic estimation and arrangement of a submitted task within delegated authority and adopted availability. “Only record it” keeps the task without arranging it; unknown user facts remain distinguishable from planning estimates.
+_Avoid_: Mandatory draft on every save, unsent text as command
 
 **Plan draft**:
 A generated planning proposal that has not yet become the current plan. It has two outputs: a task list ordered for execution and, when enough time information exists, a plan with dated time segments. Tasks without enough time information can still participate in basic list ordering but remain pending for exact placement. It can be reviewed, edited, accepted, or discarded by the user.
 _Avoid_: Applied plan, automatic change
 
+**Formulate plan**:
+A user request to arrange unfinished work using current tasks, constraints and execution facts. Ordinary changes can take effect within delegated scope with a receipt and undo; fixed commitments and actual deadlines remain protected.
+_Avoid_: Reusing old order only, automatic release of protection
+
 **Plan confirmation**:
-The user action that turns a draft into the current plan. The user may accept the whole draft or edit selected parts before confirming; the confirmed result becomes a new plan version.
-Selecting “由 AI 决定” for a current conflict is an explicit authorization and may count as confirmation for that decision scope, allowing AI to apply the choice directly while recording a reversible new version.
-_Avoid_: Passive approval, automatic application without authorization
+An explicit acceptance of a draft used in suggestion-only mode or for a decision requiring user review. It is one path for applying a plan, not an additional step required after every authorized command or routine maintenance.
+_Avoid_: Passive approval, mandatory repeated approval
 
 **Authorization scope**:
-The specific conflict or planning decision covered by the user's “由 AI 决定” choice. It may permit AI to adjust a directly affected manual order, but does not grant permission to change unrelated tasks, statuses, or global settings.
+The tasks, actions, time boundaries and data sources covered by a user command or continuing delegation. Scope does not authorize unrelated changes or treating external document instructions as the user’s intent.
 _Avoid_: Unlimited AI authority, authorization spillover
 
 **Planning setting change**:
-A change to a global preference such as category weights or availability rules. It becomes planning input for a new draft rather than immediately mutating the current plan; the user confirms the resulting version before it takes effect.
-_Avoid_: Immediate bulk mutation, history loss
+A user change to preferences or availability used by subsequent arrangement. It may trigger authorized local repair of affected future work while preserving historical facts and fixed commitments.
+_Avoid_: History loss, inferred global preference change
 
 **Current plan**:
-The single user-confirmed plan currently used for execution and reminders. New AI results remain drafts until confirmed, and historical versions remain available for rollback; the MVP does not maintain multiple simultaneously active plans.
-If an unconfirmed draft exists, the current plan still governs execution, notifications, and task state.
+The single effective arrangement governing execution and reminders, applied either by explicit acceptance or authorized automatic action. Unapplied drafts remain separate and do not schedule reminders.
 _Avoid_: Competing active plans, draft treated as current
 
 **Unconfirmed draft**:
@@ -91,16 +113,16 @@ A task whose deadline has passed while it remains unfinished. It stays active un
 _Avoid_: Automatic cancellation, hidden deadline extension
 
 **Plan feasibility warning**:
-A user-visible statement that the currently available time cannot satisfy all planned work before its deadlines. AI may explain the shortfall and recommend trade-offs such as rotation, postponement, splitting, lowering the goal, or abandonment; the user chooses or authorizes the outcome rather than the system silently changing or dropping work.
-_Avoid_: Automatic failure, hidden rescheduling
+A statement of work that cannot fit the available capacity before real deadlines. The assistant may automatically move or split ordinary flexible work, but changing a true deadline or protected commitment requires matching authority.
+_Avoid_: Automatic failure, hidden deadline extension, discarded work
 
 **Manual plan adjustment**:
-A user-confirmed reorder or placement change for the current plan. It expresses the user's current intent and should be preserved during later replanning unless the user releases it; it does not silently rewrite the task's initial priority.
-_Avoid_: Permanent priority rewrite, ignored user intent
+A direct user reorder or placement change expressing current intent. It is preferred during nearby automatic repair; permanent movement protection is expressed separately through an explicit fixed or locked interval.
+_Avoid_: Permanent priority rewrite, ordinary drag as permanent lock
 
 **Manual order override**:
-The user's highest-priority direct change to the current plan, made by long-pressing a task and dragging it up or down. On a concrete time-segment plan, the drag also changes the corresponding time-segment arrangement. It takes precedence over AI ordering for the current plan; the end-of-day workflow records the user's final ordered table for later analysis and history.
-_Avoid_: AI undoing the order, unrecorded manual decision
+The user’s direct ordering choice for current work, retained as a traceable planning decision and given stability preference during local repair. It does not silently rewrite task importance or grant permission to violate fixed time.
+_Avoid_: Unrecorded manual intent, permanent protection inferred from one drag
 
 **Manual-order behavior evidence**:
 The user's repeated direct ordering choices may inform later AI suggestions about planning preferences. They do not silently rewrite initial priorities, category weights, or the user's task data.
@@ -111,19 +133,19 @@ A non-blocking warning shown when the user's direct ordering may cause a deadlin
 _Avoid_: Blocking user control, silent reorder
 
 **Manual parallel override**:
-A user-created overlap between a fixed task and a normal task. AI must preserve the user choice and may warn about execution risk, but cannot generate or silently remove the overlap.
+A user-confirmed overlap between ordinary, unprotected task placements, not evidence of simultaneous execution. It cannot cover courses, fixed commitments, hard-protected rest, locked intervals, or confirmed unavoidable-task intervals without first changing or releasing the relevant protection.
 _Avoid_: AI-generated concurrency, automatic conflict correction
 
 **Initial-priority change**:
-A user edit to a task's original high/medium/low priority, which remains a separate user judgment from dynamic priority. It triggers recalculation and a new adjustment draft rather than silently changing the current plan.
-_Avoid_: Immediate plan mutation, dynamic value rewritten as initial value
+A user edit of the task’s stated importance, separate from dynamic planning urgency and interval protection. It may trigger authorized repair without replacing the user’s value with an AI score.
+_Avoid_: Dynamic value written as user choice, importance equals fixed time
 
 **Locked time block**:
-A scheduled task interval that the user has protected from automatic movement. Only the user can unlock or change it. AI treats it as occupied and never generates an overlapping task placement; the user may manually create an overlap when they intentionally want parallel work.
+A scheduled task interval protected from movement or conflicting placement by AI, local planning, and fallback planning. The user must explicitly release or change its protection before making a conflicting adjustment.
 _Avoid_: Locked task, immutable task
 
 **Fixed task**:
-A normal task marked with the user's “不可避免” priority. Its confirmed time placement is treated as fixed for AI planning, but it is not a separate event object. The user may manually place a normal task in the same interval for parallel work; AI does not generate such overlap.
+A task marked “不可避免”, considered preferentially before placement and whose confirmed intervals are protected from automatic movement or conflicting placement across AI, local, and fallback planning. It is not a separate fixed-event object; the user can explicitly change its placement with confirmation.
 _Avoid_: Separate event model, AI-generated overlap
 
 **Execution log**:
@@ -131,16 +153,16 @@ A record of a user-confirmed task status or feedback event. It remains historica
 _Avoid_: Rewritten history, inferred completion
 
 **Plan version**:
-A saved snapshot of task ordering, scheduled intervals, and task statuses at a confirmed point in time. Rolling back restores that snapshot as a new current version instead of deleting the prior version or its later execution logs.
-_Avoid_: Overwritten plan, temporary draft
+A retained snapshot of effective task order and scheduled intervals, whether applied manually or through authorized automation. Historical plan restoration creates a new version without reverting outcomes, reviving finished tasks or restarting past work.
+_Avoid_: Overwritten plan, operation undo, temporary draft
 
 **Task status**:
-The user's current execution state for a task: not started, in progress, completed, postponed, cancelled, or replaced. When a confirmed time segment begins, the task may automatically enter “进行中”, and the user can manually change it. Completion, postponement, cancellation, replacement, and end-of-day outcomes still require the user's action; if no feedback is submitted, the system does not infer them.
-_Avoid_: AI status, automatically completed
+The execution state supported by an explicit user action or clear natural-language statement: not started, in progress, completed, postponed, cancelled or replaced. Clock time and elapsed timer targets do not establish a result; later corrections retain their provenance.
+_Avoid_: AI-invented result, automatically completed from time
 
-**Automatic-start event**:
-The system event generated when a confirmed time segment begins and moves its task into “进行中”. It is recorded as an execution-plan event, not as evidence that the task was completed; later user corrections are appended.
-_Avoid_: Automatic completion, automatic postponement
+**Scheduled-start reminder**:
+A reminder that a confirmed placement's planned start has arrived, without changing task status or recording actual work. It is distinct from a user-confirmed start or retrospective execution record.
+_Avoid_: Automatic-start event, inferred execution
 
 **Task-segment status distinction**:
 A daily work segment's completed or postponed result is recorded independently from the overall task status. Completing one segment does not automatically complete the task; the user controls the task-level outcome and total progress.
@@ -151,7 +173,7 @@ A user-confirmed task outcome that removes a task from future planning without d
 _Avoid_: Hard deletion, AI cancellation
 
 **Task restoration**:
-A user action that returns a completed or cancelled task to active planning. Restoration preserves the earlier completion or cancellation record and starts a new planning analysis or draft rather than overwriting history.
+An explicit user action or clear command returning a completed or cancelled task to active planning while preserving the earlier result. Its new arrangement may be applied within delegated scope without erasing history.
 _Avoid_: Erased outcome, automatic resurrection
 
 **Planning quantum**:
@@ -167,23 +189,23 @@ The MVP does not provide a dedicated recurring-task template. Repeated work is r
 _Avoid_: Habit automation in MVP, recurring-task confusion
 
 **Pending task**:
-A task that is visible in the task list and can still receive basic ordering, but lacks enough time information for exact automatic placement, such as an expected duration or necessary time constraint. A task with a duration but no deadline may still be placed within the rolling planning horizon. It remains user-controlled and is not silently discarded.
-_Avoid_: Invalid task, ignored task
+A retained task that is not currently placed, for example because the user asked to record only, availability is absent or capacity is insufficient. Missing user duration alone need not block placement when a source-labelled planning estimate is available.
+_Avoid_: Invalid task, ignored task, missing duration always blocks
 
 **Deterministic fallback priority**:
 The MVP's explainable priority calculation used when no AI is available. AI-specific factors receive neutral scores while user priority, category preference, deadline or overdue state, and postponements drive ordering with stable tie-breaking. Execution-time proximity is presented by the timed execution view and is not an independent fallback-ranking factor.
 _Avoid_: Machine-learned ranking, random order
 
 **Plan regeneration trigger**:
-A user-visible analysis or draft-generation event caused by saving a task, generating a plan, submitting execution feedback, changing a constraint, or explicitly requesting replanning. Saving a task may trigger immediate analysis. It creates advice or a proposal but never applies a plan automatically.
-_Avoid_: Silent reschedule, background mutation
+A relevant change such as a submitted task, real constraint update or explicit progress report that calls for arrangement maintenance. It can trigger authorized local repair or a reviewable draft, while opening a page alone is not a new instruction.
+_Avoid_: Model call on every page open, unrelated global replan
 
 **Future-constraint change**:
-A user change to a deadline, expected cycle, category, priority, timetable, rest template, or other planning input. It preserves already elapsed dates and historical versions, and generates a proposal for affected future work rather than silently rewriting the current plan.
+A change to an upcoming planning input that can trigger repair of affected future flexible work. It preserves elapsed arrangements, real execution and commitments not covered by the change.
 _Avoid_: Rewriting history, retroactive schedule mutation
 
 **Dynamic priority**:
-The changing priority shown for ordering tasks in the plan. Its soft-ranking structure is currently 25% user initial priority, 15% category preference, 45% AI task-planning suitability, and 15% AI context judgment. The 15% AI context judgment includes deadline proximity, accumulated postponements, the general profile, the learning profile, course/grade impact, and other relevant context. Hard constraints and feasibility rules are handled before or outside this score; the user's initial priority remains visible and is not silently rewritten.
+The explainable, changing priority used to consider candidate tasks for planning, based on user priority, deadlines, planned dates, execution evidence and category preferences. It never rewrites initial priority or overrides protected time; its versioned scoring rules belong to the product specification.
 _Avoid_: Overwritten user priority, fixed lifetime score
 
 **Execution-time proximity**:
@@ -191,12 +213,12 @@ The fact that a task's scheduled time segment is about to begin. In the current 
 _Avoid_: Extra ranking factor, urgency score from clock proximity
 
 **Priority presentation**:
-The user's initial high/medium/low priority remains stored and visible in task details. The task list and plan primarily show the current dynamic priority used for ordering, so the displayed planning urgency can change without rewriting the original user judgment.
+The user's explicit “高 / 中 / 低 / 不可避免” choice remains distinct from dynamic urgency; an absent choice is shown as “未设置”. Planning urgency may change without rewriting that choice or removing unavoidable-placement protection.
 _Avoid_: Confusing dynamic urgency with initial priority, hidden rewrite
 
 **Structured AI assessment**:
-An AI response that reports task judgments such as difficulty, expected work pattern, context importance, suggested duration or split, postponement risk, and reasons in a form the planner can use. The user's general profile and learning profile provide the AI's context judgment, which is a 15% factor in dynamic-priority decisions. It can recommend a capacity trade-off and help reassess a task's goal after repeated postponement. Internal ranking scores remain backend data; the user sees a short reason and may expand it for detailed reasons. It informs planning but is not a task-status command or a rewrite of the user's initial priority.
-_Avoid_: Opaque score, autonomous status change
+A non-binding, structured recommendation about a task's estimated duration, split, work pattern or planning trade-offs, informed by relevant task facts and available personal planning parameters. It does not add a separate profile-based priority factor, rewrite user facts or authorize a task-status change.
+_Avoid_: Opaque personality score, extra profile priority weight, autonomous status change
 
 **User correction of AI assessment**:
 Any user edit to an AI-suggested task description, duration, split, execution cycle, or goal context. The correction is treated as user-provided planning evidence and takes precedence over the earlier AI suggestion in later analysis.
@@ -216,7 +238,7 @@ Without configured availability, the MVP provides the task list but does not ass
 _Avoid_: Setup wall, unusable empty state, assumed free time
 
 **Completion cleanup**:
-When the user marks a task completed, future unexecuted work segments are removed from the active plan while remaining in plan history and execution records. Any resulting reallocation is proposed as a draft rather than silently applied.
+The removal of future unexecuted placements after an explicit completion action or command, with prior arrangements retained in history. Freed capacity may be reused through authorized local repair.
 _Avoid_: Deleted history, inferred completion
 
 **Daily review**:
@@ -228,20 +250,20 @@ The record produced at the end of the day from the user's final manually adjuste
 _Avoid_: AI-generated final order, unrecorded manual arrangement
 
 **End-of-day snapshot**:
-An automatically retained record of the final plan table for that day. It supports history and later analysis but does not bypass confirmation to become a new future current plan.
-_Avoid_: Hidden future-plan mutation, unconfirmed active plan
+A retained account of the day’s final arrangement for historical review. It is not evidence that scheduled work actually happened and is distinct from any newly maintained future plan.
+_Avoid_: Inferred execution, rewritten historical outcome
 
 **Profile aggregation**:
-The conversion of older detailed execution evidence into durable general-profile or learning-profile patterns after the detailed daily log window expires. Aggregation keeps useful planning evidence while allowing old raw status changes to be pruned or hidden.
-_Avoid_: Permanent raw diary, discarded learning evidence
+A traceable summary of effective execution evidence and explicit preferences within a stated scope and time range. The summary does not by itself authorize deleting source history or replacing uncertain evidence with a permanent personal label.
+_Avoid_: Automatic history pruning, discarded source evidence, permanent label
 
 **Planning horizon**:
 The rolling 30-day window in which the MVP expands tasks into daily work. Tasks beyond that window remain stored without being rendered as daily items.
 _Avoid_: Project end date, permanent schedule
 
 **Daily work segment**:
-A dated, timed portion of one task's work. A multi-day task has one task identity and may have many daily work segments carrying its remaining progress. AI-generated duration and split suggestions become exact time placement only after user confirmation; the user can edit, merge, or further split segments.
-_Avoid_: Duplicated task, separate task
+A dated portion of one task’s planned work, possibly based on a source-labelled estimate. Multiple segments retain one task identity and may be adjusted within delegated authority without implying execution or completion.
+_Avoid_: Duplicated task, planned time as actual effort
 
 **Timed execution view**:
 The view for a confirmed plan with concrete time segments. It displays scheduled tasks as equal-width rows, with a time axis on the left for reference; each task segment is represented by its start and end time points. After a segment ends, that row leaves this view and becomes available in the past-segment review view.
@@ -252,16 +274,16 @@ The concrete time representation shown for a scheduled task segment, using two p
 _Avoid_: Duration encoded by width, continuous chart required
 
 **Past-segment review view**:
-The horizontally reachable view for ended time segments. The user reviews each ended segment and records whether the work was completed or postponed; the system and AI do not infer that status.
-_Avoid_: Automatic completion, hidden unfinished work
+An optional view of elapsed planned segments where the user may supplement actual progress or correct a result. Unknown old results do not require review before remaining work can be arranged.
+_Avoid_: Mandatory review debt, automatic completion
 
 **Pending past segment**:
-An ended time segment that the user has not yet reviewed. It remains marked “待确认” and does not count as completed or postponed until the user submits a status.
-_Avoid_: Silent failure, automatic postponement
+An elapsed planned segment whose actual result is unknown. It is not automatically completed, failed or postponed, and does not block authorized arrangement of remaining work.
+_Avoid_: Silent failure, inferred postponement, mandatory approval debt
 
 **Task detail feedback**:
-The detail interaction available from a past time segment or the normal plan. The user can add actual time, progress, completed content, results, or other feedback; these inputs inform later planning and profile updates without allowing AI to set the task status.
-_Avoid_: Mandatory long form, AI-written execution result
+Optional actual time, progress, results or corrections supplied from task details or a clear language command. Missing fields stay unknown, and a clear status statement does not need a second form submission.
+_Avoid_: Mandatory long form, invented actual duration
 
 **Batch status edit**:
 A user action that selects multiple tasks and applies the same status change together. Each selected task receives its own execution record and any resulting planning analysis; batch editing does not allow AI or the system to infer the statuses.
@@ -272,28 +294,80 @@ A user choice from task details to turn the current task into a new task. The or
 _Avoid_: Overwriting task identity, erased original task
 
 **Execution feedback**:
-The user's report about what was completed, the actual progress or time, and any result after attempting a task. It is evidence for later advice, not an automatic status change.
-_Avoid_: Automatic completion, inferred outcome
+The user’s report of actual progress, effort or result. A clear instruction can directly update the corresponding status and remaining arrangement, with the original statement retained as its source.
+_Avoid_: Inferred outcome, every report requires another confirmation
 
 **Postponement feedback**:
-A user-confirmed decision that a past time segment was not completed and should be postponed. It records the event, increases the relevant dynamic urgency, and triggers an adjustment draft; it does not silently move the task to a new date.
-_Avoid_: Automatic rollover, unrecorded postponement
+An explicit user statement that work should be postponed, distinct from a missed scheduled slot. It can update the recorded decision and trigger authorized repair without creating a fictitious actual-duration record.
+_Avoid_: Automatic rollover counted as failure, unrecorded source
 
 **Postponement reason**:
 An optional explanation attached to a user-confirmed postponement, such as insufficient time, unexpected difficulty, or an interruption. It can inform later AI analysis and profile updates but is never required to record the postponement.
 _Avoid_: Mandatory justification, moral judgment
 
 **Partial completion adjustment**:
-The replanning proposal created after the user reports that only part of a task was completed. It recalculates the remaining work and may carry it into later dates, but requires confirmation and does not infer or change the user's task status.
-_Avoid_: Lost remaining work, automatic completion
+The repair of remaining work after an explicit partial-progress report. It can take effect within delegated scope without a full feedback form or a repeated approval, and does not imply full completion.
+_Avoid_: Lost remaining work, inferred completion
 
 **User planning cycle**:
 The user's expected number of days for completing a task. It is the primary planning cycle when supplied; AI may suggest a different cycle, but the suggestion does not replace the user's value unless the user changes it.
 _Avoid_: AI-imposed deadline, fixed universal cycle
 
 **Profile update**:
-The gradual update of the general profile and learning profile from user-confirmed completion, actual time, progress, results, and relevant grades. AI may propose conclusions, but the user can inspect, correct, or delete inaccurate conclusions.
-_Avoid_: Hidden permanent label, AI-only identity
+The revision of personal planning parameters from effective execution evidence and explicit user preferences, with their uncertainty and provenance preserved. An updated profile does not change confirmed tasks or plans, and any description based on an older profile remains distinguishable from the current profile.
+_Avoid_: Hidden permanent label, AI-only identity, silent plan mutation
+
+**User usage summary（用户画像 / 近期使用总结）**:
+An automatically maintained explanation of the user's recent recorded task activity, progress, execution timing and explicit arrangement changes. It describes observable use without requiring profile forms or confirmations, and is not evidence for a new personal claim or authority to modify a task.
+_Avoid_: Personality assessment, self-discipline score, AI text used as fresh evidence
+
+**Explicit usage action（主动使用操作）**:
+A committed user action such as editing a task, moving an arrangement or changing its lock. System-generated schedule repairs are separate events and do not establish the user's habit or preference.
+_Avoid_: Every plan version as a user adjustment, cancelled drafts as completed actions
+
+**Numeric planning profile（数值规划参数）**:
+A user-inspectable set of planning parameters, primarily computed from traceable records or taken from explicit user preferences, that reduces repeated AI interpretation of the user's history. It describes planning context rather than personality, ability, self-discipline or health.
+_Avoid_: Personality assessment, productivity grade, AI-invented identity
+
+**Planning parameter（画像参数）**:
+A value with a defined meaning, unit, scope and evidence basis, describing an observed planning pattern or an explicit preference. A missing or insufficiently supported parameter is unknown, not a neutral score.
+_Avoid_: Universal 0–100 score, guessed default, unqualified personal trait
+
+**Profile snapshot（画像快照）**:
+A particular version of the user's planning parameters with their applicable evidence and time range. Recommendations and descriptions tied to that snapshot are not automatically assertions about a later snapshot.
+_Avoid_: Timeless identity, description treated as current after evidence changes
+
+**Observed execution pattern（执行统计特征）**:
+A summary of recorded work, such as execution lengths or time-of-day distribution, limited to the available evidence. It is distinct from the user's preferred schedule and does not establish efficiency or concentration ability.
+_Avoid_: Observed behavior equals preference, inferred capability
+
+**Explicit planning preference（明确规划偏好）**:
+A planning choice stated or confirmed by the user, such as category preference, preferred time range or grouping style. An inferred pattern does not silently replace this preference or override manual decisions and protected time.
+_Avoid_: Hidden preference mutation, one drag as permanent preference
+
+**Duration calibration factor（估时修正系数）**:
+A comparison between sufficiently recorded actual total effort and a comparable task's traceable original estimate. It supports a new duration suggestion without rewriting that estimate or compounding the same correction during repeated replanning.
+_Avoid_: Actual duration guessed from progress, cumulative correction, task-importance factor
+
+**Execution segment distribution（执行段时长分布）**:
+The distribution of recorded active working durations for user-started execution sessions, distinct from planned durations and paused time. It is evidence for segment-length suggestions, not a measurement of concentration capacity.
+_Avoid_: Planned interval as actual work, preferred length inferred as fact
+
+**Replanning and interruption evidence（重排与中断证据）**:
+Records distinguishing requested replanning, accepted schedule changes and explicitly reported interruptions, with their observation scope and known reasons. Cancelled drafts and missing reports do not establish actual disruption or procrastination.
+_Avoid_: Every draft as a replan event, missing feedback as failure, moral judgment
+
+**Profile evidence eligibility（画像证据可用性）**:
+Whether a record supplies the traceable information required for a particular planning parameter. Eligibility is parameter-specific: valid task history may still be insufficient for estimating total effort or identifying a preference.
+_Avoid_: Every log counts for every dimension, missing information treated as zero
+
+**Profile current-state description（画像现状描述）**:
+An AI-authored, user-visible explanation of a specified profile snapshot's recent observations, evidence limits and optional planning suggestions. The description is not numeric evidence, a diagnosis, a permanent label or authority to change tasks, parameters or plans.
+_Avoid_: AI text as new profile evidence, invented numbers, autonomous profile mutation
+
+**Profile parameter opt-out（画像参数停用）**:
+The user's choice to stop a parameter from informing new planning suggestions. It does not erase source execution history or disable basic local planning.
+_Avoid_: Source-log deletion, forced AI dependence
 
 **Goal reassessment**:
 The user-facing review prompted after repeated postponement. It offers choices such as maintaining the goal, splitting the task, lowering the goal, moving the deadline, changing the approach, or cancelling the task; AI may recommend but does not change the goal without authorization.
@@ -308,8 +382,8 @@ The planning stage that considers all unfinished tasks together before assigning
 _Avoid_: Independent per-day sorting, local optimum only
 
 **New-task conflict draft**:
-When a task is added to an existing plan, the task is first retained in the task list and the existing plan is preserved. If capacity or time conflicts appear, Repland creates an adjustment draft that explains the conflict; the user may edit it or explicitly authorize AI to decide.
-_Avoid_: Silent displacement, discarded new task
+An optional reviewable arrangement for a new task when suggestion-only mode, an important ambiguity or a boundary decision calls for review. Routine flexible conflicts can instead be repaired directly within authority, retaining all unplaced work.
+_Avoid_: Draft required for every conflict, discarded new task
 
 **AI degraded mode**:
 The local fallback mode used when the AI API is unavailable or returns unusable data. It continues basic explainable ordering and plan generation, treats AI-specific judgments as neutral, and tells the user that advanced AI assessment is unavailable.
@@ -320,7 +394,7 @@ A user-entered change to one occurrence of a weekly course or rest template. It 
 _Avoid_: Permanent template edit, imported calendar event
 
 **One-day availability override**:
-A user-entered availability change for a particular date. It takes precedence over the recurring availability template for that date only and becomes input to a future-plan adjustment draft.
+A user-specified availability change for one date that takes precedence over its recurring template. It may trigger authorized local repair for that date without rewriting the recurring rule or past execution.
 _Avoid_: Permanent template rewrite, retroactive history change
 
 **Local timetable import**:
@@ -340,8 +414,8 @@ An explicit user action that clears the app's locally stored tasks, plans, logs,
 _Avoid_: Account deletion, remote wipe
 
 **AI contract**:
-A versioned, typed boundary through which Repland may request task analysis, priority advice, split suggestions, replan proposals, or daily summaries. Its responses are advisory data and never authoritative task-state commands. The MVP exposes these results through the Agent's structured workflow rather than requiring a separate free-form AI chat page.
-_Avoid_: Free-form chat protocol, autonomous action
+The boundary through which structured AI interpretations and proposed actions enter the planning domain. A response is not permission to bypass user authority, real facts or fixed commitments; authorized actions are distinguishable from model suggestions.
+_Avoid_: Model output as unlimited authority, direct facts from guesses
 
 **Model-provider abstraction**:
 The product boundary that hides the specific AI model and service provider from users. The Agent workflow and AI contract remain stable while the implementation may change providers or models.
@@ -352,12 +426,12 @@ The rule that only the current task's user-provided content and necessary, relev
 _Avoid_: Full-device upload, silent profiling
 
 **AI consent**:
-The user's explicit permission before task content and necessary profile context are sent to the API-connected AI workflow. The user can disable AI later; local deterministic planning remains available.
-_Avoid_: Silent upload, AI-required operation
+The user’s permission to send the selected relevant data to a configured model service. It can cover continuing requests within a disclosed scope, remains revocable and is distinct from authority to change local plans.
+_Avoid_: Consent to all data and providers, mandatory per-request approval
 
 **Participation mode**:
-The user's changeable preference for how much planning detail and intervention Repland presents: co-planning, guided planning, or focused execution. It does not classify the user's personality or change ownership of tasks and confirmed plans.
-_Avoid_: Fixed user type, separate account identity, inferred diagnosis
+A historical three-mode preference retained for compatibility and export, not a current user-type switch. Automatic arrangement enabled, paused or suggestion-only describes delegation behavior rather than those old participation modes.
+_Avoid_: Current three-mode switch, inferred user type
 
 **Usage event**:
 An observation of a specific user interaction, such as switching participation mode or opening a schedule item. It is evidence of that interaction only, not evidence that scheduled work was performed.
@@ -376,12 +450,12 @@ The reusable user-owned content object that describes what should be done, such 
 _Avoid_: A task being permanently bound to its first time slot, duplicated task records
 
 **Schedule Agent**:
-A specialized assistant surface that turns an editable natural-language or voice transcript into staged Repland proposals such as task drafts, plan drafts, and task breakdowns. It is an input-and-confirmation workflow, not an autonomous general chatbot.
-_Avoid_: Autonomous schedule mutation, a free-form agent that bypasses confirmation
+The assistant surface that interprets submitted task and progress language and carries out authorized multi-step planning actions. It can ask about material ambiguity or boundary decisions, and returns a reviewable receipt rather than requiring a draft for every routine action.
+_Avoid_: Unbounded general agent, mandatory input-and-confirm workflow
 
 **Agent proposal**:
-An editable, non-persistent set of changes shown by the Schedule Agent before the user chooses a named confirmation action. A proposal may be discarded without affecting tasks, schedule instances, or history.
-_Avoid_: A preview that already writes data, an AI result treated as a command
+A reviewable set of changes retained for suggestion-only operation or a decision needing user review, separate from official tasks and the current plan until applied. Authorized routine actions may use an internal action plan without making this proposal a required user step.
+_Avoid_: Preview already applied, every action requires proposal approval
 
 **Schedule instance**:
 One dated placement of an event object, with a start, end, and track. Moving or reusing an event object creates or changes a placement while preserving the event identity and execution history.
@@ -394,7 +468,3 @@ _Avoid_: An automatically inferred overlap lane, a permanent task category
 **Horizon view**:
 The three planning resolutions exposed by Repland: day for execution and track placement, week for rhythm and load distribution, and month for density and milestones. Each view is a projection of the same schedule instances rather than a separate source of truth.
 _Avoid_: Three duplicated calendars, month view as an editable task list
-
-## GrillMe continuation status
-
-The planned interview frontier has been completed through the current round. The main product decisions, task lifecycle rules, user-authority boundaries, AI workflow, V1 scope, and consistency corrections are recorded above. The next step is to produce the complete product-thinking summary when the user requests it.

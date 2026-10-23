@@ -27,6 +27,11 @@ data class PlanDraft(
     /** Local, explainable score associated with every task in orderedTaskIds. */
     val priorityAssessments: List<LocalPriorityAssessment> = emptyList(),
     val hasManualTaskOrder: Boolean = false,
+    val sourceRevision: String? = null,
+    val orderOnly: Boolean = false,
+    val numericProfileVersion: String? = null,
+    val numericParameters: List<String> = emptyList(),
+    val numericAdvice: List<String> = emptyList(),
 )
 
 /** The explicit request/response boundary for the local planner and a future AI suggestion adapter. */
@@ -38,10 +43,14 @@ data class PlanGenerationInput(
     val lockedSegments: List<PlannedSegment> = emptyList(),
     val categoryPreferences: Map<TaskCategory, Int> = CategoryPreferences.defaults,
     val manualTaskOrder: List<String> = emptyList(),
+    val placementWindows: Map<String, PlacementWindow> = emptyMap(),
 )
+
+data class PlacementWindow(val startMinute: Int, val endMinute: Int)
 
 interface PlanDraftGenerator {
     fun generate(input: PlanGenerationInput): PlanDraft
+    fun generateReplan(input: PlanGenerationInput, current: ConfirmedPlan?): PlanDraft = generate(input)
 }
 
 /**
@@ -95,6 +104,12 @@ object PlanningConstraintValidator {
                 override.type == DateOverrideType.AVAILABLE &&
                 covers(override.startMinute, override.endMinute, startMinute, endMinute)
         }
+        val weeklyBlocked = weeklyBlocks.any { block ->
+            block.kind != TimeBlockKind.AVAILABLE && block.dayOfWeek == date.dayOfWeek &&
+                CourseWeekPattern.appliesOn(block.weekPattern, date, semesterFirstWeekMonday) &&
+                overlaps(block.startMinute, block.endMinute, startMinute, endMinute)
+        }
+        if (weeklyBlocked) return false
         if (availableOverride) return true
         val weeklyAvailable = weeklyBlocks.any { block ->
             block.kind == TimeBlockKind.AVAILABLE &&
@@ -249,8 +264,37 @@ object PlanDraftEditor {
 object PlanGenerator : PlanDraftGenerator {
     private const val HORIZON_DAYS = 30
     private const val QUANTUM_MINUTES = 30
-    private const val DAY_START_MINUTE = 8 * 60
-    private const val DAY_END_MINUTE = 22 * 60
+    private const val DAY_END_MINUTE = 24 * 60
+
+    /** Rebuild only the unprotected remainder of today, keeping all other placements. */
+    fun generateToday(input: PlanGenerationInput, current: ConfirmedPlan?, clock: Clock = Clock.systemDefaultZone()): PlanDraft {
+        return generateRemaining(input, current, clock, todayOnly = true)
+    }
+
+    override fun generateReplan(input: PlanGenerationInput, current: ConfirmedPlan?) = generateRemaining(input, current)
+
+    /** Past placements are history, not proof of progress and not deductions from confirmed remaining work. */
+    fun generateRemaining(input: PlanGenerationInput, current: ConfirmedPlan?, clock: Clock = Clock.systemDefaultZone(), todayOnly: Boolean = false): PlanDraft {
+        val now = LocalDateTime.now(clock)
+        val day = now.toLocalDate()
+        val minute = now.hour * 60 + now.minute
+        val activeIds = input.tasks.filter { it.status.isActive }.map { it.id }.toSet()
+        val unavoidableIds = input.tasks.filter { it.status.isActive && it.userPriority == TaskPriority.REQUIRED }.map { it.id }.toSet()
+        fun ended(s: PlannedSegment) = s.date < day || (s.date == day && s.endMinute <= minute)
+        val hasAvailability = PlanningConstraintValidator.hasExplicitAvailability(input)
+        val history = current?.segments.orEmpty().filter(::ended)
+        val retained = current?.segments.orEmpty().filter { s -> !ended(s) && s.taskId in activeIds &&
+            (!hasAvailability || s.isLocked || s.taskId in unavoidableIds || (s.date == day && s.startMinute <= minute) || (todayOnly && s.date != day)) }
+        val effectiveLocks = (retained + input.lockedSegments.filter { !ended(it) && it.taskId in activeIds })
+            .distinctBy { listOf(it.taskId, it.date, it.startMinute, it.endMinute, it.trackId) }
+        val generated = generate(input.tasks, input.weeklyBlocks, input.dateOverrides, input.semesterFirstWeekMonday,
+            effectiveLocks.map { it.copy(isLocked = true) }, input.categoryPreferences, input.manualTaskOrder,
+            clock, horizonDays = if (todayOnly) 1 else HORIZON_DAYS, placementWindows = input.placementWindows)
+        val restored = generated.segments.map { s -> effectiveLocks.firstOrNull {
+            it.taskId == s.taskId && it.date == s.date && it.startMinute == s.startMinute && it.endMinute == s.endMinute && it.trackId == s.trackId
+        } ?: s }
+        return generated.copy(segments = (history + restored).sortedWith(compareBy(PlannedSegment::date, PlannedSegment::startMinute)))
+    }
 
     override fun generate(input: PlanGenerationInput): PlanDraft = generate(
         tasks = input.tasks,
@@ -260,6 +304,7 @@ object PlanGenerator : PlanDraftGenerator {
         lockedSegments = input.lockedSegments,
         categoryPreferences = input.categoryPreferences,
         manualTaskOrder = input.manualTaskOrder,
+        placementWindows = input.placementWindows,
     )
 
     fun generate(
@@ -271,12 +316,16 @@ object PlanGenerator : PlanDraftGenerator {
         categoryPreferences: Map<TaskCategory, Int> = CategoryPreferences.defaults,
         manualTaskOrder: List<String> = emptyList(),
         clock: Clock = Clock.systemDefaultZone(),
+        horizonDays: Int = HORIZON_DAYS,
+        placementWindows: Map<String, PlacementWindow> = emptyMap(),
     ): PlanDraft {
+        require(horizonDays in 1..HORIZON_DAYS)
         val now = LocalDateTime.now(clock)
         val activeTasks = tasks.filter { it.status.isActive }
         val activeTaskIds = activeTasks.mapTo(mutableSetOf(), Task::id)
+        val unavoidableIds = activeTasks.filter { it.userPriority == TaskPriority.REQUIRED }.map { it.id }.toSet()
         val preservedLocks = lockedSegments.filter { segment ->
-            segment.isLocked && segment.taskId in activeTaskIds
+            (segment.isLocked || segment.taskId in unavoidableIds) && segment.taskId in activeTaskIds
         }
         fun rankActiveTasks(): List<LocalPriorityAssessment> = LocalPriorityRanker.rank(
             tasks = activeTasks,
@@ -308,9 +357,9 @@ object PlanGenerator : PlanDraftGenerator {
             )
         }
         // Hard constraints produce the candidate slot set before any soft ranking occurs.
-        val allSlots = freeSlots(now, weeklyBlocks, dateOverrides, semesterFirstWeekMonday)
+        val allSlots = freeSlots(now, weeklyBlocks, dateOverrides, semesterFirstWeekMonday, horizonDays)
         val assignedSlots = allSlots.filterTo(mutableSetOf()) { slot ->
-            preservedLocks.any { locked -> locked.covers(slot) }
+            preservedLocks.any { locked -> locked.overlaps(slot) }
         }
         val lockedMinutesByTask = preservedLocks.groupingBy(PlannedSegment::taskId)
             .fold(0) { total, segment -> total + segment.endMinute - segment.startMinute }
@@ -330,17 +379,24 @@ object PlanGenerator : PlanDraftGenerator {
             val remainingMinutes = (remainingWorkMinutes(task) - (lockedMinutesByTask[task.id] ?: 0))
                 .coerceAtLeast(0)
             val requiredSlots = ceil(remainingMinutes / QUANTUM_MINUTES.toDouble()).toInt()
-            val cutoff = task.dueDate ?: now.toLocalDate().plusDays(HORIZON_DAYS - 1L)
-            val selected = allSlots.asSequence()
-                .filter { slot -> slot !in assignedSlots && !slot.date.isAfter(cutoff) }
+            val cutoff = task.dueDate ?: now.toLocalDate().plusDays(horizonDays - 1L)
+            val pool = allSlots.filter { slot -> slot !in assignedSlots && !slot.date.isAfter(cutoff) }
+            val preference = placementWindows[task.id]
+            val selected = (if (preference == null) pool else pool.groupBy(Slot::date).toSortedMap().values
+                .flatMap { daySlots ->
+                    val (inside, outside) = daySlots.partition { slot ->
+                        slot.startMinute >= preference.startMinute && slot.endMinute <= preference.endMinute
+                    }
+                    inside + outside
+                })
                 .take(requiredSlots)
-                .toList()
+                .sortedWith(compareBy(Slot::date, Slot::startMinute))
             assignedSlots += selected
             segments += mergeSegments(task.id, selected)
             if (selected.size < requiredSlots) {
                 unscheduled += UnscheduledTask(
                     taskId = task.id,
-                    remainingMinutes = (requiredSlots - selected.size) * QUANTUM_MINUTES,
+                    remainingMinutes = (remainingMinutes - selected.size * QUANTUM_MINUTES).coerceAtLeast(0),
                     reason = if (hasOverallCapacityShortfall) {
                         UnscheduledReason.TOTAL_CAPACITY_IN_ROLLING_WINDOW
                     } else if (task.dueDate == null) {
@@ -372,13 +428,14 @@ object PlanGenerator : PlanDraftGenerator {
         weeklyBlocks: List<WeeklyTimeBlock>,
         dateOverrides: List<DateOverride>,
         semesterFirstWeekMonday: LocalDate?,
+        horizonDays: Int,
     ): List<Slot> = buildList {
-        repeat(HORIZON_DAYS) { dayOffset ->
+        repeat(horizonDays) { dayOffset ->
             val date = now.toLocalDate().plusDays(dayOffset.toLong())
             val firstMinute = if (dayOffset == 0) {
-                maxOf(DAY_START_MINUTE, roundUpToQuantum(now.hour * 60 + now.minute))
+                roundUpToQuantum(now.hour * 60 + now.minute)
             } else {
-                DAY_START_MINUTE
+                0
             }
             for (minute in firstMinute until DAY_END_MINUTE step QUANTUM_MINUTES) {
                 val slot = Slot(date, minute, minute + QUANTUM_MINUTES)
@@ -439,6 +496,6 @@ object PlanGenerator : PlanDraftGenerator {
         )
     }
 
-    private fun PlannedSegment.covers(slot: Slot): Boolean =
-        date == slot.date && startMinute <= slot.startMinute && endMinute >= slot.endMinute
+    private fun PlannedSegment.overlaps(slot: Slot): Boolean =
+        date == slot.date && startMinute < slot.endMinute && endMinute > slot.startMinute
 }

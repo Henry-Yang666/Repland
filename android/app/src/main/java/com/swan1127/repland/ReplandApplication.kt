@@ -33,6 +33,7 @@ import com.swan1127.repland.domain.model.NoOpArrangementAssistantAdvisor
 import com.swan1127.repland.domain.model.PlanningAgent
 import com.swan1127.repland.domain.model.PlanningAgentWorkflow
 import com.swan1127.repland.reminders.LocalReminderScheduler
+import kotlinx.coroutines.flow.first
 
 class ReplandApplication : Application() {
     val appContainer: AppContainer by lazy { AppContainer(applicationContext) }
@@ -67,32 +68,61 @@ class AppContainer(context: Context) {
         ReplandDatabase.MIGRATION_16_17,
         ReplandDatabase.MIGRATION_17_18,
         ReplandDatabase.MIGRATION_18_19,
+        ReplandDatabase.MIGRATION_19_20,
+        ReplandDatabase.MIGRATION_20_21,
     ).build()
 
     val taskRepository: TaskRepository = RoomTaskRepository(database)
+    val taskCaptureRepository = com.swan1127.repland.data.room.RoomTaskCaptureRepository(database)
+    val executionSessionRepository = com.swan1127.repland.data.room.RoomExecutionSessionRepository(database)
     val timeRepository: TimeRepository = RoomTimeRepository(database.timeDao())
-    val planRepository: PlanRepository = RoomPlanRepository(database.planDao())
+    val planRepository: PlanRepository = RoomPlanRepository(database)
+    val autonomyRepository: com.swan1127.repland.domain.ports.AutonomyRepository =
+        com.swan1127.repland.data.room.RoomAutonomyRepository(database)
     val categoryPreferenceRepository: CategoryPreferenceRepository =
         RoomCategoryPreferenceRepository(database.categoryPreferenceDao())
     val reminderSettingsRepository: ReminderSettingsRepository =
         RoomReminderSettingsRepository(database.reminderSettingsDao())
     val profileEvidenceRepository: ProfileEvidenceRepository = RoomProfileEvidenceRepository(database)
-    val dataManagementRepository: DataManagementRepository = RoomDataManagementRepository(database)
-    val aiSettingsRepository: AiSettingsRepository = RoomAiSettingsRepository(database.aiSettingsDao())
     val aiProviderConfigRepository: AiProviderConfigRepository = SecureAiProviderConfigRepository(context)
+    val numericProfileRepository = com.swan1127.repland.data.room.RoomNumericProfileRepository(database, aiProviderConfigRepository)
+    val personalProfileStore = com.swan1127.repland.data.profile.LocalPersonalProfileStore(context)
+    val auxiliaryStore = com.swan1127.repland.data.AuxiliaryStore(context)
+    val dataManagementRepository: DataManagementRepository = RoomDataManagementRepository(database) {
+        personalProfileStore.clear()
+        auxiliaryStore.clearLearningMemory()
+        planningOperationService.clearTeamMemory()
+    }
+    val aiSettingsRepository: AiSettingsRepository = RoomAiSettingsRepository(database.aiSettingsDao())
+    val usageSummaryRepository = com.swan1127.repland.data.room.RoomUsageSummaryRepository(database, aiProviderConfigRepository)
     val engagementRepository = RoomEngagementRepository(database)
-    /** Debug builds may use the user-configured provider. Release builds remain local-only. */
+    /** QA/internal share the optional BYOK provider; release stays local-only. */
     val aiAdvisor: AiAdvisor = runCatching {
-        Class.forName("com.swan1127.repland.debug.DebugAgnesAdvisor")
+        Class.forName("com.swan1127.repland.data.ai.CompatibleAiAdvisor")
             .getDeclaredConstructor(AiProviderConfigRepository::class.java)
             .newInstance(aiProviderConfigRepository) as AiAdvisor
     }.getOrDefault(NoOpAiAdvisor)
     val arrangementAssistantAdvisor: ArrangementAssistantAdvisor = runCatching {
-        Class.forName("com.swan1127.repland.debug.DebugAgnesArrangementAdvisor")
+        Class.forName("com.swan1127.repland.data.ai.CompatibleArrangementAdvisor")
             .getDeclaredConstructor(AiProviderConfigRepository::class.java)
             .newInstance(aiProviderConfigRepository) as ArrangementAssistantAdvisor
     }.getOrDefault(NoOpArrangementAssistantAdvisor)
     val planDraftGenerator: PlanDraftGenerator = PlanGenerator
+    val numericProfileAdvisor: com.swan1127.repland.domain.model.NumericProfileAdvisor = runCatching {
+        Class.forName("com.swan1127.repland.data.ai.CompatibleNumericProfileAdvisor")
+            .getDeclaredConstructor(AiProviderConfigRepository::class.java).newInstance(aiProviderConfigRepository) as com.swan1127.repland.domain.model.NumericProfileAdvisor
+    }.getOrDefault(com.swan1127.repland.domain.model.NoOpNumericProfileAdvisor)
+    val usageSummaryAdvisor: com.swan1127.repland.domain.model.UsageSummaryAdvisor = runCatching {
+        Class.forName("com.swan1127.repland.data.ai.CompatibleUsageSummaryAdvisor")
+            .getDeclaredConstructor(AiProviderConfigRepository::class.java, AiSettingsRepository::class.java)
+            .newInstance(aiProviderConfigRepository, aiSettingsRepository) as com.swan1127.repland.domain.model.UsageSummaryAdvisor
+    }.getOrDefault(com.swan1127.repland.domain.model.NoOpUsageSummaryAdvisor)
+    val planningReadService = com.swan1127.repland.domain.model.PlanningReadService(taskRepository, timeRepository, planRepository, categoryPreferenceRepository)
+    val planningOperationService = com.swan1127.repland.domain.model.PlanningOperationService(
+        planningReadService, planRepository, planDraftGenerator, executionSessionRepository, numericProfileRepository,
+        memoryReference = auxiliaryStore::memoryReference,
+        executionLogs = { date -> taskRepository.observeExecutionLogsForDate(date).first() },
+    )
     /** Local bounded workflow; it has no repository write capability. */
     val planningAgentWorkflow = PlanningAgentWorkflow(
         planningAgent = PlanningAgent(aiAdvisor, planDraftGenerator),

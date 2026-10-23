@@ -6,6 +6,29 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 interface PlanRepository {
+    suspend fun applyManualChange(change: com.swan1127.repland.domain.model.ManualPlanChange, confirmedRevision: String? = null) {
+        require(confirmedRevision == null) { "此存储不支持确认调整。" }
+        when (change) {
+            is com.swan1127.repland.domain.model.ManualPlanChange.Place -> placeTask(change.taskId, change.date, change.start, change.end, change.track)
+            is com.swan1127.repland.domain.model.ManualPlanChange.Move -> movePlacement(change.segmentId, change.start, change.end, change.track)
+            is com.swan1127.repland.domain.model.ManualPlanChange.Remove -> removePlacement(change.segmentId)
+            com.swan1127.repland.domain.model.ManualPlanChange.Clear -> clearCurrentPlan()
+        }
+    }
+    suspend fun saveAssistantChanges(tasks: List<com.swan1127.repland.domain.model.TaskDraft>, segments: List<com.swan1127.repland.domain.model.PlannedSegment>, existingTaskIds: Set<String>, date: java.time.LocalDate): com.swan1127.repland.domain.model.AssistantSaveResult
+    fun observeTracks(): Flow<List<com.swan1127.repland.domain.model.RhythmTrack>>
+    suspend fun saveTracks(tracks: List<com.swan1127.repland.domain.model.RhythmTrack>)
+    fun observeAssistantWorkspace(): Flow<com.swan1127.repland.domain.model.AssistantWorkspace?>
+    suspend fun saveAssistantWorkspace(value: com.swan1127.repland.domain.model.AssistantWorkspace?)
+    fun observeDraft(): Flow<PlanDraft?>
+    suspend fun saveDraft(draft: PlanDraft?)
+    /** Atomically edit a still-current preview; never overwrite a replacement preview. */
+    suspend fun replaceDraftIfCurrent(expected: PlanDraft, updated: PlanDraft)
+    fun observeTaskOrder(): Flow<List<String>>
+    suspend fun saveTaskOrder(ids: List<String>)
+    fun observeCanUndoTaskOrder(): Flow<Boolean>
+    suspend fun undoTaskOrder()
+    suspend fun saveTasksAndPlace(tasks: List<com.swan1127.repland.domain.model.TaskDraft>, segments: List<com.swan1127.repland.domain.model.PlannedSegment>)
     fun observeCurrentPlan(): Flow<ConfirmedPlan?>
 
     fun observePlanHistory(): Flow<List<ConfirmedPlan>>

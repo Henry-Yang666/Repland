@@ -9,6 +9,7 @@ import com.swan1127.repland.domain.model.TaskFeedback
 import com.swan1127.repland.domain.model.TaskLifecycleValidator
 import com.swan1127.repland.domain.model.TaskName
 import com.swan1127.repland.domain.model.TaskStatus
+import com.swan1127.repland.domain.model.TaskInputSources
 import com.swan1127.repland.domain.ports.TaskRepository
 import java.util.UUID
 import java.time.LocalDate
@@ -35,17 +36,23 @@ class RoomTaskRepository(
         return executionLogDao.observeBetween(start, end).map { logs -> logs.map(ExecutionLogEntity::toDomain) }
     }
 
-    override suspend fun save(draft: TaskDraft) {
+    override suspend fun updateExisting(draft: TaskDraft) = database.withTransaction {
+        require(TaskDraftValidator.isValid(draft)) { "Invalid task draft." }
+        requireTask(requireNotNull(draft.id) { "Editing requires a task identity." })
+        save(draft)
+    }
+
+    override suspend fun save(draft: TaskDraft) = database.withTransaction {
+        require(TaskDraftValidator.isValid(draft)) { "Invalid task draft." }
         val now = System.currentTimeMillis()
         val existing = if (draft.id == null) null else taskDao.getById(draft.id)
         val entity = TaskEntity(
-            id = existing?.id ?: UUID.randomUUID().toString(),
+            id = existing?.id ?: draft.id ?: UUID.randomUUID().toString(),
             description = draft.description.trim(),
             displayName = draft.displayName.trim().ifBlank { TaskName.fromDescription(draft.description) },
             category = draft.category.name,
-            // A task's initial priority is evidence of the user's original intent and
-            // must not be silently rewritten by later edits.
-            userPriority = existing?.userPriority ?: draft.userPriority.name,
+            // Ordinary edits preserve the initial choice; an unknown choice can be supplied explicitly.
+            userPriority = existing?.userPriority?.takeUnless { it == "UNSPECIFIED" } ?: draft.userPriority.name,
             estimatedDays = draft.estimatedDays,
             totalDurationMinutes = draft.totalDurationMinutes,
             dueDateEpochDay = draft.dueDate?.toEpochDay(),
@@ -58,8 +65,28 @@ class RoomTaskRepository(
             updatedAtEpochMillis = now,
             completionResult = existing?.completionResult,
             scheduledForEpochDay = draft.scheduledForDate?.toEpochDay(),
+            inputSources = existing?.let { old ->
+                val previous = TaskInputSources.decode(old.inputSources)
+                draft.inputSources.copy(
+                    category = if (old.category == draft.category.name) previous.category else draft.inputSources.category,
+                    priority = if (old.userPriority != "UNSPECIFIED") previous.priority else draft.inputSources.priority,
+                    days = if (old.estimatedDays == draft.estimatedDays) previous.days else draft.inputSources.days,
+                    duration = if (old.totalDurationMinutes == draft.totalDurationMinutes) previous.duration else draft.inputSources.duration,
+                    dueDate = if (old.dueDateEpochDay == draft.dueDate?.toEpochDay()) previous.dueDate else draft.inputSources.dueDate,
+                    scheduledDate = if (old.scheduledForEpochDay == draft.scheduledForDate?.toEpochDay()) previous.scheduledDate else draft.inputSources.scheduledDate,
+                ).encode()
+            } ?: draft.inputSources.encode(),
         )
         taskDao.insert(entity)
+        if (existing == null || entity.copy(updatedAtEpochMillis = existing.updatedAtEpochMillis) != existing) {
+            UsageSummaryRecorder.record(database,
+                if (existing == null) com.swan1127.repland.domain.model.UsageSummaryActionKind.TASK_CREATED
+                else com.swan1127.repland.domain.model.UsageSummaryActionKind.TASK_UPDATED,
+                taskId = entity.id, now = now)
+        }
+        if (existing != null && existing.scheduledForEpochDay != entity.scheduledForEpochDay) {
+            AutonomyManualOverrides(database).dateEdited(existing.id)
+        }
     }
 
     override suspend fun confirmStatus(
@@ -83,11 +110,10 @@ class RoomTaskRepository(
             require(TaskLifecycleValidator.isValidFeedback(feedback)) { "Invalid feedback values." }
         }
         val now = System.currentTimeMillis()
-        val effectiveFeedback = if (status == TaskStatus.COMPLETED && feedback.actualDurationMinutes == null) {
-            feedback.copy(actualDurationMinutes = inferActualDurationMinutes(existing, taskId, now))
-        } else {
-            feedback
-        }
+        // Missing duration remains unknown. Planned duration and time since a status
+        // change are not evidence of actual work (they include breaks/background).
+        val effectiveFeedback = feedback
+        if (status == TaskStatus.IN_PROGRESS) freezeNumericOriginal(database, existing, now)
         val logCreatedAt = nextLogCreatedAt(taskId, now)
         taskDao.update(existing.withConfirmedStatus(status, effectiveFeedback, now))
         executionLogDao.insert(
@@ -199,6 +225,7 @@ class RoomTaskRepository(
                     updatedAtEpochMillis = now,
                     completionResult = null,
                     scheduledForEpochDay = replacement.scheduledForDate?.toEpochDay(),
+                    inputSources = replacement.inputSources.encode(),
                 ),
             )
             taskDao.update(original.copy(status = TaskStatus.REPLACED.name, updatedAtEpochMillis = now))
@@ -216,14 +243,6 @@ class RoomTaskRepository(
 
     private suspend fun requireTask(taskId: String): TaskEntity =
         requireNotNull(taskDao.getById(taskId)) { "Task does not exist." }
-
-    private suspend fun inferActualDurationMinutes(existing: TaskEntity, taskId: String, now: Long): Int? {
-        val startedAt = executionLogDao.getForTask(taskId)
-            .lastOrNull { it.confirmedStatus == TaskStatus.IN_PROGRESS.name }
-            ?.createdAtEpochMillis
-        val elapsed = startedAt?.let { ((now - it) / 60_000L).toInt().coerceIn(1, 1_440) }
-        return elapsed ?: existing.totalDurationMinutes?.coerceIn(1, 1_440)
-    }
 
     /** Makes chronological ordering deterministic even for confirmations in one clock millisecond. */
     private suspend fun nextLogCreatedAt(taskId: String, now: Long): Long {

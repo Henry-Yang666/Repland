@@ -6,6 +6,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swan1127.repland.ui.agent.AgentCenterScreen
 import com.swan1127.repland.ui.theme.ReplandTheme
@@ -26,6 +31,332 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class AgentCenterUiTest {
     @get:Rule val rule = createComposeRule()
+    @Test fun successful_confirmation_makes_the_receipt_visible_from_the_bottom() {
+        val receipt = androidx.compose.runtime.mutableStateOf<com.swan1127.repland.domain.model.AssistantSaveReceipt?>(null)
+        val original = com.swan1127.repland.domain.model.AssistantTaskProposal("p", "英语", TaskCategory.COURSE, 30, ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "英语", listOf(original)),
+            saveReceipt = receipt.value,
+            onConfirmChanges = { _, _, _, day, done -> receipt.value = com.swan1127.repland.domain.model.AssistantSaveReceipt("r", com.swan1127.repland.domain.model.AssistantSaveResult(1, 0, 1, day)); done() },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performScrollTo().performClick()
+        rule.onNodeWithTag("agent-confirm-tasks").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("agent-prompt").assertIsNotFocused()
+        rule.onNodeWithTag("agent-save-receipt").assertIsDisplayed()
+        rule.onNodeWithTag("agent-view-saved-tasks").assertIsDisplayed()
+    }
+    @Test fun consecutive_follow_ups_replace_the_same_draft_without_saving() {
+        val original = com.swan1127.repland.domain.model.AssistantTaskProposal("p", "英语", TaskCategory.COURSE, 30, ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.AI_SUGGESTED)
+        var stored: com.swan1127.repland.domain.model.AssistantWorkspace? = null
+        val requests = mutableListOf<com.swan1127.repland.domain.model.ArrangementAssistantAdviceRequest>()
+        var saves = 0
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "学英语30分钟", listOf(original)),
+            canRefineWithAi = true, onWorkspaceChanged = { stored = it },
+            onRefineWithContext = { input ->
+                requests += input
+                ArrangementAssistantAdviceResult.Advice(ArrangementAssistantAdvice(listOf(input.draftCandidates.single().copy(timeHint = ArrangementTimeHint(if (requests.size == 1) 960 else 1080))), "test"))
+            },
+            onSaveTasks = { saves++ }, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-follow-up").performScrollTo().performTextInput("改到16点，其他保留")
+        rule.onNodeWithTag("agent-confirm-tasks").assertIsNotEnabled()
+        rule.onNodeWithTag("agent-apply-follow-up").performScrollTo().performClick()
+        rule.waitForIdle()
+        assertEquals("学英语30分钟", requests.single().utterance)
+        assertEquals("改到16点，其他保留", requests.single().followUpInstruction)
+        assertEquals("p", stored!!.proposals.single().id)
+        assertEquals(960, stored!!.proposals.single().timeHint.explicitStartMinute)
+        rule.onNodeWithTag("agent-follow-up").performScrollTo().performTextInput("再改到18点")
+        rule.onNodeWithTag("agent-apply-follow-up").performScrollTo().performClick()
+        rule.waitForIdle()
+        assertEquals(960, requests.last().draftCandidates.single().timeHint.explicitStartMinute)
+        assertEquals("p", stored!!.proposals.single().id)
+        assertEquals(1080, stored!!.proposals.single().timeHint.explicitStartMinute)
+        assertEquals("", stored!!.followUpInstruction)
+        assertEquals(0, saves)
+    }
+    @Test fun failed_follow_up_keeps_instruction_and_draft_until_explicit_discard() {
+        val original = com.swan1127.repland.domain.model.AssistantTaskProposal("p", "英语", TaskCategory.COURSE, 30, ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)
+        var stored: com.swan1127.repland.domain.model.AssistantWorkspace? = null
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "英语", listOf(original)),
+            canRefineWithAi = true, onWorkspaceChanged = { stored = it },
+            onRefineWithContext = { ArrangementAssistantAdviceResult.Failed(com.swan1127.repland.domain.model.AiAdvisorFailureReason.TIMEOUT) },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-follow-up").performScrollTo().performTextInput("改到16点")
+        rule.onNodeWithTag("agent-apply-follow-up").performScrollTo().performClick()
+        rule.waitForIdle()
+        assertEquals(listOf(original), stored!!.proposals)
+        assertEquals("改到16点", stored!!.followUpInstruction)
+        rule.onNodeWithTag("agent-confirm-tasks").assertIsNotEnabled()
+        rule.onNodeWithTag("agent-clear-follow-up").performScrollTo().performClick()
+        assertEquals("", stored!!.followUpInstruction)
+    }
+    @Test fun late_follow_up_reply_cannot_erase_a_new_instruction() {
+        val original = com.swan1127.repland.domain.model.AssistantTaskProposal("p", "英语", TaskCategory.COURSE, 30, ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)
+        val response = kotlinx.coroutines.CompletableDeferred<ArrangementAssistantAdviceResult>()
+        var stored: com.swan1127.repland.domain.model.AssistantWorkspace? = null
+        var calls = 0
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "英语", listOf(original)),
+            canRefineWithAi = true, onWorkspaceChanged = { stored = it },
+            onRefineWithContext = { calls++; response.await() },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-follow-up").performScrollTo().performTextInput("改到16点")
+        rule.onNodeWithTag("agent-apply-follow-up").performScrollTo().performClick()
+        rule.waitUntil { calls == 1 }
+        rule.onNodeWithTag("agent-follow-up").performScrollTo().performTextClearance()
+        rule.onNodeWithTag("agent-follow-up").performTextInput("改到18点")
+        rule.runOnIdle { response.complete(ArrangementAssistantAdviceResult.Advice(ArrangementAssistantAdvice(listOf(ArrangementCandidate("旧回复", TaskCategory.COURSE, 30, ArrangementTimeHint(960), emptySet())), "test"))) }
+        rule.waitForIdle()
+        assertEquals(listOf(original), stored!!.proposals)
+        assertEquals("改到18点", stored!!.followUpInstruction)
+    }
+    @Test fun saved_receipt_exposes_task_and_correct_date_schedule_destinations() {
+        val receipt = androidx.compose.runtime.mutableStateOf<com.swan1127.repland.domain.model.AssistantSaveReceipt?>(null)
+        var tasks = 0; var viewedDate: LocalDate? = null
+        val date = LocalDate.now().plusDays(2)
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            saveReceipt = receipt.value, onViewTasks = { tasks++ }, onViewSchedule = { viewedDate = it },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-save-receipt").assertDoesNotExist()
+        rule.runOnIdle { receipt.value = com.swan1127.repland.domain.model.AssistantSaveReceipt("r", com.swan1127.repland.domain.model.AssistantSaveResult(1, 2, 3, date)) }
+        rule.onNodeWithTag("agent-view-saved-tasks").performClick()
+        rule.onNodeWithTag("agent-view-saved-schedule").performClick()
+        assertEquals(1, tasks); assertEquals(date, viewedDate)
+    }
+    @Test fun existing_task_reply_confirms_adjustment_without_creating_a_copy() {
+        var request: com.swan1127.repland.domain.model.ArrangementAssistantAdviceRequest? = null
+        var confirmed = false
+        val tasks = (1..55).map { com.swan1127.repland.domain.model.ArrangementExistingTask("task-$it", "原任务$it", TaskCategory.COURSE, 90) }
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            activeDate = LocalDate.now().plusDays(1), existingTasks = tasks, canRefineWithAi = true,
+            onRefineWithContext = { input -> request = input; ArrangementAssistantAdviceResult.Advice(ArrangementAssistantAdvice(listOf(
+                ArrangementCandidate("模型改名", TaskCategory.LEISURE, 30, ArrangementTimeHint(720), emptySet(), ArrangementPlacementSource.AI_SUGGESTED, existingTaskId = "task-1")
+            ), "test")) },
+            onConfirmChanges = { newTasks, segments, ids, day, done ->
+                assertEquals(0, newTasks.size); assertEquals(setOf("task-1"), ids)
+                assertEquals("task-1", segments.single().taskId); assertEquals(LocalDate.now().plusDays(1), day)
+                confirmed = true; done()
+            },
+            onSaveTasks = { error("must not create a copy") }, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("把原任务1改到12点")
+        rule.onNodeWithTag("agent-preview").performClick()
+        rule.waitUntil { request != null }
+        rule.waitForIdle()
+        assertEquals(50, request!!.existingTasks.size)
+        // The parser's provisional new-item IDs are not yet user-approved proposal identities.
+        assertEquals(emptyList<ArrangementCandidate>(), request!!.draftCandidates)
+        rule.onNodeWithText("确认新增 0 项、调整已有 1 项").performScrollTo().performClick()
+        assertEquals(true, confirmed)
+    }
+    @Test fun incomplete_existing_task_cannot_be_confirmed_as_a_new_task() {
+        val p = com.swan1127.repland.domain.model.AssistantTaskProposal("p", "英语", TaskCategory.COURSE, null,
+            ArrangementTimeHint(), emptySet(), ArrangementPlacementSource.UNSCHEDULED, existingTaskId = "a")
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "调整英语", listOf(p)),
+            existingTasks = listOf(com.swan1127.repland.domain.model.ArrangementExistingTask("a", "英语", TaskCategory.COURSE, 90)),
+            onConfirmChanges = { _, _, _, _, _ -> error("incomplete change") },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-confirm-tasks").assertIsNotEnabled()
+    }
+    @Test fun provider_change_invalidates_an_inflight_reply_even_when_ai_remains_enabled() {
+        val revision = androidx.compose.runtime.mutableStateOf(1L)
+        val response = kotlinx.coroutines.CompletableDeferred<ArrangementAssistantAdviceResult>()
+        var calls = 0
+        var stored: com.swan1127.repland.domain.model.AssistantWorkspace? = null
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            providerRevision = revision.value, canRefineWithAi = true,
+            onRefineWithAi = { _, _, _ -> calls++; response.await() }, onWorkspaceChanged = { stored = it },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("复习英语")
+        rule.onNodeWithTag("agent-preview").performClick()
+        rule.waitUntil { calls == 1 }
+        val expected = stored
+        rule.runOnIdle { revision.value = 2L }
+        rule.waitForIdle()
+        rule.runOnIdle { response.complete(ArrangementAssistantAdviceResult.Advice(
+            ArrangementAssistantAdvice(listOf(ArrangementCandidate("旧任务", TaskCategory.COURSE, 30, ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.AI_SUGGESTED)), "旧配置"))) }
+        rule.waitForIdle()
+        assertEquals(expected, stored)
+    }
+
+    @Test fun missing_availability_exposes_a_real_configuration_action() {
+        var opened = 0
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            hasAvailability = false, onConfigureAvailability = { opened++ },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-configure-availability").performClick()
+        assertEquals(1, opened)
+    }
+
+    @Test fun assistant_text_and_proposals_restore_after_page_recreation() {
+        var stored: com.swan1127.repland.domain.model.AssistantWorkspace? = null
+        val visible = androidx.compose.runtime.mutableStateOf(true)
+        rule.setContent { if (visible.value) ReplandTheme { AgentCenterScreen(
+            initialWorkspace = stored, onWorkspaceChanged = { stored = it },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("15:00 复习英语 30 分钟")
+        rule.onNodeWithTag("agent-preview").performClick()
+        val id = stored!!.proposals.single().id
+        rule.runOnIdle { visible.value = false }
+        rule.runOnIdle { visible.value = true }
+        rule.onNodeWithTag("agent-prompt").assertTextContains("15:00 复习英语 30 分钟", substring = false)
+        rule.onNodeWithTag("agent-confirm-tasks").fetchSemanticsNode()
+        assertEquals(id, stored!!.proposals.single().id)
+    }
+
+    @Test fun stale_restored_workspace_requires_regeneration() {
+        val p = com.swan1127.repland.domain.model.AssistantTaskProposal("id", "英语", TaskCategory.COURSE, 30,
+            ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)
+        val stored = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now().minusDays(1), "英语", listOf(p))
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = stored, onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-confirm-tasks").assertIsNotEnabled()
+        rule.onNodeWithTag("agent-refresh-draft").fetchSemanticsNode()
+    }
+
+    @Test fun failed_ai_refresh_does_not_validate_a_stale_workspace() {
+        val p = com.swan1127.repland.domain.model.AssistantTaskProposal("id", "英语", TaskCategory.COURSE, 30,
+            ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)
+        val stored = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "英语", listOf(p), sourceRevision = "old")
+        var calls = 0
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = stored, contextRevision = "new", canRefineWithAi = true,
+            onRefineWithAi = { _, _, _ -> calls++; ArrangementAssistantAdviceResult.Unavailable(
+                com.swan1127.repland.domain.model.AiAdvisorFailureReason.SERVICE_NOT_CONFIGURED) },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-refine-with-ai").performScrollTo().performClick()
+        rule.waitUntil { calls == 1 }
+        rule.waitForIdle()
+        rule.onNodeWithTag("agent-confirm-tasks").assertIsNotEnabled()
+        rule.onNodeWithTag("agent-refresh-draft").fetchSemanticsNode()
+    }
+
+    @Test fun late_ai_response_does_not_restore_proposals_after_user_edits() {
+        val response = kotlinx.coroutines.CompletableDeferred<ArrangementAssistantAdviceResult>()
+        var calls = 0
+        var stored: com.swan1127.repland.domain.model.AssistantWorkspace? = null
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            canRefineWithAi = true, onRefineWithAi = { _, _, _ -> calls++; response.await() },
+            onWorkspaceChanged = { stored = it }, onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("复习英语")
+        rule.onNodeWithTag("agent-preview").performClick()
+        rule.waitUntil { calls == 1 }
+        rule.onNodeWithTag("agent-prompt").performTextClearance()
+        rule.runOnIdle { response.complete(ArrangementAssistantAdviceResult.Advice(
+            ArrangementAssistantAdvice(confidenceLabel = "旧回复", candidates = listOf(ArrangementCandidate("旧任务", TaskCategory.COURSE, 30,
+                ArrangementTimeHint(600), emptySet(), ArrangementPlacementSource.AI_SUGGESTED))))) }
+        rule.waitForIdle()
+        assertEquals("", stored!!.prompt)
+        assertEquals(0, stored!!.proposals.size)
+    }
+
+    @Test fun formulate_plan_is_independent_of_composer() {
+        var calls = 0
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            onFormulatePlan = { calls++ }, onSaveTasks = {},
+            onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-formulate-plan").performClick()
+        assertEquals(1, calls)
+        rule.onNodeWithTag("agent-prompt-重排今天").performClick()
+        rule.onNodeWithTag("agent-prompt").assertTextContains("", substring = false)
+    }
+
+    @Test fun capture_workflow_keeps_text_and_saves_no_placements() {
+        var saved = 0
+        var placed = 0
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            onSaveTasks = { saved += it.size }, onPlaceTask = { _, _, _, _ -> placed++ }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("15:00 复习英语 30 分钟")
+        rule.onNodeWithTag("agent-prompt-只新增任务").performClick()
+        rule.onNodeWithTag("agent-prompt").assertTextContains("15:00 复习英语 30 分钟", substring = false)
+        rule.onNodeWithTag("agent-confirm-tasks").performScrollTo().performClick()
+        assertEquals(1, saved)
+        assertEquals(0, placed)
+    }
+
+    @Test fun free_input_ai_time_is_included_in_the_same_confirmation_that_previews_it() {
+        var placements = -1
+        var savedTasks = -1
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            canRefineWithAi = true,
+            onRefineWithAi = { _, _, _ -> ArrangementAssistantAdviceResult.Advice(
+                ArrangementAssistantAdvice(listOf(ArrangementCandidate("QA-final-AI-reading", TaskCategory.UNSPECIFIED, 30,
+                    ArrangementTimeHint(960), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)), "explicit time")) },
+            onConfirmChanges = { tasks, segments, _, _, done -> savedTasks = tasks.size; placements = segments.size; done() },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("Add a task and schedule it today at 16:00")
+        rule.onNodeWithTag("agent-preview").performScrollTo().performClick()
+        rule.onNodeWithTag("agent-confirm-tasks").performScrollTo()
+        rule.waitForIdle()
+        rule.onNodeWithText("确认创建 1 项并放入 1 个时段").assertExists()
+        rule.onNodeWithTag("agent-confirm-tasks").performClick()
+        assertEquals(1, savedTasks)
+        assertEquals("Previewed time must be included in the actual confirmation", 1, placements)
+    }
+
+    @Test fun restored_free_input_draft_does_not_lose_its_previewed_time_on_confirmation() {
+        var placements = -1
+        val item = com.swan1127.repland.domain.model.AssistantTaskProposal("restore-time", "QA restored time",
+            TaskCategory.UNSPECIFIED, 30, ArrangementTimeHint(960), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            initialWorkspace = com.swan1127.repland.domain.model.AssistantWorkspace(LocalDate.now(), "at 16:00", listOf(item),
+                intent = com.swan1127.repland.domain.model.ArrangementIntent.CAPTURE_TASKS),
+            onConfirmChanges = { _, segments, _, _, done -> placements = segments.size; done() },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-confirm-tasks").performScrollTo().performClick()
+        assertEquals(1, placements)
+    }
+
+    @Test fun explicit_capture_still_discards_ai_placement_before_preview_and_confirmation() {
+        var placements = -1
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            canRefineWithAi = true,
+            onRefineWithAi = { _, _, _ -> ArrangementAssistantAdviceResult.Advice(
+                ArrangementAssistantAdvice(listOf(ArrangementCandidate("QA capture only", TaskCategory.UNSPECIFIED, 30,
+                    ArrangementTimeHint(960), emptySet(), ArrangementPlacementSource.USER_EXPLICIT)), "explicit time")) },
+            onConfirmChanges = { _, segments, _, _, done -> placements = segments.size; done() },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("Add a task at 16:00")
+        rule.onNodeWithTag("agent-prompt-只新增任务").performScrollTo().performClick()
+        rule.onNodeWithTag("agent-confirm-tasks").performScrollTo()
+        rule.waitForIdle()
+        rule.onNodeWithText("确认创建 1 项").assertExists()
+        rule.onNodeWithTag("agent-confirm-tasks").performClick()
+        assertEquals(0, placements)
+    }
+
+    @Test fun offline_free_input_with_explicit_time_confirms_the_time_it_previews() {
+        var placements = -1
+        rule.setContent { ReplandTheme { AgentCenterScreen(
+            onConfirmChanges = { _, segments, _, _, done -> placements = segments.size; done() },
+            onSaveTasks = {}, onPlaceTask = { _, _, _, _ -> }, onOpenTimeStudio = {},
+        ) } }
+        rule.onNodeWithTag("agent-prompt").performTextInput("QA reading at 16:00 30 min")
+        rule.onNodeWithTag("agent-preview").performScrollTo().performClick()
+        rule.onNodeWithTag("agent-confirm-tasks").performScrollTo().performClick()
+        assertEquals(1, placements)
+    }
 
     @Test fun text_is_only_saved_after_explicit_confirmation() {
         var saved = 0

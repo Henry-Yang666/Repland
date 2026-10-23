@@ -1,0 +1,178 @@
+[
+  {
+    "text": "版本 0.1.35-internal (1035) · 85c75f04117b",
+    "content-desc": "",
+    "bounds": "[53,338][681,384]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "日常使用",
+    "content-desc": "",
+    "bounds": "[53,421][199,474]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "计划历史与锁定管理",
+    "content-desc": "",
+    "bounds": "[376,548][704,601]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "时间设置 · 课程、可用时间与学期",
+    "content-desc": "",
+    "bounds": "[271,711][809,764]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "统一工作方式",
+    "content-desc": "",
+    "bounds": "[53,837][317,901]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "所有安排始终可见，详细信息按需展开。旧版参与方式记录保留在本地历史中，不再改变页面功能。",
+    "content-desc": "",
+    "bounds": "[53,938][1027,1044]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "本地提醒",
+    "content-desc": "",
+    "bounds": "[100,1142][246,1195]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "开始、截止前与每日回顾时提醒你。",
+    "content-desc": "",
+    "bounds": "[100,1195][613,1241]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "开启时需要允许系统通知。",
+    "content-desc": "",
+    "bounds": "[100,1275][485,1321]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "智能与个性化",
+    "content-desc": "",
+    "bounds": "[53,1405][272,1458]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "规划助手",
+    "content-desc": "",
+    "bounds": "[100,1556][246,1609]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "帮你理解任务、估算时长和调整计划。",
+    "content-desc": "",
+    "bounds": "[100,1609][645,1655]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "已开启授权，发送前仍可查看内容。",
+    "content-desc": "",
+    "bounds": "[100,1689][613,1735]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "模型服务",
+    "content-desc": "",
+    "bounds": "[258,1788][404,1841]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "密钥已加密保存在本设备 · deepseek-flash",
+    "content-desc": "",
+    "bounds": "[258,1846][860,1892]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "配置",
+    "content-desc": "",
+    "bounds": "[889,1817][954,1863]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "保存密钥本身不会联网。只有你在助手或任务建议中确认请求后，才会发送本次所需的最小上下文。",
+    "content-desc": "",
+    "bounds": "[100,1945][980,2029]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的设置",
+    "content-desc": "",
+    "bounds": "[43,171][270,253]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日",
+    "content-desc": "",
+    "bounds": "[95,2251][160,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务",
+    "content-desc": "",
+    "bounds": "[370,2251][435,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "助手",
+    "content-desc": "",
+    "bounds": "[645,2251][710,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的",
+    "content-desc": "",
+    "bounds": "[920,2251][985,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

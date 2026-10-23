@@ -1,4 +1,10 @@
 package com.swan1127.repland.ui
+import com.swan1127.repland.domain.model.ManualPlanChange
+
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 
 import android.Manifest
 import android.app.Activity
@@ -8,6 +14,7 @@ import android.net.Uri
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -18,18 +25,25 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -40,22 +54,33 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.swan1127.repland.ui.components.DesignButton as Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.BorderStroke
+import com.swan1127.repland.ui.theme.LocalReplandVisuals
+import com.swan1127.repland.ui.theme.MotionPage
+import com.swan1127.repland.ui.theme.MotionDisclosure
+import com.swan1127.repland.ui.theme.LocalReducedMotion
+import com.swan1127.repland.ui.theme.ReplandMotion
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import com.swan1127.repland.ui.components.DesignIcons
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.swan1127.repland.ui.components.DesignFilterChip as FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.OutlinedButton
+import com.swan1127.repland.ui.components.DesignNavigationItem
+import com.swan1127.repland.ui.components.DesignOutlinedButton as OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -63,13 +88,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,9 +118,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.swan1127.repland.R
+import com.swan1127.repland.data.AuxiliaryStore
+import com.swan1127.repland.ui.components.LandscapeArtwork
+import com.swan1127.repland.ui.components.LandscapeStyle
+import com.swan1127.repland.ui.components.LearningMemorySettings
+import com.swan1127.repland.ui.plan.PlanningTeamLogPanel
+import com.swan1127.repland.ui.plan.PlanningTeamStatusDialog
+import com.swan1127.repland.ui.tools.ReviewPointsTool
 import com.swan1127.repland.domain.model.ClassPeriodClock
 import com.swan1127.repland.domain.model.AiAdvisorFailureReason
 import com.swan1127.repland.domain.model.AiProviderConfig
@@ -114,6 +154,7 @@ import com.swan1127.repland.domain.model.DateOverrideDraft
 import com.swan1127.repland.domain.model.DateOverrideType
 import com.swan1127.repland.domain.model.DailyReviewSummarizer
 import com.swan1127.repland.domain.model.ExecutionLogEventType
+import com.swan1127.repland.domain.model.ExecutionOutcome
 import com.swan1127.repland.domain.model.ImportedCourse
 import com.swan1127.repland.domain.model.PlanDraft
 import com.swan1127.repland.domain.model.PlanDraftEditor
@@ -121,6 +162,8 @@ import com.swan1127.repland.domain.model.PlanGenerationInput
 import com.swan1127.repland.domain.model.LocalPriorityAssessment
 import com.swan1127.repland.domain.model.PriorityReason
 import com.swan1127.repland.domain.model.PriorityReasonKind
+import com.swan1127.repland.domain.model.RhythmTrack
+import com.swan1127.repland.domain.model.PlanningRevision
 import com.swan1127.repland.domain.model.PlannedSegment
 import com.swan1127.repland.domain.model.PlanningAgentState
 import com.swan1127.repland.domain.model.PlanningAgentRequestType
@@ -141,11 +184,19 @@ import com.swan1127.repland.domain.model.TimeBlockValidator
 import com.swan1127.repland.domain.model.ScheduleTimeline
 import com.swan1127.repland.domain.model.TimelineEntry
 import com.swan1127.repland.domain.model.TimelinePhase
+import com.swan1127.repland.domain.model.TodayFocus
 import com.swan1127.repland.domain.model.EngagementMode
 import com.swan1127.repland.domain.model.WeeklyTimeBlock
 import com.swan1127.repland.domain.model.WeeklyTimeBlockDraft
 import com.swan1127.repland.domain.model.UnscheduledReason
+import com.swan1127.repland.domain.model.PlanDraftReview
 import com.swan1127.repland.ui.time.TimeViewModel
+import com.swan1127.repland.ui.time.TimeMutationKind
+import androidx.compose.runtime.key
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
 import com.swan1127.repland.ui.time.TimetableImportState
 import com.swan1127.repland.ui.plan.PlanViewModel
 import com.swan1127.repland.ui.preferences.CategoryPreferenceViewModel
@@ -156,9 +207,11 @@ import com.swan1127.repland.ui.data.DataManagementViewModel
 import com.swan1127.repland.ui.ai.PlanningAgentViewModel
 import com.swan1127.repland.ui.ai.AiProviderConfigViewModel
 import com.swan1127.repland.ui.ai.AiProviderConnectionTest
-import com.swan1127.repland.ui.agent.AgentCenterScreen
 import com.swan1127.repland.ui.agent.ArrangementAssistantViewModel
 import com.swan1127.repland.ui.tasks.TaskViewModel
+import com.swan1127.repland.ui.tasks.TaskMutationKind
+import com.swan1127.repland.ui.tasks.FeedbackFormValidation
+import com.swan1127.repland.ui.schedule.ScheduleCreateCard
 import com.swan1127.repland.ui.schedule.TimelineDashboard
 import com.swan1127.repland.ui.schedule.WeekScheduleView
 import com.swan1127.repland.ui.schedule.MonthScheduleView
@@ -185,7 +238,16 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private data class LifecycleLogLookup(
+    val logs: List<TaskExecutionLog> = emptyList(),
+    val isLoading: Boolean = true,
+    val failed: Boolean = false,
+)
 
 private enum class AppTab(
     @param:StringRes val titleRes: Int,
@@ -200,10 +262,28 @@ private enum class AppTab(
 
 private enum class ScheduleRange { OVERVIEW, DAY, WEEK, MONTH }
 
+@Composable
+private fun DataReadNotice(message: String, onRetry: () -> Unit, canRetry: Boolean = true) {
+    Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth().testTag("data-read-notice")) {
+        if (LocalDensity.current.fontScale > 1.3f) {
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(message, Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                TextButton(onClick = onRetry, enabled = canRetry,
+                    modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp).testTag("retry-data-read")) { Text("重试读取") }
+            }
+        } else Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(message, Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+            TextButton(onClick = onRetry, enabled = canRetry, modifier = Modifier.testTag("retry-data-read")) { Text("重试读取") }
+        }
+    }
+}
+
 private const val POSTPONEMENT_ADVICE_THRESHOLD = 3
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 fun ReplandApp(
     taskViewModel: TaskViewModel,
     timeViewModel: TimeViewModel,
@@ -216,19 +296,79 @@ fun ReplandApp(
     aiProviderConfigViewModel: AiProviderConfigViewModel,
     arrangementAssistantViewModel: ArrangementAssistantViewModel,
     engagementViewModel: EngagementViewModel,
+    taskCaptureViewModel: com.swan1127.repland.ui.tasks.TaskCaptureViewModel,
+    numericProfileViewModel: com.swan1127.repland.ui.profile.NumericProfileViewModel? = null,
+    personalProfileViewModel: com.swan1127.repland.ui.profile.PersonalProfileViewModel? = null,
+    autonomyViewModel: com.swan1127.repland.ui.agent.AutonomyViewModel? = null,
+    usageSummaryViewModel: com.swan1127.repland.ui.profile.UsageSummaryViewModel? = null,
 ) {
+    val noAutonomy = remember { kotlinx.coroutines.flow.MutableStateFlow(com.swan1127.repland.ui.agent.AutonomyUiState()) }
+    val autonomy by (autonomyViewModel?.state ?: noAutonomy).collectAsStateWithLifecycle()
+    var showScheduleAssistant by rememberSaveable { mutableStateOf(false) }
+    val taskCaptureUiState by taskCaptureViewModel.uiState.collectAsStateWithLifecycle()
+    val captureLifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(captureLifecycle, autonomyViewModel) {
+        captureLifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                autonomyViewModel?.onForeground()
+                delay(30_000)
+            }
+        }
+    }
+    DisposableEffect(captureLifecycle, taskCaptureViewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) taskCaptureViewModel.retain()
+            if (event == Lifecycle.Event.ON_RESUME) autonomyViewModel?.onForeground()
+        }
+        captureLifecycle.addObserver(observer)
+        onDispose { captureLifecycle.removeObserver(observer) }
+    }
+    val captureSnackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    val feedbackSnackbarScope = rememberCoroutineScope()
+    var snackbarHeightPx by remember { mutableStateOf(0) }
+    var pageContentBottomPx by remember { mutableStateOf(0f) }
+    var pageSnackbarTopPx by remember { mutableStateOf(0f) }
+    val snackbarBottomInset = with(LocalDensity.current) { snackbarHeightPx.toDp() }
+    val taskSnackbarInset = with(LocalDensity.current) {
+        if (captureSnackbar.currentSnackbarData != null && pageSnackbarTopPx > 0f)
+            (pageContentBottomPx - pageSnackbarTopPx).coerceAtLeast(0f).toDp()
+        else 0.dp
+    }
     val uiState by taskViewModel.uiState.collectAsStateWithLifecycle()
+    val taskMutation by taskViewModel.mutationState.collectAsStateWithLifecycle()
+    val taskActionLocked = taskMutation.busy || taskMutation.receipt != null || !uiState.isTrusted
+    val executionReadState by taskViewModel.sessionReadState.collectAsStateWithLifecycle()
+    val executionSession = executionReadState.value
+    val executionBusy by taskViewModel.sessionBusy.collectAsStateWithLifecycle()
+    val executionError by taskViewModel.sessionError.collectAsStateWithLifecycle()
+    val executionFinished by taskViewModel.sessionFinished.collectAsStateWithLifecycle()
+    var showExecutionSession by rememberSaveable { mutableStateOf(false) }
     val timeUiState by timeViewModel.uiState.collectAsStateWithLifecycle()
+    val timeMutation by timeViewModel.mutationState.collectAsStateWithLifecycle()
     val planUiState by planViewModel.uiState.collectAsStateWithLifecycle()
+    val workspaceUiState by planViewModel.workspaceUiState.collectAsStateWithLifecycle()
     val categoryPreferenceUiState by categoryPreferenceViewModel.uiState.collectAsStateWithLifecycle()
     val reminderSettingsUiState by reminderSettingsViewModel.uiState.collectAsStateWithLifecycle()
-    val profileEvidenceUiState by profileEvidenceViewModel.uiState.collectAsStateWithLifecycle()
     val dataManagementUiState by dataManagementViewModel.uiState.collectAsStateWithLifecycle()
     val planningAgentUiState by planningAgentViewModel.uiState.collectAsStateWithLifecycle()
     val aiProviderConfigUiState by aiProviderConfigViewModel.uiState.collectAsStateWithLifecycle()
+    val planningReadsReady = uiState.isTrusted && timeUiState.isTrusted && categoryPreferenceUiState.isTrusted &&
+        planUiState.isTrusted && workspaceUiState.isTrusted && executionReadState.isTrusted
+    val taskReadMessage = if (uiState.isLoading && uiState.hasLoaded) "正在重新读取任务…" else uiState.readError
+    val timeReadMessage = if (timeUiState.isLoading && timeUiState.hasLoaded) "正在重新读取时间设置…" else timeUiState.readError
+    val planReadMessage = if (planUiState.isLoading && planUiState.hasLoaded) "正在重新读取计划…" else planUiState.readError
+    val workspaceReadMessage = if (workspaceUiState.isLoading && workspaceUiState.hasLoaded) "正在重新读取轨道与助手草稿…" else workspaceUiState.readError
+    val preferenceReadMessage = if (categoryPreferenceUiState.isLoading && categoryPreferenceUiState.hasLoaded) "正在重新读取类别偏好…" else categoryPreferenceUiState.readError
+    val sessionReadMessage = if (executionReadState.isLoading && executionReadState.hasLoaded) "正在重新读取专注记录…" else executionReadState.error
+    val readMessage = listOfNotNull(taskReadMessage, timeReadMessage, planReadMessage, workspaceReadMessage, preferenceReadMessage, sessionReadMessage)
+        .joinToString("\n").ifBlank { null }
+    val canRetryReads = !uiState.isLoading && !timeUiState.isLoading && !planUiState.isLoading &&
+        !workspaceUiState.isLoading && !categoryPreferenceUiState.isLoading && !executionReadState.isLoading
+    val retryReads: () -> Unit = { taskViewModel.retryRead(); taskViewModel.retrySessionRead(); timeViewModel.retryRead(); planViewModel.retryRead(); categoryPreferenceViewModel.retryRead() }
     val arrangementAssistantAccess by arrangementAssistantViewModel.access.collectAsStateWithLifecycle()
     val engagementMode by engagementViewModel.mode.collectAsStateWithLifecycle()
     var activeDate by remember { mutableStateOf(LocalDate.now()) }
+    var scheduleEpochDay by rememberSaveable(activeDate) { mutableStateOf(activeDate.toEpochDay()) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(60_000)
@@ -236,6 +376,12 @@ fun ReplandApp(
         }
     }
     val context = LocalContext.current
+    val auxiliaryStore = remember(context) { AuxiliaryStore(context.applicationContext) }
+    var memoryRevision by remember { mutableStateOf(0) }
+    var showLearningReview by rememberSaveable { mutableStateOf(false) }
+    val learningMemory = remember(auxiliaryStore, memoryRevision, activeDate) {
+        auxiliaryStore.learningMemorySnapshot()
+    }
     val notificationPermissionGranted = context.canPostLocalNotifications()
     val reminderScheduler = remember(context) { LocalReminderScheduler(context.applicationContext) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -246,7 +392,13 @@ fun ReplandApp(
     val localDataExportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { destination ->
-        destination?.let { uri -> dataManagementViewModel.exportTo(context.contentResolver, uri) }
+        destination?.let { uri ->
+            dataManagementViewModel.exportTo(
+                context.contentResolver,
+                uri,
+                memorySnapshot = auxiliaryStore.learningMemorySnapshot(),
+            )
+        }
     }
     var showVoiceComposer by rememberSaveable { mutableStateOf(false) }
     var voiceTranscript by rememberSaveable { mutableStateOf("") }
@@ -271,26 +423,65 @@ fun ReplandApp(
         runCatching { speechLauncher.launch(intent) }.onFailure { voiceError = true }
         Unit
     }
+    val tabStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    val assistantStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.TODAY) }
+    var showMineSettings by rememberSaveable { mutableStateOf(false) }
     var timeReturnTab by rememberSaveable { mutableStateOf(AppTab.TODAY) }
+    // Retain the removed enum value only to recover an older saved navigation state.
+    LaunchedEffect(selectedTab, timeReturnTab) {
+        if (selectedTab == AppTab.AGENT) selectedTab = AppTab.TODAY
+        if (timeReturnTab == AppTab.AGENT) timeReturnTab = AppTab.TODAY
+    }
     var selectedTaskId by rememberSaveable { mutableStateOf<String?>(null) }
-    var taskEditorTarget by remember { mutableStateOf<Task?>(null) }
+    LaunchedEffect(usageSummaryViewModel, captureLifecycle, selectedTab, showMineSettings, selectedTaskId) {
+        captureLifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            val profileVisible = selectedTab == AppTab.MINE && !showMineSettings && selectedTaskId == null
+            usageSummaryViewModel?.setVisible(profileVisible)
+            if (profileVisible) try {
+                while (true) {
+                    usageSummaryViewModel?.onForeground()
+                    delay(30_000)
+                }
+            } finally {
+                usageSummaryViewModel?.setVisible(false)
+            }
+        }
+    }
+    var taskEditorTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    val taskEditorTarget = taskEditorTargetId?.let { id -> uiState.tasks.firstOrNull { it.id == id } }
     var showTaskEditor by rememberSaveable { mutableStateOf(false) }
+    var showQuickAvailability by rememberSaveable { mutableStateOf(false) }
+    var pausedPlanDraftIdentity by rememberSaveable { mutableStateOf<String?>(null) }
     var showTaskCapture by rememberSaveable { mutableStateOf(false) }
     var taskEditorSeed by rememberSaveable { mutableStateOf("") }
-    var completingTask by remember { mutableStateOf<Task?>(null) }
-    var partiallyCompletingTask by remember { mutableStateOf<Task?>(null) }
-    var feedbackTask by remember { mutableStateOf<Task?>(null) }
-    var postponingTask by remember { mutableStateOf<Task?>(null) }
-    var cancellingTask by remember { mutableStateOf<Task?>(null) }
-    var replacingTask by remember { mutableStateOf<Task?>(null) }
-    var correctingLog by remember { mutableStateOf<TaskExecutionLog?>(null) }
-    var weeklyBlockEditorTarget by remember { mutableStateOf<WeeklyTimeBlock?>(null) }
+    var taskMutationEditorKind by rememberSaveable { mutableStateOf<TaskMutationKind?>(null) }
+    var taskMutationEditorId by rememberSaveable { mutableStateOf<String?>(null) }
+    var taskMutationLogId by rememberSaveable { mutableStateOf<String?>(null) }
+    val taskMutationTarget = uiState.tasks.firstOrNull { it.id == taskMutationEditorId }
+    fun openTaskMutation(kind: TaskMutationKind, taskId: String, logId: String? = null) {
+        if (!taskActionLocked) {
+            taskViewModel.resetMutation()
+            taskMutationEditorKind = kind; taskMutationEditorId = taskId; taskMutationLogId = logId
+        }
+    }
+    val closeTaskMutation: () -> Unit = {
+        if (!taskMutation.busy) {
+            taskMutationEditorKind = null; taskMutationEditorId = null; taskMutationLogId = null
+            taskViewModel.resetMutation()
+        }
+    }
+    var weeklyBlockEditorId by rememberSaveable { mutableStateOf<String?>(null) }
+    val weeklyBlockEditorTarget = weeklyBlockEditorId?.let { id -> timeUiState.weeklyBlocks.firstOrNull { it.id == id } }
     var showWeeklyBlockEditor by rememberSaveable { mutableStateOf(false) }
-    var dateOverrideEditorTarget by remember { mutableStateOf<DateOverride?>(null) }
+    var weeklyBlockInitialKind by rememberSaveable { mutableStateOf(TimeBlockKind.COURSE) }
+    var dateOverrideEditorId by rememberSaveable { mutableStateOf<String?>(null) }
+    val dateOverrideEditorTarget = dateOverrideEditorId?.let { id -> timeUiState.dateOverrides.firstOrNull { it.id == id } }
     var showDateOverrideEditor by rememberSaveable { mutableStateOf(false) }
-    var deletingWeeklyBlock by remember { mutableStateOf<WeeklyTimeBlock?>(null) }
-    var deletingDateOverride by remember { mutableStateOf<DateOverride?>(null) }
+    var deletingWeeklyId by rememberSaveable { mutableStateOf<String?>(null) }
+    val deletingWeeklyBlock = deletingWeeklyId?.let { id -> timeUiState.weeklyBlocks.firstOrNull { it.id == id } }
+    var deletingOverrideId by rememberSaveable { mutableStateOf<String?>(null) }
+    val deletingDateOverride = deletingOverrideId?.let { id -> timeUiState.dateOverrides.firstOrNull { it.id == id } }
     var showSemesterStartEditor by rememberSaveable { mutableStateOf(false) }
     var showPlanOverview by rememberSaveable { mutableStateOf(false) }
     var showClearPlanConfirmation by rememberSaveable { mutableStateOf(false) }
@@ -305,10 +496,28 @@ fun ReplandApp(
     val dailyLogsFlow = remember(reviewDate) { taskViewModel.observeExecutionLogsForDate(reviewDate) }
     val dailyLogs by dailyLogsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedTask = selectedTaskId?.let { id -> uiState.tasks.firstOrNull { it.id == id } }
+    // Dialog/sheet handlers are composed later and retain their IME/save protection.
+    // At page level, native Back has the same destination as the visible arrow.
+    BackHandler(enabled = selectedTaskId != null || selectedTab == AppTab.TIME ||
+        (selectedTab == AppTab.MINE && showMineSettings)) {
+        when {
+            selectedTaskId != null -> selectedTaskId = null
+            selectedTab == AppTab.TIME -> selectedTab = timeReturnTab
+            else -> showMineSettings = false
+        }
+    }
     val selectedTaskLogs = remember(selectedTaskId) {
         selectedTaskId?.let(taskViewModel::observeExecutionLogs) ?: flowOf(emptyList())
     }
     val executionLogs by selectedTaskLogs.collectAsStateWithLifecycle(initialValue = emptyList())
+    val correctionLogsFlow = remember(taskMutationEditorId) {
+        taskMutationEditorId?.let { id -> taskViewModel.observeExecutionLogs(id)
+            .map { LifecycleLogLookup(logs = it, isLoading = false) }
+            .catch { emit(LifecycleLogLookup(isLoading = false, failed = true)) }
+        } ?: flowOf(LifecycleLogLookup())
+    }
+    val correctionLogs by correctionLogsFlow.collectAsStateWithLifecycle(initialValue = LifecycleLogLookup())
+    val correctionTarget = correctionLogs.logs.firstOrNull { it.id == taskMutationLogId }
     val planNeedsUpdate = planUiState.currentPlan?.let { plan ->
         uiState.tasks.any { task -> task.updatedAtEpochMillis > plan.createdAtEpochMillis } ||
             timeUiState.weeklyBlocks.any { block -> block.updatedAtEpochMillis > plan.createdAtEpochMillis } ||
@@ -316,7 +525,11 @@ fun ReplandApp(
                 override.updatedAtEpochMillis > plan.createdAtEpochMillis
             } || timeUiState.timeConstraintsUpdatedAtEpochMillis > plan.createdAtEpochMillis
     } ?: false
-    val generatePlanDraft = {
+    fun generatePlanDraft(reorder: Boolean = false, orderOnly: Boolean = false, todayOnly: LocalDate? = null) {
+        if (!planningReadsReady) {
+            feedbackSnackbarScope.launch { captureSnackbar.showSnackbar("任务或时间尚未可靠读取，请先重试；原计划未变。") }
+            return
+        }
         planViewModel.generateDraft(
             tasks = uiState.tasks,
             weeklyBlocks = timeUiState.weeklyBlocks,
@@ -324,22 +537,19 @@ fun ReplandApp(
             semesterFirstWeekMonday = timeUiState.semesterFirstWeekMonday,
             lockedSegments = planUiState.currentPlan?.segments
                 ?.filter { segment ->
-                    segment.isLocked && !segment.hasEndedBefore(LocalDateTime.now())
+                    (segment.isLocked || executionSession?.taskId == segment.taskId) && !segment.hasEndedBefore(LocalDateTime.now())
                 }
                 .orEmpty(),
             categoryPreferences = categoryPreferenceUiState.weights,
-            manualTaskOrder = planUiState.currentPlan
+            manualTaskOrder = if (reorder) emptyList() else planUiState.taskOrder.ifEmpty { planUiState.currentPlan
                 ?.takeIf { it.hasManualTaskOrder }
                 ?.orderedTaskIds
-                .orEmpty(),
+                .orEmpty() },
+            orderOnly = orderOnly,
+            todayOnly = todayOnly,
+            reorder = reorder,
         )
     }
-    val taskRevision = uiState.tasks.maxOfOrNull(Task::updatedAtEpochMillis) ?: 0L
-    val timeConstraintRevision = maxOf(
-        timeUiState.weeklyBlocks.maxOfOrNull(WeeklyTimeBlock::updatedAtEpochMillis) ?: 0L,
-        timeUiState.dateOverrides.maxOfOrNull(DateOverride::updatedAtEpochMillis) ?: 0L,
-        timeUiState.timeConstraintsUpdatedAtEpochMillis,
-    )
     // The arrangement assistant previews against exactly the same projected day
     // that the user sees on the home timeline; it never schedules into a vacuum.
     val agentTimelineEntries = ScheduleTimeline.entries(
@@ -354,16 +564,7 @@ fun ReplandApp(
     // Feedback and future-constraint changes can propose a new plan, but only the user
     // can accept it. The draft itself is deliberately not a key: dismissing a draft
     // must not cause the system to immediately recreate it without a new user change.
-    LaunchedEffect(planUiState.currentPlan?.id, taskRevision, timeConstraintRevision) {
-        if (
-            planNeedsUpdate &&
-            planUiState.draft == null &&
-            !uiState.isLoading &&
-            !timeUiState.isLoading
-        ) {
-            generatePlanDraft()
-        }
-    }
+    // Changed facts show a review affordance, never an unsolicited modal over execution/editing.
 
     LaunchedEffect(
         reminderSettingsUiState.preferences.isEnabled,
@@ -371,7 +572,12 @@ fun ReplandApp(
         planUiState.currentPlan,
         planUiState.planHistory,
         uiState.tasks,
+        uiState.isTrusted,
+        planUiState.isTrusted,
     ) {
+        // Reading failure is not evidence that confirmed tasks disappeared. An
+        // explicit reminder switch-off can still cancel reminders safely.
+        if ((!uiState.isTrusted || !planUiState.isTrusted) && reminderSettingsUiState.preferences.isEnabled) return@LaunchedEffect
         reminderScheduler.sync(
             isEnabled = reminderSettingsUiState.preferences.isEnabled && notificationPermissionGranted,
             currentPlan = planUiState.currentPlan,
@@ -397,30 +603,39 @@ fun ReplandApp(
     }
 
     if (selectedTask != null) {
+        MotionPage(targetKey = selectedTask.id, lateral = true) {
         TaskDetailScreen(
             task = selectedTask,
             executionLogs = executionLogs,
+            actionsLocked = taskActionLocked,
+            savingRecord = taskMutation.busy,
+            snackbarHostState = captureSnackbar,
+            snackbarBottomInset = snackbarBottomInset,
+            readMessage = readMessage,
+            onRetryReads = retryReads,
+            onSnackbarSize = { snackbarHeightPx = it },
             onBack = { selectedTaskId = null },
             onStart = taskViewModel::startTask,
             onEdit = {
-                taskEditorTarget = selectedTask
+                taskViewModel.resetEditorResult()
+                taskEditorTargetId = selectedTask.id
                 showTaskEditor = true
             },
-            onPostpone = { postponingTask = selectedTask },
-            onCancel = { cancellingTask = selectedTask },
+            onPostpone = { openTaskMutation(TaskMutationKind.POSTPONE, selectedTask.id) },
+            onCancel = { openTaskMutation(TaskMutationKind.CANCEL, selectedTask.id) },
             onComplete = { taskViewModel.completeTask(selectedTask.id) },
-            onPartialCompletion = { partiallyCompletingTask = selectedTask },
-            onFeedback = { feedbackTask = selectedTask },
+            onPartialCompletion = { openTaskMutation(TaskMutationKind.PARTIAL, selectedTask.id) },
+            onFeedback = { openTaskMutation(TaskMutationKind.FEEDBACK, selectedTask.id) },
             onOpenAssistant = { assistantTaskId = selectedTask.id; showAssistant = true },
-            onReplace = { replacingTask = selectedTask },
+            onReplace = { openTaskMutation(TaskMutationKind.REPLACE, selectedTask.id) },
             onRestore = { taskViewModel.restoreTask(selectedTask.id) },
-            onCorrectLog = { correctingLog = it },
+            onCorrectLog = { openTaskMutation(TaskMutationKind.CORRECT, it.taskId, it.id) },
             onReviewAdjustmentDraft = {
                 selectedTaskId = null
-                selectedTab = AppTab.TIME
+                selectedTab = AppTab.TODAY
                 if (planUiState.draft == null) generatePlanDraft()
             },
-            isAiEnabled = planningAgentUiState.preferences.isEnabled,
+            isAiEnabled = planningReadsReady && planningAgentUiState.preferences.isEnabled,
             planningAgentState = if (lastPlanningAgentTaskId == selectedTask.id) {
                 planningAgentUiState.workflow
             } else {
@@ -467,6 +682,7 @@ fun ReplandApp(
                                 .orEmpty(),
                         ),
                         constraintSummary = listOf("仅调整当前任务的未来工作；课程、休息、锁定和固定任务保持受保护。"),
+                        persistedTaskOrder = planUiState.taskOrder,
                     )
 
                     PlanningAgentRequestType.DAILY_SUMMARY -> Unit
@@ -477,14 +693,35 @@ fun ReplandApp(
                 reviewingAgentDraft = planUiState.draft == null
             },
         )
+        }
     } else {
         Scaffold(
+            snackbarHost = { androidx.compose.material3.SnackbarHost(captureSnackbar,
+                modifier = Modifier.testTag("page-save-snackbar")
+                    .onSizeChanged { snackbarHeightPx = it.height }
+                    .onGloballyPositioned { pageSnackbarTopPx = it.boundsInRoot().top }) },
             topBar = {
-                if (selectedTab != AppTab.AGENT) TopAppBar(
+                if (selectedTab == AppTab.TASKS) TaskPageAppBar(
+                    title = stringResource(selectedTab.titleRes),
+                    canUndo = workspaceUiState.canUndoOrder,
+                    undoEnabled = planningReadsReady && !planUiState.isWorking && planUiState.draft == null,
+                    sortEnabled = planningReadsReady && !planUiState.isWorking && planUiState.draft == null && uiState.tasks.any { it.status.isActive },
+                    onUndo = planViewModel::undoTaskOrder,
+                    onSort = { if (planUiState.draft == null) generatePlanDraft(reorder = true, orderOnly = true) },
+                ) else if (selectedTab == AppTab.TODAY) {
+                    Surface(color = MaterialTheme.colorScheme.surface) {
+                        Column(Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                            .padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(LocalDate.ofEpochDay(scheduleEpochDay).format(DateTimeFormatter.ofPattern("yyyy/MM/dd E", Locale.CHINA)),
+                                modifier = Modifier.testTag("schedule-selected-date"),
+                                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                } else TopAppBar(
                     title = {
                         Column {
                             Text(
-                                if (selectedTab == AppTab.TIME) "导入课表" else stringResource(selectedTab.titleRes),
+                                if (selectedTab == AppTab.TIME) "时间设置" else if (selectedTab == AppTab.MINE && showMineSettings) "设置" else stringResource(selectedTab.titleRes),
                                 style = MaterialTheme.typography.titleLarge,
                             )
                             if (selectedTab == AppTab.TODAY) {
@@ -496,40 +733,32 @@ fun ReplandApp(
                             }
                         }
                     },
+                    actions = {
+                        if (selectedTab == AppTab.TODAY) Text("设计副本", modifier = Modifier.padding(end = 20.dp),
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    },
                     navigationIcon = {
-                        if (selectedTab == AppTab.TIME) {
+                        if (selectedTab == AppTab.TIME || (selectedTab == AppTab.MINE && showMineSettings)) {
                             IconButton(
-                                onClick = { selectedTab = timeReturnTab },
-                                modifier = Modifier.testTag("timetable-back"),
+                                onClick = { if (selectedTab == AppTab.TIME) selectedTab = timeReturnTab else showMineSettings = false },
+                                modifier = Modifier.testTag(if (selectedTab == AppTab.TIME) "timetable-back" else "settings-back"),
                             ) {
                                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
                             }
                         }
                     },
-                    actions = {
-                        if (selectedTab == AppTab.TASKS) {
-                            TextButton(
-                                onClick = { showVoiceComposer = true; voiceError = false },
-                                modifier = Modifier.testTag("voice-capture"),
-                            ) { Text("语音添加") }
-                        }
-                    },
                 )
             },
             bottomBar = {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
-                    AppTab.entries.filter { it != AppTab.TIME }.forEach { tab ->
-                        NavigationBarItem(
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
+                    AppTab.entries.filter { it != AppTab.TIME && it != AppTab.AGENT }.forEach { tab ->
+                        DesignNavigationItem(
                             selected = selectedTab == tab,
-                            onClick = { selectedTab = tab },
+                            onClick = { selectedTab = tab; if (tab == AppTab.MINE) showMineSettings = false },
                             modifier = Modifier.testTag("navigation-${tab.name.lowercase()}"),
                             icon = { TabIcon(tab) },
-                            label = { Text(stringResource(tab.shortRes)) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            ),
+                            label = { Text(if (tab == AppTab.TODAY) "日程" else stringResource(tab.shortRes)) },
+                            accentIndex = when (tab) { AppTab.TODAY -> 0; AppTab.TASKS -> 1; AppTab.AGENT -> 2; else -> 4 },
                         )
                     }
                 }
@@ -537,15 +766,16 @@ fun ReplandApp(
             floatingActionButton = {
                 when (selectedTab) {
                     AppTab.TASKS -> {
-                        FloatingActionButton(
+                        TaskCaptureButton(
                             onClick = {
                                 showTaskCapture = true
                             },
-                            modifier = Modifier.testTag("add-task"),
-                        ) { Icon(Icons.Outlined.Add, contentDescription = "添加任务") }
+                        )
                     }
 
-                    AppTab.TODAY -> Unit
+                    AppTab.TODAY -> if (autonomyViewModel != null) ScheduleAssistantButton(
+                        onClick = { showScheduleAssistant = true },
+                    )
 
                     AppTab.AGENT -> Unit
 
@@ -555,40 +785,71 @@ fun ReplandApp(
                 }
             },
         ) { innerPadding ->
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .onGloballyPositioned { pageContentBottomPx = it.boundsInRoot().bottom },
             ) {
+                readMessage?.let { DataReadNotice(it, retryReads, canRetry = canRetryReads) }
+                if (planUiState.draft != null && pausedPlanDraftIdentity == planUiState.draft?.generatedAt.toString()) {
+                    OutlinedButton(onClick = { pausedPlanDraftIdentity = null }, modifier = Modifier.fillMaxWidth().testTag("plan-resume-preview")) {
+                        Text("继续查看保留的计划预览")
+                    }
+                }
+                // Scaffold places the snackbar above its FAB. Its height alone does not
+                // describe the covered list area, so reserve the actual vertical overlap.
+                MotionPage(targetKey = selectedTab, modifier = Modifier.weight(1f).fillMaxWidth()
+                    .padding(bottom = if (selectedTab != AppTab.TIME) taskSnackbarInset else 0.dp)
+                    .wrapContentSize(Alignment.TopCenter)
+                    .widthIn(max = 720.dp).fillMaxWidth()) {
+                tabStateHolder.SaveableStateProvider(selectedTab) {
                 when (selectedTab) {
                     AppTab.TODAY -> TodayScreen(
-                        date = activeDate,
+                        executionSession = executionSession,
+                        executionError = executionError,
+                        executionReadsReady = executionReadState.isTrusted && uiState.isTrusted && planUiState.isTrusted,
+                        onResumeExecution = { showExecutionSession = true },
+                        executionFinished = executionFinished,
+                        automaticPlanning = autonomyViewModel != null && autonomy.delegation.enabled,
+                        hasAssistantButton = autonomyViewModel != null,
+                        onReplanRemaining = { taskViewModel.dismissSessionResult(); generatePlanDraft() },
+                        onDismissExecutionResult = taskViewModel::dismissSessionResult,
+                        planNeedsUpdate = planNeedsUpdate && !(autonomyViewModel != null && autonomy.delegation.enabled),
+                        onReviewPlanChanges = { if (planUiState.draft == null) generatePlanDraft() },
+                        date = LocalDate.ofEpochDay(scheduleEpochDay),
+                        onDateSelected = { scheduleEpochDay = it.toEpochDay() },
                         tasks = uiState.tasks.filter(Task::isTodayRelevant),
                         allTasks = uiState.tasks,
                         weeklyBlocks = timeUiState.weeklyBlocks,
                         dateOverrides = timeUiState.dateOverrides,
                         semesterFirstWeekMonday = timeUiState.semesterFirstWeekMonday,
                         engagementMode = engagementMode,
+                        tracks = workspaceUiState.tracks,
+                        onTracksChanged = planViewModel::saveTracks,
                         onOpenTimelineEntry = engagementViewModel::recordTimelineOpened,
                         onEditTimelineEntry = { entry ->
                             when {
                                 entry.id.startsWith("segment:") -> entry.taskId?.let { taskId ->
-                                    taskEditorTarget = uiState.tasks.firstOrNull { it.id == taskId }
+                                    taskViewModel.resetEditorResult()
+                                    taskEditorTargetId = taskId.takeIf { id -> uiState.tasks.any { it.id == id } }
                                     showTaskEditor = taskEditorTarget != null
                                 }
 
                                 entry.id.startsWith("weekly:") -> {
-                                    weeklyBlockEditorTarget = timeUiState.weeklyBlocks.firstOrNull {
+                                    timeViewModel.resetMutation()
+                                    weeklyBlockEditorId = timeUiState.weeklyBlocks.firstOrNull {
                                         it.id == entry.id.removePrefix("weekly:")
-                                    }
-                                    showWeeklyBlockEditor = weeklyBlockEditorTarget != null
+                                    }?.id
+                                    showWeeklyBlockEditor = weeklyBlockEditorId != null
                                 }
 
                                 entry.id.startsWith("override:") -> {
-                                    dateOverrideEditorTarget = timeUiState.dateOverrides.firstOrNull {
+                                    timeViewModel.resetMutation()
+                                    dateOverrideEditorId = timeUiState.dateOverrides.firstOrNull {
                                         it.id == entry.id.removePrefix("override:")
-                                    }
-                                    showDateOverrideEditor = dateOverrideEditorTarget != null
+                                    }?.id
+                                    showDateOverrideEditor = dateOverrideEditorId != null
                                 }
                             }
                         },
@@ -604,26 +865,23 @@ fun ReplandApp(
                             }
                             ?.sortedWith(compareBy(PlannedSegment::date, PlannedSegment::startMinute))
                             .orEmpty(),
-                        isLoading = uiState.isLoading,
+                        isLoading = uiState.isLoading || (!uiState.hasLoaded && uiState.readError != null),
                         onOpen = { selectedTaskId = it.id },
                         onStart = taskViewModel::startTask,
                         onOpenDailyReview = { showDailyReview = true },
                         onAdd = {
                             showTaskCapture = true
                         },
-                        onOpenPlan = { selectedTab = AppTab.AGENT },
+                        onOpenTaskLibrary = { selectedTab = AppTab.TASKS },
                         onPlaceEvent = planViewModel::placeTask,
-                        onFocusStarted = taskViewModel::startTask,
-                        onFocusCompleted = { taskId, minutes ->
-                            taskViewModel.completeTask(taskId, actualDurationMinutes = minutes)
+                        onFocusStarted = { segmentId ->
+                            if (executionReadState.isTrusted && uiState.isTrusted && planUiState.isTrusted) {
+                                showExecutionSession = true
+                                taskViewModel.startSession(segmentId)
+                            }
                         },
-                        onFocusNotCompleted = { taskId, minutes ->
-                            taskViewModel.recordFeedback(
-                                taskId,
-                                TaskFeedback(actualDurationMinutes = minutes, completionResult = "focus_incomplete"),
-                            )
-                        },
-                        onCreateCourse = { request, courseDate ->
+                        onCreateCourse = { request, courseDate, saved ->
+                            timeViewModel.resetMutation()
                             timeViewModel.saveWeeklyBlock(
                                 WeeklyTimeBlockDraft(
                                     title = request.title,
@@ -632,16 +890,19 @@ fun ReplandApp(
                                     startMinute = request.startMinute,
                                     endMinute = (request.startMinute + request.durationMinutes).coerceAtMost(1_440),
                                     trackId = request.trackId,
-                                ),
+                                ), saved,
                             )
                         },
+                        timelineWriteBusy = planUiState.isWorking || timeMutation.busy || planUiState.pendingManualChange != null,
+                        timelineWriteError = planUiState.errorMessage ?: timeMutation.error,
                         onRemovePlacement = planViewModel::removePlacement,
-                        onMoveEntry = { entry, startMinute ->
+                        onMoveEntry = { entry, startMinute, saved ->
+                            timeViewModel.resetMutation()
                             val duration = entry.endMinute - entry.startMinute
                             val endMinute = startMinute + duration
                             when {
                                 entry.id.startsWith("segment:") -> planViewModel.movePlacement(
-                                    entry.id.removePrefix("segment:"), startMinute, endMinute, entry.trackId,
+                                    entry.id.removePrefix("segment:"), startMinute, endMinute, entry.trackId, saved,
                                 )
 
                                 entry.id.startsWith("weekly:") -> timeUiState.weeklyBlocks
@@ -658,7 +919,7 @@ fun ReplandApp(
                                                 weekPattern = block.weekPattern,
                                                 trackId = block.trackId,
                                                 note = block.note,
-                                            ),
+                                            ), saved,
                                         )
                                     }
 
@@ -674,15 +935,16 @@ fun ReplandApp(
                                                 startMinute = startMinute,
                                                 endMinute = endMinute,
                                                 note = override.note,
-                                            ),
+                                            ), saved,
                                         )
                                     }
                             }
                         },
-                        onUpdateEntryTime = { entry, startMinute, endMinute ->
+                        onUpdateEntryTime = { entry, startMinute, endMinute, saved ->
+                            timeViewModel.resetMutation()
                             when {
                                 entry.id.startsWith("segment:") -> planViewModel.movePlacement(
-                                    entry.id.removePrefix("segment:"), startMinute, endMinute, entry.trackId,
+                                    entry.id.removePrefix("segment:"), startMinute, endMinute, entry.trackId, saved,
                                 )
 
                                 entry.id.startsWith("weekly:") -> timeUiState.weeklyBlocks
@@ -699,7 +961,7 @@ fun ReplandApp(
                                                 weekPattern = block.weekPattern,
                                                 trackId = block.trackId,
                                                 note = block.note,
-                                            ),
+                                            ), saved,
                                         )
                                     }
 
@@ -715,7 +977,7 @@ fun ReplandApp(
                                                 startMinute = startMinute,
                                                 endMinute = endMinute,
                                                 note = override.note,
-                                            ),
+                                            ), saved,
                                         )
                                     }
                             }
@@ -723,8 +985,9 @@ fun ReplandApp(
                     )
 
                     AppTab.TASKS -> TasksScreen(
-                        tasks = uiState.tasks,
-                        isLoading = uiState.isLoading,
+                        confirmedSegments = planUiState.currentPlan?.segments.orEmpty(),
+                        tasks = uiState.tasks.sortedBy { task -> planUiState.taskOrder.indexOf(task.id).takeIf { it >= 0 } ?: Int.MAX_VALUE },
+                        isLoading = uiState.isLoading || (!uiState.hasLoaded && uiState.readError != null),
                         onOpen = { selectedTaskId = it.id },
                         onStart = taskViewModel::startTask,
                         onAdd = {
@@ -732,51 +995,58 @@ fun ReplandApp(
                         },
                     )
 
-                    AppTab.AGENT -> AgentCenterScreen(
-                        activeDate = activeDate,
-                        occupiedEntries = agentTimelineEntries,
-                        canRefineWithAi = arrangementAssistantAccess.isEnabled &&
-                            arrangementAssistantAccess.hasExplicitConsent && aiProviderConfigUiState.config.hasApiKey,
-                        onRefineWithAi = arrangementAssistantViewModel::refine,
-                        onSaveTasks = { drafts -> drafts.forEach(taskViewModel::saveTask) },
-                        onPlaceTask = { taskId, startMinute, endMinute, trackId ->
-                            planViewModel.placeTask(taskId, activeDate, startMinute, endMinute, trackId)
-                        },
-                        onOpenTimeStudio = {
-                            timeReturnTab = AppTab.AGENT
-                            selectedTab = AppTab.TIME
-                        },
-                    )
+                    AppTab.AGENT -> Unit
 
                     AppTab.TIME -> TimeScreen(
+                        snackbarBottomInset = snackbarBottomInset,
+                        state = timeUiState,
+                        busy = timeMutation.busy || !timeUiState.isTrusted,
+                        onAddWeekly = { timeViewModel.resetMutation(); weeklyBlockEditorId = null; weeklyBlockInitialKind = TimeBlockKind.COURSE; showWeeklyBlockEditor = true },
+                        onEditWeekly = { timeViewModel.resetMutation(); weeklyBlockEditorId = it.id; showWeeklyBlockEditor = true },
+                        onDeleteWeekly = { timeViewModel.resetMutation(); deletingWeeklyId = it.id },
+                        onAddOverride = { timeViewModel.resetMutation(); dateOverrideEditorId = null; showDateOverrideEditor = true },
+                        onEditOverride = { timeViewModel.resetMutation(); dateOverrideEditorId = it.id; showDateOverrideEditor = true },
+                        onDeleteOverride = { timeViewModel.resetMutation(); deletingOverrideId = it.id },
+                        onEditSemester = { timeViewModel.resetMutation(); showSemesterStartEditor = true },
                         timetableImport = timeUiState.timetableImport,
                         onImportPdf = timeViewModel::readTimetable,
                         onClearTimetableImport = timeViewModel::clearTimetableImport,
                     )
                     AppTab.MINE -> MineScreen(
+                        showSettings = showMineSettings,
+                        onOpenSettings = { showMineSettings = true },
+                        memoryReferenceEnabled = learningMemory.referenceEnabled,
+                        memoryPointCount = learningMemory.points.size,
+                        onMemoryReferenceChange = {
+                            auxiliaryStore.memoryReferenceEnabled = it
+                            memoryRevision += 1
+                        },
+                        onOpenLearningReview = { showLearningReview = true },
+                        personalProfileContent = { personalProfileViewModel?.let { com.swan1127.repland.ui.profile.PersonalProfileSection(it) } },
+                        onOpenTimeSettings = { timeReturnTab = AppTab.MINE; selectedTab = AppTab.TIME },
+                        onOpenPlanHistory = { showPlanOverview = true },
                         weights = categoryPreferenceUiState.weights,
-                        profileEvidence = profileEvidenceUiState.evidence,
-                        isLoading = categoryPreferenceUiState.isLoading ||
-                            reminderSettingsUiState.isLoading || profileEvidenceUiState.isLoading ||
+                        preferenceState = categoryPreferenceUiState,
+                        isLoading = (categoryPreferenceUiState.isLoading && !categoryPreferenceUiState.hasLoaded) ||
+                            reminderSettingsUiState.isLoading ||
                             planningAgentUiState.isLoading || aiProviderConfigUiState.isLoading,
                         onSave = categoryPreferenceViewModel::save,
                         remindersEnabled = reminderSettingsUiState.preferences.isEnabled,
                         notificationsAllowed = notificationPermissionGranted,
                         onRemindersEnabledChange = onReminderEnabledChange,
-                        onGenerateProfileEvidence = profileEvidenceViewModel::generate,
-                        onUpdateProfileEvidence = profileEvidenceViewModel::updateConclusion,
-                        onDeleteProfileEvidence = profileEvidenceViewModel::delete,
                         onExportLocalData = {
                             localDataExportLauncher.launch("repland-local-export-${LocalDate.now()}.json")
                         },
                         onClearLocalData = { showClearLocalDataConfirmation = true },
                         isDataWorking = dataManagementUiState.isWorking,
                         dataResult = dataManagementUiState.result,
-                        hasProfileActionError = profileEvidenceUiState.hasActionError,
+                        automaticPlanningEnabled = autonomy.delegation.enabled.takeIf { autonomyViewModel != null && autonomy.ready },
+                        onAutomaticPlanningChange = { autonomyViewModel?.setEnabled(it) },
                         aiEnabled = planningAgentUiState.preferences.isEnabled,
                         aiConsented = planningAgentUiState.preferences.hasExplicitConsent,
                         onAiEnabledChange = onAiEnabledChange,
                         aiProviderConfig = aiProviderConfigUiState.config,
+                        remoteAiSupported = aiProviderConfigUiState.supportsRemote,
                         aiProviderConfigError = aiProviderConfigUiState.errorMessage,
                         aiProviderConnectionTest = aiProviderConfigUiState.connectionTest,
                         onSaveAiProviderConfig = aiProviderConfigViewModel::save,
@@ -784,34 +1054,143 @@ fun ReplandApp(
                         onTestAiProviderConnection = aiProviderConfigViewModel::testConnection,
                         engagementMode = engagementMode,
                         onEngagementModeChange = engagementViewModel::setMode,
+                        summaryContent = {
+                            if (usageSummaryViewModel != null) com.swan1127.repland.ui.profile.UsageSummarySection(usageSummaryViewModel)
+                            else com.swan1127.repland.ui.profile.UsageSummaryCard(com.swan1127.repland.ui.profile.UsageSummaryUiState(
+                                text = "照常记录任务和进度，这里会自动整理近期的使用情况。", loading = false))
+                        },
                     )
+                }
+                }
                 }
             }
         }
     }
 
-    if (showTaskCapture) {
+    if (showLearningReview) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showLearningReview = false },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                val reviewPoints = remember(auxiliaryStore, memoryRevision, activeDate) {
+                    auxiliaryStore.reviewPoints().filterNot { it.isGraduated }
+                }
+                val due = reviewPoints.filter { it.isDueOn(activeDate) }
+                val upcoming = reviewPoints.filterNot { it.isDueOn(activeDate) }.sortedBy { it.dueOn }
+                ReviewPointsTool(
+                    due = due,
+                    upcomingCount = upcoming.size,
+                    upcomingReviewPoints = upcoming,
+                    today = activeDate,
+                    tasks = if (uiState.isTrusted) uiState.tasks else emptyList(),
+                    onClose = { showLearningReview = false },
+                    onGrade = { pointId, grade ->
+                        auxiliaryStore.gradeReviewPoint(pointId, grade, activeDate)
+                        memoryRevision += 1
+                    },
+                    onAddPoint = { selected, content ->
+                        val task = uiState.tasks.firstOrNull { it.id == selected.id }
+                        if (task == null || !uiState.isTrusted || dataManagementUiState.isWorking) false
+                        else auxiliaryStore.addReviewPointFromText(
+                            task.id, task.displayName, content, activeDate, task.userPriority,
+                        ).also { saved -> if (saved) memoryRevision += 1 }
+                    },
+                )
+            }
+        }
+    }
+
+    if (showScheduleAssistant && autonomyViewModel != null) {
+        com.swan1127.repland.ui.agent.AutonomousAssistantSheet(
+            busy = autonomy.busy,
+            onDismiss = { showScheduleAssistant = false },
+        ) {
+            assistantStateHolder.SaveableStateProvider("schedule-assistant") {
+                com.swan1127.repland.ui.agent.AutonomousAssistantScreen(
+                    state = autonomy.copy(ready = autonomy.ready && planningReadsReady,
+                        error = autonomy.error ?: readMessage.takeIf { !planningReadsReady }),
+                    tasks = uiState.tasks,
+                    onSubmit = { text -> autonomyViewModel.submit(text,
+                        planningReadsReady && arrangementAssistantAccess.isEnabled && arrangementAssistantAccess.hasExplicitConsent &&
+                            aiProviderConfigUiState.config.hasApiKey && aiProviderConfigUiState.supportsRemote,
+                        arrangementAssistantViewModel::refine) },
+                    onUndo = autonomyViewModel::undo,
+                    onOpenTask = { if (!autonomy.busy) { showScheduleAssistant = false; selectedTaskId = it } },
+                )
+            }
+        }
+    }
+
+    if (showExecutionSession && executionSession != null) {
+        com.swan1127.repland.ui.schedule.ExecutionSessionDialog(
+            session = executionSession!!,
+            busy = executionBusy,
+            error = executionError,
+            canOperate = executionReadState.isTrusted && uiState.isTrusted && planUiState.isTrusted,
+            readNotice = { readMessage?.let { DataReadNotice(it, retryReads, canRetryReads) } },
+            onDismiss = { showExecutionSession = false },
+            onPause = { taskViewModel.pauseSession(executionSession!!.id) },
+            onResume = { taskViewModel.resumeSession(executionSession!!.id) },
+            onFinish = { outcome, feedback -> taskViewModel.finishSession(executionSession!!.id, outcome, feedback) },
+        )
+    }
+    LaunchedEffect(taskCaptureUiState.receipt) {
+        taskCaptureUiState.receipt?.let { receipt ->
+            showTaskCapture = false
+            taskEditorSeed = ""
+            captureSnackbar.showSnackbar(receipt)
+            // Consuming the effect key earlier would cancel the visible Snackbar.
+            taskCaptureViewModel.dismissReceipt()
+        }
+    }
+    if (showTaskCapture && taskCaptureUiState.loadFailed && !taskCaptureUiState.loading) {
+        AlertDialog(onDismissRequest = { showTaskCapture = false }, title = { Text("草稿暂时无法读取") },
+            text = { Text(taskCaptureUiState.error.orEmpty()) },
+            confirmButton = { TextButton(onClick = taskCaptureViewModel::retryLoad) { Text("重试") } },
+            dismissButton = { TextButton(onClick = { showTaskCapture = false }) { Text("返回") } })
+    }
+    if (showTaskCapture && !taskCaptureUiState.loading && !taskCaptureUiState.loadFailed) {
         TaskCaptureSheet(
             initialText = taskEditorSeed,
-            onDismiss = { showTaskCapture = false; taskEditorSeed = "" },
-            onSave = {
-                taskViewModel.saveTask(it)
-                showTaskCapture = false
-                taskEditorSeed = ""
-            },
+            draft = taskCaptureUiState.draft,
+            onDraftChange = taskCaptureViewModel::update,
+            saving = taskCaptureUiState.saving,
+            persisted = taskCaptureUiState.persisted,
+            saveError = taskCaptureUiState.error,
+            onDiscard = taskCaptureViewModel::discard,
+            onVoice = { taskCaptureViewModel.retain(); taskEditorSeed = ""; voiceTranscript = taskCaptureUiState.draft.text; showTaskCapture = false; showVoiceComposer = true; voiceError = false },
+            onDismiss = { taskCaptureViewModel.retain(); showTaskCapture = false; taskEditorSeed = "" },
+            onSave = taskCaptureViewModel::save,
         )
     }
 
-    if (showTaskEditor) {
+    val editorSaveState by taskViewModel.editorSaveState.collectAsStateWithLifecycle()
+    LaunchedEffect(editorSaveState.receipt) {
+        editorSaveState.receipt?.let {
+            showTaskEditor = false
+            taskEditorSeed = ""
+            selectedTaskId = null
+            selectedTab = AppTab.TASKS
+            captureSnackbar.showSnackbar(it)
+            taskViewModel.resetEditorResult()
+        }
+    }
+    if (showTaskEditor && taskEditorTargetId != null && uiState.isTrusted && taskEditorTarget == null) {
+        AlertDialog(onDismissRequest = { showTaskEditor = false }, title = { Text("这件任务已不在任务库") },
+            text = { Text("不会把这次编辑当成新任务保存。请返回任务页检查。") },
+            confirmButton = { TextButton(onClick = { showTaskEditor = false; taskViewModel.resetEditorResult() }) { Text("返回任务页") } })
+    }
+    if (showTaskEditor && (taskEditorTargetId == null || taskEditorTarget != null)) {
         TaskEditorDialog(
             task = taskEditorTarget,
             initialText = taskEditorSeed,
-            onDismiss = { showTaskEditor = false; taskEditorSeed = "" },
-            onSave = {
-                taskViewModel.saveTask(it)
-                showTaskEditor = false
-                taskEditorSeed = ""
-            },
+            saving = editorSaveState.saving,
+            saveError = editorSaveState.error,
+            canSave = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = { if (!editorSaveState.saving) { showTaskEditor = false; taskEditorSeed = ""; taskViewModel.resetEditorResult() } },
+            onSave = taskViewModel::saveTask,
         )
     }
 
@@ -839,7 +1218,7 @@ fun ReplandApp(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        taskEditorTarget = null
+                        taskEditorTargetId = null
                         taskEditorSeed = voiceTranscript.trim()
                         showVoiceComposer = false
                         showTaskCapture = true
@@ -893,148 +1272,315 @@ fun ReplandApp(
         }
     }
 
-    partiallyCompletingTask?.let { task ->
+    LaunchedEffect(taskMutation.receipt) {
+        taskMutation.receipt?.let { receipt ->
+            if (taskMutationEditorKind == taskMutation.kind && taskMutationEditorId == taskMutation.taskId &&
+                taskMutationLogId == taskMutation.logId) {
+                taskMutationEditorKind = null; taskMutationEditorId = null; taskMutationLogId = null
+            }
+            // Enqueue the actual receipt before consuming it, without locking every
+            // task action for the duration of a transient Snackbar.
+            feedbackSnackbarScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                captureSnackbar.showSnackbar(receipt)
+            }
+            taskViewModel.resetMutation()
+        }
+    }
+    val missingFeedbackTarget = taskMutationEditorKind != null && uiState.isTrusted &&
+        (taskMutationTarget == null || (taskMutationEditorKind == TaskMutationKind.CORRECT &&
+            !correctionLogs.isLoading && !correctionLogs.failed && correctionTarget == null))
+    if (missingFeedbackTarget && !taskMutation.busy && taskMutation.receipt == null) {
+        AlertDialog(onDismissRequest = closeTaskMutation, title = { Text("原任务或记录已不存在") },
+            text = { Text("请关闭后重新选择。本次输入不会保存到其他事项，也不会复活原任务。") },
+            confirmButton = { TextButton(onClick = closeTaskMutation) { Text("关闭") } })
+    }
+    if (taskMutationEditorKind == TaskMutationKind.CORRECT && correctionLogs.failed) {
+        AlertDialog(onDismissRequest = closeTaskMutation, title = { Text("原记录读取失败") },
+            text = { Text("未修改记录，请关闭后重新打开。") },
+            confirmButton = { TextButton(onClick = closeTaskMutation) { Text("关闭") } })
+    }
+    if (taskMutation.error != null && taskMutationEditorKind == null) {
+        AlertDialog(onDismissRequest = taskViewModel::resetMutation, title = { Text("操作未保存") },
+            text = { Text(taskMutation.error!!) },
+            confirmButton = { TextButton(onClick = taskViewModel::retryMutation) { Text("重试") } },
+            dismissButton = { TextButton(onClick = taskViewModel::resetMutation) { Text("取消") } })
+    }
+    taskMutationTarget?.takeIf { taskMutationEditorKind == TaskMutationKind.PARTIAL && !missingFeedbackTarget }?.let { task ->
         PartialCompletionDialog(
             task = task,
-            onDismiss = { partiallyCompletingTask = null },
+            busy = taskMutation.busy, error = taskMutation.error,
+            canConfirm = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = closeTaskMutation,
             onConfirm = { feedback ->
                 taskViewModel.recordPartialCompletion(task.id, feedback)
-                partiallyCompletingTask = null
             },
         )
     }
 
-    feedbackTask?.let { task ->
+    taskMutationTarget?.takeIf { taskMutationEditorKind == TaskMutationKind.FEEDBACK && !missingFeedbackTarget }?.let { task ->
         ExecutionFeedbackDialog(
             task = task,
-            onDismiss = { feedbackTask = null },
+            busy = taskMutation.busy, error = taskMutation.error,
+            canConfirm = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = closeTaskMutation,
             onConfirm = { feedback ->
                 taskViewModel.recordFeedback(task.id, feedback)
-                feedbackTask = null
             },
         )
     }
 
-    postponingTask?.let { task ->
+    taskMutationTarget?.takeIf { taskMutationEditorKind == TaskMutationKind.POSTPONE && !missingFeedbackTarget }?.let { task ->
         PostponeTaskDialog(
-            onDismiss = { postponingTask = null },
+            taskId = task.id, busy = taskMutation.busy, error = taskMutation.error,
+            canConfirm = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = closeTaskMutation,
             onConfirm = { reason ->
                 taskViewModel.postponeTask(task.id, reason)
-                postponingTask = null
             },
         )
     }
 
-    cancellingTask?.let { task ->
+    taskMutationTarget?.takeIf { taskMutationEditorKind == TaskMutationKind.CANCEL && !missingFeedbackTarget }?.let { task ->
         ConfirmTaskStatusDialog(
             title = stringResource(R.string.task_cancel),
             message = stringResource(R.string.cancel_task_message),
             confirmLabel = stringResource(R.string.task_cancel),
-            onDismiss = { cancellingTask = null },
+            busy = taskMutation.busy, error = taskMutation.error,
+            canConfirm = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = closeTaskMutation,
             onConfirm = {
                 taskViewModel.cancelTask(task.id)
-                cancellingTask = null
             },
         )
     }
 
-    replacingTask?.let { task ->
+    taskMutationTarget?.takeIf { taskMutationEditorKind == TaskMutationKind.REPLACE && !missingFeedbackTarget }?.let { task ->
         TaskEditorDialog(
             task = task,
             dialogTitle = R.string.replace_task,
             confirmLabel = R.string.replace_task,
             allowPriorityChange = true,
-            onDismiss = { replacingTask = null },
+            saving = taskMutation.busy, saveError = taskMutation.error,
+            canSave = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = closeTaskMutation,
             onSave = { replacement ->
                 taskViewModel.replaceTask(task.id, replacement.copy(id = null))
-                replacingTask = null
             },
         )
     }
 
-    correctingLog?.let { log ->
+    correctionTarget?.takeIf { taskMutationEditorKind == TaskMutationKind.CORRECT && !missingFeedbackTarget }?.let { log ->
         CorrectExecutionLogDialog(
             log = log,
-            onDismiss = { correctingLog = null },
+            busy = taskMutation.busy, error = taskMutation.error,
+            canConfirm = uiState.isTrusted,
+            readNotice = { taskReadMessage?.let { DataReadNotice(it, taskViewModel::retryRead, !uiState.isLoading) } },
+            onDismiss = closeTaskMutation,
             onConfirm = { feedback ->
                 taskViewModel.correctExecutionLog(log.taskId, log.id, feedback)
-                correctingLog = null
             },
         )
     }
 
-    if (showWeeklyBlockEditor) {
+    (timeUiState.timetableImport as? TimetableImportState.Review)?.let { review ->
+        TimetableImportReviewDialog(
+            review = review,
+            canConfirm = timeUiState.isTrusted,
+            readNotice = { timeReadMessage?.let { DataReadNotice(it, timeViewModel::retryRead, !timeUiState.isLoading) } },
+            onDismiss = timeViewModel::clearTimetableImport,
+            onConfirm = timeViewModel::confirmTimetableImport,
+            onSelected = timeViewModel::selectImportedCourse,
+            onEditCourse = timeViewModel::updateImportedCourse,
+            onClockAcknowledged = timeViewModel::acknowledgeImportClock,
+        )
+    }
+
+    LaunchedEffect(timeMutation.receipt) {
+        timeMutation.receipt?.let { receipt ->
+            when (timeMutation.kind) {
+                TimeMutationKind.WEEKLY_SAVE -> if (weeklyBlockEditorId == timeMutation.targetId) showWeeklyBlockEditor = false
+                TimeMutationKind.OVERRIDE_SAVE -> if (dateOverrideEditorId == timeMutation.targetId) showDateOverrideEditor = false
+                TimeMutationKind.SEMESTER_SAVE -> showSemesterStartEditor = false
+                TimeMutationKind.WEEKLY_DELETE -> if (deletingWeeklyId == timeMutation.targetId) deletingWeeklyId = null
+                TimeMutationKind.OVERRIDE_DELETE -> if (deletingOverrideId == timeMutation.targetId) deletingOverrideId = null
+                null -> Unit
+            }
+            captureSnackbar.showSnackbar(receipt)
+            timeViewModel.resetMutation()
+        }
+    }
+    if (timeUiState.isTrusted && !timeMutation.busy && timeMutation.receipt == null && ((showWeeklyBlockEditor && weeklyBlockEditorId != null && weeklyBlockEditorTarget == null) ||
+        (showDateOverrideEditor && dateOverrideEditorId != null && dateOverrideEditorTarget == null) ||
+        (deletingWeeklyId != null && deletingWeeklyBlock == null) || (deletingOverrideId != null && deletingDateOverride == null))) {
+        AlertDialog(onDismissRequest = {}, title = { Text("原时间设置已不存在") },
+            text = { Text("请关闭并重新选择，不会把本次编辑保存为新的时间设置。") },
+            confirmButton = { TextButton(onClick = { showWeeklyBlockEditor = false; showDateOverrideEditor = false;
+                deletingWeeklyId = null; deletingOverrideId = null; timeViewModel.resetMutation() }) { Text("关闭") } })
+    }
+    if (showWeeklyBlockEditor && timeUiState.hasLoaded && (weeklyBlockEditorId == null || weeklyBlockEditorTarget != null)) {
         WeeklyTimeBlockEditorDialog(
             block = weeklyBlockEditorTarget,
-            onDismiss = { showWeeklyBlockEditor = false },
-            onSave = {
-                timeViewModel.saveWeeklyBlock(it)
-                showWeeklyBlockEditor = false
-            },
+            initialKind = weeklyBlockInitialKind,
+            busy = timeMutation.busy,
+            error = timeMutation.error,
+            canSave = timeUiState.isTrusted,
+            readNotice = { timeReadMessage?.let { DataReadNotice(it, timeViewModel::retryRead, !timeUiState.isLoading) } },
+            onDismiss = { if (!timeMutation.busy) { showWeeklyBlockEditor = false; timeViewModel.resetMutation() } },
+            onSave = timeViewModel::saveWeeklyBlock,
         )
     }
 
-    if (showDateOverrideEditor) {
+    if (showDateOverrideEditor && timeUiState.hasLoaded && (dateOverrideEditorId == null || dateOverrideEditorTarget != null)) {
         DateOverrideEditorDialog(
             dateOverride = dateOverrideEditorTarget,
-            onDismiss = { showDateOverrideEditor = false },
-            onSave = {
-                timeViewModel.saveDateOverride(it)
-                showDateOverrideEditor = false
-            },
+            busy = timeMutation.busy,
+            error = timeMutation.error,
+            canSave = timeUiState.isTrusted,
+            readNotice = { timeReadMessage?.let { DataReadNotice(it, timeViewModel::retryRead, !timeUiState.isLoading) } },
+            onDismiss = { if (!timeMutation.busy) { showDateOverrideEditor = false; timeViewModel.resetMutation() } },
+            onSave = timeViewModel::saveDateOverride,
         )
     }
 
-    if (showSemesterStartEditor) {
+    if (showSemesterStartEditor && timeUiState.hasLoaded) {
         SemesterStartEditorDialog(
             semesterFirstWeekMonday = timeUiState.semesterFirstWeekMonday,
-            onDismiss = { showSemesterStartEditor = false },
-            onSave = {
-                timeViewModel.saveSemesterFirstWeekMonday(it)
-                showSemesterStartEditor = false
-            },
+            busy = timeMutation.busy,
+            error = timeMutation.error,
+            canSave = timeUiState.isTrusted,
+            readNotice = { timeReadMessage?.let { DataReadNotice(it, timeViewModel::retryRead, !timeUiState.isLoading) } },
+            onDismiss = { if (!timeMutation.busy) { showSemesterStartEditor = false; timeViewModel.resetMutation() } },
+            onSave = timeViewModel::saveSemesterFirstWeekMonday,
         )
     }
 
     deletingWeeklyBlock?.let { block ->
         DeleteTimeEntryDialog(
             title = block.title,
-            onDismiss = { deletingWeeklyBlock = null },
-            onConfirm = {
-                timeViewModel.deleteWeeklyBlock(block.id)
-                deletingWeeklyBlock = null
-            },
+            busy = timeMutation.busy,
+            error = timeMutation.error,
+            canSave = timeUiState.isTrusted,
+            readNotice = { timeReadMessage?.let { DataReadNotice(it, timeViewModel::retryRead, !timeUiState.isLoading) } },
+            onDismiss = { if (!timeMutation.busy) { deletingWeeklyId = null; timeViewModel.resetMutation() } },
+            onConfirm = { timeViewModel.deleteWeeklyBlock(block.id) },
         )
     }
 
     deletingDateOverride?.let { dateOverride ->
         DeleteTimeEntryDialog(
             title = dateOverride.title,
-            onDismiss = { deletingDateOverride = null },
-            onConfirm = {
-                timeViewModel.deleteDateOverride(dateOverride.id)
-                deletingDateOverride = null
-            },
+            busy = timeMutation.busy,
+            error = timeMutation.error,
+            canSave = timeUiState.isTrusted,
+            readNotice = { timeReadMessage?.let { DataReadNotice(it, timeViewModel::retryRead, !timeUiState.isLoading) } },
+            onDismiss = { if (!timeMutation.busy) { deletingOverrideId = null; timeViewModel.resetMutation() } },
+            onConfirm = { timeViewModel.deleteDateOverride(dateOverride.id) },
         )
     }
 
-    planUiState.draft?.let { draft ->
+    if (timeMutation.error != null && !showWeeklyBlockEditor && !showDateOverrideEditor && !showSemesterStartEditor &&
+        deletingWeeklyId == null && deletingOverrideId == null) {
+        AlertDialog(onDismissRequest = timeViewModel::resetMutation, title = { Text("时间设置未保存") },
+            text = { Text(timeMutation.error.orEmpty()) },
+            confirmButton = { TextButton(onClick = timeViewModel::retryMutation) { Text("重试") } },
+            dismissButton = { TextButton(onClick = timeViewModel::resetMutation) { Text("取消") } })
+    }
+
+    planUiState.pendingManualChange?.let { pending ->
+        val change = pending.change
+        val targetId = when (change) {
+            is ManualPlanChange.Place -> change.taskId
+            is ManualPlanChange.Move -> planUiState.currentPlan?.segments?.find { it.id == change.segmentId }?.taskId
+            is ManualPlanChange.Remove -> planUiState.currentPlan?.segments?.find { it.id == change.segmentId }?.taskId
+            ManualPlanChange.Clear -> null
+        }
+        val taskName = uiState.tasks.find { it.id == targetId }?.displayName.orEmpty()
+        val details = when (change) {
+            is ManualPlanChange.Place -> "${change.date} ${TimeBlockValidator.formatTime(change.start)}–${TimeBlockValidator.formatTime(change.end)} · ${change.track}"
+            is ManualPlanChange.Move -> "${TimeBlockValidator.formatTime(change.start)}–${TimeBlockValidator.formatTime(change.end)} · ${change.track}"
+            is ManualPlanChange.Remove -> "移出安排，保留任务与历史"
+            ManualPlanChange.Clear -> "清空当前安排，保留任务与历史"
+        }
+        AlertDialog(onDismissRequest = planViewModel::cancelManualChange,
+            title = { Text("确认调整安排") },
+            text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(taskName); Text(details); Text(pending.message)
+                planUiState.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            } },
+            confirmButton = { TextButton(onClick = planViewModel::confirmManualChange, enabled = !planUiState.isWorking && planningReadsReady,
+                modifier = Modifier.testTag("manual-plan-confirm")) { Text("确认调整") } },
+            dismissButton = { TextButton(onClick = planViewModel::cancelManualChange, enabled = !planUiState.isWorking,
+                modifier = Modifier.testTag("manual-plan-cancel")) { Text("取消，保留原安排") } })
+    }
+    planUiState.errorMessage?.takeIf { planUiState.pendingManualChange == null && !showPlanOverview }?.let { message ->
+        AlertDialog(
+            onDismissRequest = planViewModel::dismissError,
+            title = { Text("安排未保存") },
+            text = { Text(message) },
+            confirmButton = { TextButton(onClick = planViewModel::dismissError) { Text("知道了") } },
+        )
+    }
+    if (showQuickAvailability) {
+        com.swan1127.repland.ui.plan.QuickAvailabilityDialog(
+            busy = planUiState.isWorking, error = planUiState.errorMessage,
+            canSave = planningReadsReady,
+            readNotice = { readMessage?.let { DataReadNotice(it, retryReads, canRetryReads) } },
+            onDismiss = { showQuickAvailability = false },
+            onSave = { value -> planViewModel.saveAvailabilityAndGenerate(value, categoryPreferenceUiState.weights) { showQuickAvailability = false } },
+        )
+    }
+    if (planUiState.isGenerating) {
+        PlanningTeamStatusDialog(
+            isGenerating = true,
+            events = planUiState.teamEvents,
+            error = null,
+            onCancel = planViewModel::cancelGeneration,
+            onRetry = { generatePlanDraft() },
+        )
+    }
+    planUiState.draft?.takeIf { !planUiState.isGenerating && it.generatedAt.toString() != pausedPlanDraftIdentity && !showQuickAvailability && !(showExecutionSession && executionSession != null) }?.let { draft ->
         PlanDraftDialog(
             draft = draft,
+            currentPlan = planUiState.currentPlan,
+            currentTaskOrder = planUiState.taskOrder,
+            isSaving = planUiState.isWorking,
+            canAccept = planningReadsReady,
+            canEdit = planningReadsReady,
+            retainOnDismiss = !planUiState.isTrusted || !workspaceUiState.isTrusted,
+            readNotice = { readMessage?.let { DataReadNotice(it, retryReads, canRetryReads) } },
+            planningTeamContent = { PlanningTeamLogPanel(planUiState.teamEvents, planUiState.teamResult) },
+            tracks = workspaceUiState.tracks,
+            onCompleteTaskDetails = { task -> planViewModel.discardDraft(); taskViewModel.resetEditorResult(); taskEditorTargetId = task.id; showTaskEditor = true },
+            onConfigureAvailability = { planViewModel.dismissError(); showQuickAvailability = true },
             tasks = uiState.tasks,
             weeklyBlocks = timeUiState.weeklyBlocks,
             dateOverrides = timeUiState.dateOverrides,
             semesterFirstWeekMonday = timeUiState.semesterFirstWeekMonday,
             onDismiss = {
-                planViewModel.discardDraft()
-                if (reviewingAgentDraft) {
-                    planningAgentViewModel.dismiss()
-                    reviewingAgentDraft = false
+                if (!planUiState.isTrusted || !workspaceUiState.isTrusted) {
+                    pausedPlanDraftIdentity = draft.generatedAt.toString()
+                } else {
+                    planViewModel.discardDraft()
+                    if (reviewingAgentDraft) {
+                        planningAgentViewModel.dismiss()
+                        reviewingAgentDraft = false
+                    }
                 }
             },
             onUpdateDraft = planViewModel::updateDraft,
+            onCommitSegmentDraft = planViewModel::saveDraftEdit,
+            segmentSaveReceipt = planUiState.draftEditReceipt,
+            segmentSaveError = planUiState.draftEditError,
+            onClearSegmentSaveFeedback = planViewModel::clearDraftEditFeedback,
             onAccept = {
-                if (reviewingAgentDraft) {
+                if (!planningReadsReady) {
+                    feedbackSnackbarScope.launch { captureSnackbar.showSnackbar("请先可靠读取任务和时间；原计划与草案仍保留。") }
+                } else if (reviewingAgentDraft) {
                     planViewModel.acceptDraft {
                         planningAgentViewModel.markAccepted()
                         reviewingAgentDraft = false
@@ -1056,7 +1602,7 @@ fun ReplandApp(
                 logs = dailyLogs,
             ),
             tasks = uiState.tasks,
-            isAiEnabled = planningAgentUiState.preferences.isEnabled,
+            isAiEnabled = planningReadsReady && planningAgentUiState.preferences.isEnabled,
             planningAgentState = planningAgentUiState.workflow,
             onRequestAgentSummary = {
                 planningAgentViewModel.beginDailySummary(reviewDate, dailyLogs)
@@ -1069,10 +1615,11 @@ fun ReplandApp(
         PlanOverviewDialog(
             plans = planUiState.planHistory,
             tasks = uiState.tasks,
+            busy = planUiState.isWorking || !planningReadsReady,
+            error = planUiState.errorMessage,
             onDismiss = { showPlanOverview = false },
             onRestore = { planId ->
                 planViewModel.restore(planId)
-                showPlanOverview = false
             },
             onClearCurrent = {
                 showPlanOverview = false
@@ -1119,7 +1666,16 @@ fun ReplandApp(
                             planHistory = planUiState.planHistory,
                             tasks = uiState.tasks,
                         )
-                        dataManagementViewModel.clearAllLocalData()
+                        dataManagementViewModel.clearAllLocalData(
+                            beforeClear = taskCaptureViewModel::prepareForDataClear,
+                            afterClear = { succeeded ->
+                                taskCaptureViewModel.finishDataClear(succeeded)
+                                if (succeeded) {
+                                    memoryRevision += 1
+                                    showLearningReview = false
+                                }
+                            },
+                        )
                         showClearLocalDataConfirmation = false
                     },
                 ) {
@@ -1158,27 +1714,52 @@ fun ReplandApp(
     }
 }
 
+/** Translate reserved timer outcomes for display; retain stored evidence and other user text. */
+@Composable
+private fun completionResultText(result: String): String {
+    val label = when (result) {
+        ExecutionOutcome.CONTINUE.name -> R.string.execution_result_continue
+        ExecutionOutcome.PARTIAL.name -> R.string.execution_result_partial
+        ExecutionOutcome.COMPLETED.name -> R.string.execution_result_completed
+        ExecutionOutcome.SKIPPED.name -> R.string.execution_result_skipped
+        else -> return result
+    }
+    return stringResource(label)
+}
+
 @Composable
 private fun TabIcon(tab: AppTab) {
     val icon = when (tab) {
-        AppTab.TODAY -> Icons.Outlined.DateRange
-        AppTab.TASKS -> Icons.AutoMirrored.Outlined.List
-        AppTab.AGENT -> Icons.Outlined.Add
-        AppTab.TIME -> Icons.Outlined.DateRange
-        AppTab.MINE -> Icons.Outlined.Person
+        AppTab.TODAY -> DesignIcons.Calendar
+        AppTab.TASKS -> DesignIcons.Tasks
+        AppTab.AGENT -> DesignIcons.Assistant
+        AppTab.TIME -> DesignIcons.Calendar
+        AppTab.MINE -> DesignIcons.Profile
     }
-    Icon(icon, contentDescription = null)
+    Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
 }
 
 @Composable
 private fun TodayScreen(
+    executionSession: com.swan1127.repland.domain.model.ExecutionSession?,
+    executionError: String?,
+    executionReadsReady: Boolean,
+    onResumeExecution: () -> Unit,
+    executionFinished: Boolean,
+    onReplanRemaining: () -> Unit,
+    onDismissExecutionResult: () -> Unit,
+    planNeedsUpdate: Boolean,
+    onReviewPlanChanges: () -> Unit,
     date: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
     tasks: List<Task>,
     allTasks: List<Task>,
     weeklyBlocks: List<WeeklyTimeBlock>,
     dateOverrides: List<DateOverride>,
     semesterFirstWeekMonday: LocalDate?,
     engagementMode: EngagementMode,
+    tracks: List<RhythmTrack>,
+    onTracksChanged: (List<RhythmTrack>) -> Unit,
     onOpenTimelineEntry: (String) -> Unit,
     onEditTimelineEntry: (TimelineEntry) -> Unit,
     planSegments: List<PlannedSegment>,
@@ -1190,23 +1771,51 @@ private fun TodayScreen(
     onStart: (String) -> Unit,
     onOpenDailyReview: () -> Unit,
     onAdd: () -> Unit,
-    onOpenPlan: () -> Unit,
+    onOpenTaskLibrary: () -> Unit,
     onPlaceEvent: (String, LocalDate, Int, Int, String) -> Unit,
     onFocusStarted: (String) -> Unit,
-    onFocusCompleted: (String, Int) -> Unit,
-    onFocusNotCompleted: (String, Int) -> Unit,
-    onCreateCourse: (com.swan1127.repland.ui.schedule.CourseInsertionRequest, LocalDate) -> Unit,
+    onCreateCourse: (com.swan1127.repland.ui.schedule.CourseInsertionRequest, LocalDate, () -> Unit) -> Unit,
     onRemovePlacement: (String) -> Unit,
-    onMoveEntry: (TimelineEntry, Int) -> Unit,
-    onUpdateEntryTime: (TimelineEntry, Int, Int) -> Unit,
+    onMoveEntry: (TimelineEntry, Int, () -> Unit) -> Unit,
+    onUpdateEntryTime: (TimelineEntry, Int, Int, () -> Unit) -> Unit,
+    timelineWriteBusy: Boolean,
+    timelineWriteError: String?,
+    automaticPlanning: Boolean = false,
+    hasAssistantButton: Boolean = false,
 ) {
     if (isLoading) return
     var scheduleRange by rememberSaveable { mutableStateOf(ScheduleRange.DAY) }
-    var scheduleDate by remember { mutableStateOf(date) }
-    LaunchedEffect(date) { scheduleDate = date }
+    val scheduleDate = date
+    var showPending by rememberSaveable { mutableStateOf(false) }
+    var focusNow by remember { mutableStateOf(LocalDateTime.now()) }
+    LaunchedEffect(Unit) {
+        while (true) { focusNow = LocalDateTime.now(); delay(30_000) }
+    }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
     val taskById = allTasks.associateBy(Task::id)
     val timelineEntries = ScheduleTimeline.entries(scheduleDate, weeklyBlocks, dateOverrides, allPlanSegments, allTasks, semesterFirstWeekMonday)
-    val nowMinute = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+    val nowMinute = focusNow.hour * 60 + focusNow.minute
+    val pendingEntries = TodayFocus.pending(timelineEntries, focusNow, executionSession?.taskId)
+    if (showPending) {
+        AlertDialog(
+            onDismissRequest = { showPending = false },
+            title = { Text("确认任务结果") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("这些任务的安排时段已结束，但还没有确认整项结果。时间经过不会自动完成任务。")
+                    LazyColumn(Modifier.heightIn(max = 320.dp)) {
+                        items(pendingEntries, key = { it.taskId!! }) { entry ->
+                            TextButton(onClick = { taskById[entry.taskId]?.let(onOpen); showPending = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                                Text(entry.title)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showPending = false }) { Text("稍后确认") } },
+        )
+    }
     val currentOrNext = planSegments
         .filter { it.endMinute > nowMinute }
         .minByOrNull { it.startMinute }
@@ -1215,31 +1824,115 @@ private fun TodayScreen(
     val placedTaskIdsForScheduleDate = allPlanSegments.filter { it.date == scheduleDate }.map(PlannedSegment::taskId).toSet()
     val scheduledMinutes = planSegments.sumOf { (it.endMinute - it.startMinute).coerceAtLeast(0) }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        state = listState,
+        modifier = Modifier.fillMaxSize().testTag("today-page-scroll"),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp,
+            bottom = if (hasAssistantButton) 88.dp else 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (scheduleRange == ScheduleRange.DAY) {
-            item {
-                TodayFocalOverview(
-                    nextEntries = timelineEntries.filter { it.endMinute > nowMinute }.sortedBy(TimelineEntry::startMinute),
-                    unplacedCount = allTasks.count { it.id !in placedTaskIdsForScheduleDate && it.status.isActive },
-                    onOpenSchedule = { scheduleRange = ScheduleRange.DAY },
-                    onOpenTasks = onOpenPlan,
-                )
+        if (executionSession != null) {
+            item(key = "execution-resume") {
+                OutlinedButton(onClick = onResumeExecution, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("resume-execution")) {
+                    Text("${if (executionSession.isPaused) "已暂停" else "专注中"} · ${executionSession.taskTitle} · 返回本轮")
+                }
             }
         }
-        item {
+        if (executionError != null) {
+            item(key = "execution-error") { Text(executionError, color = MaterialTheme.colorScheme.error) }
+        }
+        if (executionFinished) {
+            item(key = "execution-result") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(if (automaticPlanning) "本轮记录已保存，后续安排会依据你确认的进度自动更新。" else "本轮记录已保存。可依据你确认的进度重新安排剩余任务；确认预览前，原计划不变。")
+                    if (!automaticPlanning) OutlinedButton(onClick = onReplanRemaining, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("execution-replan")) {
+                        Text("预览剩余任务的新安排")
+                    }
+                    TextButton(onClick = onDismissExecutionResult, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (automaticPlanning) "知道了" else "保留原计划") }
+                }
+            }
+        }
+        if (planNeedsUpdate && executionSession == null && !executionFinished) {
+            item(key = "plan-needs-update") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("任务或时间信息已变化，当前计划仍保持不变。需要时可重新预览安排。")
+                    OutlinedButton(onClick = onReviewPlanChanges, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("review-changed-plan")) {
+                        Text("预览更新后的安排")
+                    }
+                }
+            }
+        }
+        if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
+            item(key = "today-landscape") {
+                val visuals = LocalReplandVisuals.current
+                val showArtwork = LocalDensity.current.fontScale < 1.5f
+                Surface(
+                    color = visuals.mainAction,
+                    contentColor = visuals.onMainAction,
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.today_hero_title), style = MaterialTheme.typography.titleLarge)
+                            Text(stringResource(R.string.today_hero_description), style = MaterialTheme.typography.bodyMedium)
+                        }
+                        if (showArtwork) LandscapeArtwork(
+                            style = LandscapeStyle.Dawn,
+                            modifier = Modifier.size(width = 88.dp, height = 76.dp),
+                        )
+                    }
+                }
+            }
+            TodayFocus.next(timelineEntries, focusNow)?.let { entry ->
+                item(key = "today-focus-shortcut") {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(if (entry.start.isAfter(focusNow)) "下一项" else "当前时段",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(entry.title, style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text("${TimeBlockValidator.formatTime(entry.startMinute)}–${TimeBlockValidator.formatTime(entry.endMinute)}",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            TodayFocus.startSegment(entry)?.let { segmentId ->
+                                OutlinedButton(onClick = { onFocusStarted(segmentId) },
+                                    enabled = executionSession == null && executionReadsReady,
+                                    modifier = Modifier.heightIn(min = 48.dp).testTag("today-focus-start")) {
+                                    Text(if (entry.start.isAfter(focusNow)) "提前开始专注" else "开始专注")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            item(key = "schedule-create") { ScheduleCreateCard(onAdd = onAdd) }
+        }
+        item(key = "schedule-range") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = scheduleRange == ScheduleRange.DAY, onClick = { scheduleRange = ScheduleRange.DAY }, label = { Text("日") }, modifier = Modifier.testTag("today-timeline"))
-                FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"))
-                FilterChip(selected = scheduleRange == ScheduleRange.MONTH, onClick = { scheduleRange = ScheduleRange.MONTH }, label = { Text("月") }, modifier = Modifier.testTag("month-schedule"))
+                FilterChip(selected = scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW, onClick = { scheduleRange = ScheduleRange.DAY }, label = { Text("日") }, modifier = Modifier.testTag("today-timeline"))
+                FilterChip(selected = scheduleRange == ScheduleRange.WEEK, onClick = { scheduleRange = ScheduleRange.WEEK }, label = { Text("周") }, modifier = Modifier.testTag("week-schedule"), accentIndex = 1)
+                FilterChip(selected = scheduleRange == ScheduleRange.MONTH, onClick = { scheduleRange = ScheduleRange.MONTH }, label = { Text("月") }, modifier = Modifier.testTag("month-schedule"), accentIndex = 3)
             }
         }
-        if (scheduleRange == ScheduleRange.DAY) {
-            item {
+        if (scheduleRange == ScheduleRange.DAY || scheduleRange == ScheduleRange.OVERVIEW) {
+            // Stable identity keeps display mode and detail state when banners
+            // above the schedule appear or disappear after plan changes.
+            item(key = "schedule-day") {
                 TimelineDashboard(
                     entries = timelineEntries,
+                    taskPriorities = allTasks.associate { it.id to it.userPriority },
+                    completedTaskIds = allTasks.filter { it.status == TaskStatus.COMPLETED }.map { it.id }.toSet(),
+                    cancelledTaskIds = allTasks.filter { it.status == TaskStatus.CANCELLED }.map { it.id }.toSet(),
+                    persistedTracks = tracks,
+                    onTracksChanged = onTracksChanged,
                     mode = engagementMode,
                     onOpenEntry = onOpenTimelineEntry,
                     onOpenTask = { id -> taskById[id]?.let(onOpen) },
@@ -1248,21 +1941,23 @@ private fun TodayScreen(
                         .filter { it.id !in placedTaskIdsForScheduleDate && it.status.isActive }
                         .map { TimelineEventObject(it.id, it.displayName, it.totalDurationMinutes, it.category) },
                     onPlaceEvent = { event, trackId, startMinute ->
-                        val duration = event.durationMinutes?.coerceIn(15, 240) ?: 30
-                        onPlaceEvent(event.id, scheduleDate, startMinute, (startMinute + duration).coerceAtMost(1440), trackId)
+                        val duration = com.swan1127.repland.domain.model.TaskPlacementPolicy.durationForTask(event.durationMinutes)
+                        if (duration != null && startMinute in 0 until 1440 && startMinute + duration <= 1440) {
+                            onPlaceEvent(event.id, scheduleDate, startMinute, startMinute + duration, trackId)
+                        }
                     },
                     scheduleDate = scheduleDate,
-                    onCreateCourse = { request -> onCreateCourse(request, scheduleDate) },
+                    onCreateCourse = { request, saved -> onCreateCourse(request, scheduleDate, saved) },
+                    writeBusy = timelineWriteBusy,
+                    writeError = timelineWriteError,
                     onFocusStarted = onFocusStarted,
-                    onFocusCompleted = onFocusCompleted,
-                    onFocusNotCompleted = onFocusNotCompleted,
                     onRemovePlacement = onRemovePlacement,
                     onMoveEntry = onMoveEntry,
                     onUpdateEntryTime = onUpdateEntryTime,
                 )
             }
         } else if (scheduleRange == ScheduleRange.WEEK) {
-            item {
+            item(key = "schedule-week") {
                 WeekScheduleView(
                     date = scheduleDate,
                     weeklyBlocks = weeklyBlocks,
@@ -1271,83 +1966,122 @@ private fun TodayScreen(
                     tasks = allTasks,
                     semesterFirstWeekMonday = semesterFirstWeekMonday,
                     mode = engagementMode,
+                    tracks = tracks,
                     onOpenEntry = onOpenTimelineEntry,
                 )
             }
         } else if (scheduleRange == ScheduleRange.MONTH) {
-            item {
+            item(key = "schedule-month") {
                 MonthScheduleView(
                     date = scheduleDate,
                     weeklyBlocks = weeklyBlocks,
                     dateOverrides = dateOverrides,
                     planSegments = allPlanSegments,
                     tasks = allTasks,
+                    tracks = tracks,
                     semesterFirstWeekMonday = semesterFirstWeekMonday,
-                    onSelectDate = { selectedDate -> scheduleDate = selectedDate; scheduleRange = ScheduleRange.DAY },
+                    onSelectDate = { selectedDate ->
+                        onDateSelected(selectedDate)
+                        scheduleRange = ScheduleRange.DAY
+                        scope.launch { listState.scrollToItem(0) }
+                    },
                     onOpenEntry = onOpenTimelineEntry,
                 )
             }
         } else {
-        item {
+        item(key = "schedule-desk") {
             DailyDesk(
                 date = scheduleDate,
                 entries = ScheduleTimeline.entries(scheduleDate, weeklyBlocks, dateOverrides, allPlanSegments, allTasks, semesterFirstWeekMonday),
-                unplacedCount = allTasks.count { it.id !in placedTaskIdsForScheduleDate && it.status.isActive },
-                unplacedTasks = allTasks.filter { it.id !in placedTaskIdsForScheduleDate && it.status.isActive },
+                unplacedCount = allTasks.count { it.status.isActive && com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, allPlanSegments, date) },
+                unplacedTasks = allTasks.filter { it.status.isActive && com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, allPlanSegments, date) },
                 plannedMinutes = planSegments.sumOf { (it.endMinute - it.startMinute).coerceAtLeast(0) },
-                onOpenEntry = onOpenTimelineEntry,
+                onOpenEntry = { entryId ->
+                    onOpenTimelineEntry(entryId)
+                    val task = timelineEntries.firstOrNull { it.id == entryId }?.taskId?.let(taskById::get)
+                    if (task != null) onOpen(task) else scheduleRange = ScheduleRange.DAY
+                },
                 onOpenTask = onOpen,
                 onOpenPlan = { scheduleRange = ScheduleRange.DAY },
                 onAdd = onAdd,
             )
         }
         }
-        if (scheduleRange != ScheduleRange.OVERVIEW) {
-            item { TextButton(onClick = onOpenDailyReview) { Text(stringResource(R.string.open_daily_review)) } }
-        }
+        item(key = "daily-review") { TextButton(onClick = onOpenDailyReview) { Text(stringResource(R.string.open_daily_review)) } }
     }
 }
 
 @Composable
-private fun TodayFocalOverview(
+internal fun TodayFocalOverview(
     nextEntries: List<TimelineEntry>,
     unplacedCount: Int,
     onOpenSchedule: () -> Unit,
     onOpenTasks: () -> Unit,
+    now: LocalDateTime,
+    hasExecution: Boolean,
+    pendingCount: Int,
+    onOpenPending: () -> Unit,
+    onStart: (String) -> Unit,
+    canStart: Boolean = true,
+    onAdd: () -> Unit = onOpenTasks,
+    onPlan: () -> Unit = onOpenTasks,
 ) {
-    val first = nextEntries.firstOrNull()
+    val visuals = LocalReplandVisuals.current
+    val focusColors = ButtonDefaults.buttonColors(containerColor = visuals.focusAction, contentColor = visuals.onFocusAction)
+    val quietColors = ButtonDefaults.textButtonColors(contentColor = visuals.focusMuted)
+    val first = TodayFocus.next(nextEntries, now)
     val sameMoment = first?.let { lead -> nextEntries.count { it.startMinute == lead.startMinute } } ?: 0
-    val phase = first?.let { ScheduleTimeline.clock(it, LocalDateTime.now()).phase }
+    val phase = first?.let { ScheduleTimeline.clock(it, now).phase }
+    val segmentId = TodayFocus.startSegment(first)
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenSchedule).testTag("today-focus"),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shape = RoundedCornerShape(22.dp),
+        modifier = Modifier.fillMaxWidth().testTag("today-focus"),
+        color = visuals.focusSurface,
+        shape = RoundedCornerShape(20.dp),
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     when (phase) {
-                        TimelinePhase.ACTIVE -> "正在进行"
+                        TimelinePhase.ACTIVE -> "当前时段"
                         TimelinePhase.OVERRUN -> "已超时"
                         TimelinePhase.UPCOMING -> "下一项"
-                        else -> "今天"
+                        else -> "今天的焦点"
                     },
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = visuals.focusMuted,
                 )
-                Spacer(Modifier.weight(1f))
-                if (unplacedCount > 0) {
-                    TextButton(onClick = onOpenTasks) { Text("待安排 $unplacedCount") }
-                }
             }
-            Text(first?.title ?: "今天还没有具体安排", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(first?.title ?: "给今天一个好开始", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = visuals.focusText)
             Text(
-                first?.let { "${TimeBlockValidator.formatTime(it.startMinute)}–${TimeBlockValidator.formatTime(it.endMinute)}" } ?: "从任务库选择一件事，再放进日轨道。",
+                first?.let { "${TimeBlockValidator.formatTime(it.startMinute)}–${TimeBlockValidator.formatTime(it.endMinute)}" }
+                    ?: if (unplacedCount > 0) "$unplacedCount 件事待安排，先从最重要的一件开始。" else "先记下想做的事，计划可以慢慢来。",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = visuals.focusMuted,
             )
             if (sameMoment > 1) {
-                Text("同一时段还有 ${sameMoment - 1} 件并行事项", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text("同一时段还有 ${sameMoment - 1} 件并行事项", style = MaterialTheme.typography.bodySmall, color = visuals.focusMuted)
+            }
+            if (segmentId != null) {
+                Button(onClick = { onStart(segmentId) }, enabled = !hasExecution && canStart, colors = focusColors, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("today-focus-start")) {
+                    Text(if (phase == TimelinePhase.UPCOMING) "提前开始专注" else "开始专注")
+                }
+                if (hasExecution) Text("请先返回并结束当前专注，再开始另一项。", style = MaterialTheme.typography.bodySmall, color = visuals.focusMuted)
+            }
+            if (first == null) {
+                Button(onClick = if (unplacedCount > 0) onPlan else onAdd,
+                    colors = focusColors, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("today-next-action")) {
+                    Icon(if (unplacedCount > 0) DesignIcons.Calendar else DesignIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (unplacedCount > 0) "安排任务" else "记录第一件事")
+                }
+            }
+            if (first != null || pendingCount > 0) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(colors = quietColors, onClick = onOpenTasks, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("待安排 $unplacedCount") }
+                TextButton(colors = quietColors, onClick = onOpenPending, enabled = pendingCount > 0, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("today-focus-pending")) { Text("待确认 $pendingCount") }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                if (first != null || unplacedCount > 0) TextButton(colors = quietColors, onClick = onAdd, modifier = Modifier.heightIn(min = 48.dp).testTag("today-add-task")) { Icon(DesignIcons.Plus, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("记录任务") }
+                TextButton(colors = quietColors, onClick = onOpenSchedule, modifier = Modifier.heightIn(min = 48.dp).testTag("today-focus-schedule")) { Text("查看日程"); Spacer(Modifier.width(6.dp)); Icon(DesignIcons.ArrowRight, null, Modifier.size(16.dp)) }
             }
         }
     }
@@ -1376,8 +2110,8 @@ private fun TodayEmptyState(onAdd: () -> Unit, onVoiceCapture: () -> Unit) {
 }
 
 @Composable
-private fun CompactSectionHeader(title: String, count: Int, action: String? = null, onAction: (() -> Unit)? = null) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+private fun CompactSectionHeader(title: String, count: Int, action: String? = null, onAction: (() -> Unit)? = null, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text("  $count", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(1f))
@@ -1493,7 +2227,7 @@ private fun DailyReviewDialog(
                                 progress.progressPercent?.let { percent ->
                                     Text(stringResource(R.string.progress_format, percent))
                                 }
-                                progress.completionResult?.let { result -> Text(result) }
+                                progress.completionResult?.let { result -> Text(completionResultText(result)) }
                             }
                         }
                     }
@@ -1579,34 +2313,42 @@ private fun PlannedTaskCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TasksScreen(
+internal fun TasksScreen(
     tasks: List<Task>,
     isLoading: Boolean,
     onOpen: (Task) -> Unit,
     onStart: (String) -> Unit,
     onAdd: () -> Unit,
+    confirmedSegments: List<PlannedSegment> = emptyList(),
 ) {
     var view by rememberSaveable { mutableStateOf(TaskCenterView.OVERVIEW) }
     val activeTasks = tasks.filter { it.status.isActive }
     val today = LocalDate.now()
+    val activeIds = activeTasks.map { it.id }.toSet()
+    val placementLabels = confirmedSegments.filter { it.date >= today && it.taskId in activeIds }.sortedWith(compareBy({ it.date }, { it.startMinute }))
+        .groupBy { it.taskId }.mapValues { (_, placements) ->
+            val slot = placements.first()
+            fun time(minute: Int) = String.format(Locale.ROOT, "%02d:%02d", minute / 60, minute % 60)
+            "已安排 · ${slot.date.monthValue}月${slot.date.dayOfMonth}日 ${time(slot.startMinute)}–${time(slot.endMinute)}"
+        }
     val visibleTasks = when (view) {
         TaskCenterView.OVERVIEW -> activeTasks
-        TaskCenterView.INBOX -> activeTasks.filter { it.dueDate == null && it.scheduledForDate == null }
-        TaskCenterView.TODAY -> activeTasks.filter { it.dueDate == today || it.scheduledForDate == today }
+        TaskCenterView.INBOX -> activeTasks.filter { com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, confirmedSegments, today) }
+        TaskCenterView.TODAY -> activeTasks.filter { com.swan1127.repland.domain.model.TaskPlanMembership.isToday(it, confirmedSegments, today) }
         TaskCenterView.OVERDUE -> activeTasks.filter { it.dueDate?.isBefore(today) == true }
         TaskCenterView.COMPLETED -> tasks.filter { !it.status.isActive }
     }
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TaskCenterView.entries.forEach { option ->
-                FilterChip(selected = view == option, onClick = { view = option }, label = { Text(option.label) })
+                FilterChip(selected = view == option, onClick = { view = option }, label = { Text(option.label) }, modifier = Modifier.testTag("task-filter-${option.name}"))
             }
         }
         if (!isLoading && visibleTasks.isEmpty()) {
@@ -1623,9 +2365,9 @@ private fun TasksScreen(
             )
         } else if (!isLoading) {
             if (view == TaskCenterView.OVERVIEW) {
-                TaskControlCenter(tasks = activeTasks, onOpen = onOpen, onStart = onStart)
+                TaskControlCenter(tasks = activeTasks, onOpen = onOpen, onStart = onStart, confirmedSegments = confirmedSegments, placementLabels = placementLabels)
             } else {
-                TaskList(tasks = visibleTasks, onOpen = onOpen, onStart = onStart)
+                TaskList(tasks = visibleTasks, onOpen = onOpen, onStart = onStart, placementLabels = placementLabels)
             }
         }
     }
@@ -1640,6 +2382,8 @@ private fun TaskControlCenter(
     tasks: List<Task>,
     onOpen: (Task) -> Unit,
     onStart: (String) -> Unit,
+    confirmedSegments: List<PlannedSegment> = emptyList(),
+    placementLabels: Map<String, String> = emptyMap(),
 ) {
     val today = LocalDate.now()
     val attention = tasks.filter {
@@ -1647,40 +2391,33 @@ private fun TaskControlCenter(
             it.scheduledForDate?.isBefore(today) == true ||
             it.status == TaskStatus.POSTPONED
     }
-    val todayTasks = tasks.filter { (it.dueDate == today || it.scheduledForDate == today) && it !in attention }
-    val inbox = tasks.filter { it.dueDate == null && it.scheduledForDate == null && it !in attention && it !in todayTasks }
+    val todayTasks = tasks.filter { com.swan1127.repland.domain.model.TaskPlanMembership.isToday(it, confirmedSegments, today) && it !in attention }
+    val inbox = tasks.filter { com.swan1127.repland.domain.model.TaskPlanMembership.isInbox(it, confirmedSegments, today) && it !in attention && it !in todayTasks }
     val later = tasks.filter { it !in attention && it !in todayTasks && it !in inbox }
     var expandedGroup by rememberSaveable { mutableStateOf<String?>(null) }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().testTag("task-groups-scroll"),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {
-            Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("每件事，都有位置", style = MaterialTheme.typography.titleLarge)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        listOf("进行中" to tasks.count { it.status == TaskStatus.IN_PROGRESS }, "待安排" to inbox.size, "需处理" to attention.size).forEach { (label, count) ->
-                            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(count.toString(), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-                                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                }
-            }
+            Text("${tasks.size} 件未完成 · ${tasks.count { it.status == TaskStatus.IN_PROGRESS }} 件进行中" +
+                if (attention.isNotEmpty()) " · ${attention.size} 件需处理" else "",
+                modifier = Modifier.padding(vertical = 8.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         listOf("需要处理" to attention, "今天" to todayTasks, "待安排" to inbox, "更晚" to later).forEach { (title, group) ->
             if (group.isNotEmpty()) {
                 item(key = "heading-$title") {
                     CompactSectionHeader(title, group.size,
                         action = if (group.size > 3) { if (expandedGroup == title) "收起" else "查看全部" } else null,
-                        onAction = { expandedGroup = if (expandedGroup == title) null else title })
+                        onAction = { expandedGroup = if (expandedGroup == title) null else title },
+                        modifier = Modifier.testTag("task-group-$title"))
                 }
                 items(if (expandedGroup == title) group else group.take(3), key = Task::id) { task ->
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                        TaskRow(task, { onOpen(task) }, { onStart(task.id) }, emphasis = if (title == "需要处理") TaskRowEmphasis.ATTENTION else TaskRowEmphasis.NORMAL)
+                    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        TaskRow(task, { onOpen(task) }, { onStart(task.id) }, emphasis = if (title == "需要处理") TaskRowEmphasis.ATTENTION else TaskRowEmphasis.NORMAL,
+                            planningSummary = placementLabels[task.id])
                     }
                 }
             }
@@ -1694,14 +2431,15 @@ private fun TaskList(
     tasks: List<Task>,
     onOpen: (Task) -> Unit,
     onStart: (String) -> Unit,
+    placementLabels: Map<String, String> = emptyMap(),
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().testTag("task-list-scroll"),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         items(tasks, key = Task::id) { task ->
-            TaskRow(task = task, onOpen = { onOpen(task) }, onStart = { onStart(task.id) })
+            TaskRow(task = task, onOpen = { onOpen(task) }, onStart = { onStart(task.id) }, planningSummary = placementLabels[task.id])
         }
     }
 }
@@ -1716,11 +2454,11 @@ private fun TaskCard(
 }
 
 @Composable
-private fun TaskStatusButton(task: Task, onStart: () -> Unit) {
+private fun TaskStatusButton(task: Task, onStart: () -> Unit, actionsLocked: Boolean = false) {
     val canStart = task.status == TaskStatus.NOT_STARTED || task.status == TaskStatus.POSTPONED
     OutlinedButton(
         onClick = onStart,
-        enabled = canStart,
+        enabled = canStart && !actionsLocked,
         modifier = Modifier.testTag("start-task"),
         shape = RoundedCornerShape(12.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
@@ -1734,6 +2472,13 @@ private fun TaskStatusButton(task: Task, onStart: () -> Unit) {
 private fun TaskDetailScreen(
     task: Task,
     executionLogs: List<TaskExecutionLog>,
+    actionsLocked: Boolean,
+    savingRecord: Boolean,
+    snackbarHostState: androidx.compose.material3.SnackbarHostState,
+    snackbarBottomInset: androidx.compose.ui.unit.Dp,
+    onSnackbarSize: (Int) -> Unit,
+    readMessage: String?,
+    onRetryReads: () -> Unit,
     onBack: () -> Unit,
     onStart: (String) -> Unit,
     onEdit: () -> Unit,
@@ -1753,12 +2498,15 @@ private fun TaskDetailScreen(
     onReviewAgentDraft: (PlanDraft) -> Unit,
 ) {
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbarHostState,
+            modifier = Modifier.onSizeChanged { onSnackbarSize(it.height) }) },
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = task.displayName,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleLarge,
                     )
                 },
@@ -1777,10 +2525,15 @@ private fun TaskDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(bottom = snackbarBottomInset)
                 .testTag("task-detail-scroll"),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            readMessage?.let { item { DataReadNotice(it, onRetryReads) } }
+            if (savingRecord) item { Text("正在保存本次记录…", modifier = Modifier.semantics {
+                liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite
+            }) }
             item {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
@@ -1800,7 +2553,6 @@ private fun TaskDetailScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                             )
                             Spacer(Modifier.width(12.dp))
-                            TaskStatusButton(task = task, onStart = { onStart(task.id) })
                         }
                         Spacer(Modifier.height(14.dp))
                         Text(
@@ -1818,10 +2570,17 @@ private fun TaskDetailScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            DetailMetaPill(stringResource(task.category.labelRes()))
-                            DetailMetaPill(stringResource(task.userPriority.labelRes()))
+                            if (task.category != TaskCategory.UNSPECIFIED) DetailMetaPill(stringResource(task.category.labelRes()))
+                            if (task.userPriority != TaskPriority.UNSPECIFIED) DetailMetaPill(stringResource(task.userPriority.labelRes()))
                             task.totalDurationMinutes?.let {
                                 DetailMetaPill(stringResource(R.string.duration_format, it))
+                            }
+                        }
+                        if (task.status == TaskStatus.NOT_STARTED || task.status == TaskStatus.POSTPONED) {
+                            Spacer(Modifier.height(18.dp))
+                            Button(onClick = { onStart(task.id) }, enabled = !actionsLocked,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("start-task")) {
+                                Text("开始这件事")
                             }
                         }
                     }
@@ -1831,14 +2590,18 @@ private fun TaskDetailScreen(
                 DetailSection(title = stringResource(R.string.task_information), eyebrow = "任务上下文") {
                     DetailLine(stringResource(R.string.category), stringResource(task.category.labelRes()))
                     DetailLine(stringResource(R.string.priority), stringResource(task.userPriority.labelRes()))
+                    if (task.inputSources.encode().contains("LEGACY_UNVERIFIED")) {
+                        Text("旧字段来源未确认：保留原值，不作为用户明确选择或画像证据。",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     DetailLine(
                         stringResource(R.string.estimated_days),
-                        stringResource(R.string.estimated_days_format, task.estimatedDays),
+                        task.estimatedDays?.let { stringResource(R.string.estimated_days_format, it) } ?: "预计天数未知",
                     )
                     DetailLine(
-                        stringResource(R.string.duration_minutes_optional),
+                        if (task.inputSources.duration == com.swan1127.repland.domain.model.TaskInputSource.PLANNING_ESTIMATE) "规划估算时长" else "预计时长",
                         task.totalDurationMinutes?.let { stringResource(R.string.duration_format, it) }
-                            ?: stringResource(R.string.unscheduled_duration),
+                            ?: "待补充",
                     )
                     task.dueDate?.let {
                         DetailLine(
@@ -1862,7 +2625,7 @@ private fun TaskDetailScreen(
                             DetailLine(stringResource(R.string.completed_content), content)
                         }
                         task.completionResult?.let { result ->
-                            DetailLine(stringResource(R.string.completion_result), result)
+                            DetailLine(stringResource(R.string.completion_result), completionResultText(result))
                         }
                         task.actualDurationMinutes?.let { minutes ->
                             DetailLine(
@@ -1883,6 +2646,7 @@ private fun TaskDetailScreen(
                 item {
                     PostponementGuidance(
                         postponeCount = task.postponeCount,
+                        actionsLocked = actionsLocked,
                         onReviewAdjustmentDraft = onReviewAdjustmentDraft,
                         onEdit = onEdit,
                     )
@@ -1897,7 +2661,7 @@ private fun TaskDetailScreen(
                         )
                     } else {
                         executionLogs.forEach { log ->
-                            ExecutionLogCard(log = log, onCorrect = { onCorrectLog(log) })
+                            ExecutionLogCard(log = log, actionsLocked = actionsLocked, onCorrect = { onCorrectLog(log) })
                         }
                     }
                 }
@@ -1905,6 +2669,7 @@ private fun TaskDetailScreen(
             item {
                 DetailActions(
                     task = task,
+                    actionsLocked = actionsLocked,
                     onEdit = onEdit,
                     onPostpone = onPostpone,
                     onCancel = onCancel,
@@ -1932,7 +2697,16 @@ private fun TaskDetailScreen(
 
 @Composable
 private fun DetailSection(title: String, eyebrow: String? = null, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val reducedMotion = LocalReducedMotion.current
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(14.dp),
+    ) {
+    Column(modifier = Modifier.animateContentSize(
+        tween(if (reducedMotion) 0 else ReplandMotion.Expand, easing = FastOutSlowInEasing),
+    ).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         eyebrow?.let {
             Text(
                 text = it,
@@ -1942,6 +2716,7 @@ private fun DetailSection(title: String, eyebrow: String? = null, content: @Comp
         }
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         content()
+    }
     }
 }
 
@@ -1963,6 +2738,7 @@ private fun DetailMetaPill(text: String) {
 @Composable
 private fun PostponementGuidance(
     postponeCount: Int,
+    actionsLocked: Boolean,
     onReviewAdjustmentDraft: () -> Unit,
     onEdit: () -> Unit,
 ) {
@@ -1985,10 +2761,11 @@ private fun PostponementGuidance(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
-            Button(onClick = onReviewAdjustmentDraft, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = onReviewAdjustmentDraft, enabled = !actionsLocked,
+                modifier = Modifier.fillMaxWidth().testTag("postpone-review-plan")) {
                 Text(stringResource(R.string.review_adjustment_draft))
             }
-            OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = onEdit, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.adjust_task_scope_or_date))
             }
         }
@@ -1997,6 +2774,13 @@ private fun PostponementGuidance(
 
 @Composable
 private fun DetailLine(label: String, value: String) {
+    if (LocalDensity.current.fontScale > 1.3f) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text(value, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -2004,14 +2788,14 @@ private fun DetailLine(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(0.4f), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.width(16.dp))
-        Text(value, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+        Text(value, modifier = Modifier.weight(0.6f), fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
-private fun ExecutionLogCard(log: TaskExecutionLog, onCorrect: () -> Unit) {
+private fun ExecutionLogCard(log: TaskExecutionLog, onCorrect: () -> Unit, actionsLocked: Boolean = false) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -2045,7 +2829,7 @@ private fun ExecutionLogCard(log: TaskExecutionLog, onCorrect: () -> Unit) {
                 DetailLine(stringResource(R.string.completed_content), it)
             }
             log.feedback.completionResult?.let {
-                DetailLine(stringResource(R.string.completion_result), it)
+                DetailLine(stringResource(R.string.completion_result), completionResultText(it))
             }
             log.feedback.actualDurationMinutes?.let {
                 DetailLine(stringResource(R.string.actual_duration_optional), stringResource(R.string.duration_format, it))
@@ -2070,7 +2854,8 @@ private fun ExecutionLogCard(log: TaskExecutionLog, onCorrect: () -> Unit) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            TextButton(onClick = onCorrect) { Text(stringResource(R.string.correct_log)) }
+            TextButton(onClick = onCorrect, enabled = !actionsLocked,
+                modifier = Modifier.testTag("execution-log-correct-${log.id}")) { Text(stringResource(R.string.correct_log)) }
         }
     }
 }
@@ -2078,6 +2863,7 @@ private fun ExecutionLogCard(log: TaskExecutionLog, onCorrect: () -> Unit) {
 @Composable
 private fun DetailActions(
     task: Task,
+    actionsLocked: Boolean,
     onEdit: () -> Unit,
     onPostpone: () -> Unit,
     onCancel: () -> Unit,
@@ -2092,8 +2878,9 @@ private fun DetailActions(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (task.status.isActive) {
-            Button(
+            OutlinedButton(
                 onClick = onComplete,
+                enabled = !actionsLocked,
                 modifier = Modifier.fillMaxWidth().testTag("complete-task"),
             ) {
                 Text(stringResource(R.string.complete))
@@ -2101,26 +2888,28 @@ private fun DetailActions(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick = onPartialCompletion,
+                    enabled = !actionsLocked,
                     modifier = Modifier.weight(1f).testTag("partial-completion"),
                 ) { Text(stringResource(R.string.partial_completion)) }
-                OutlinedButton(onClick = onPostpone, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = onPostpone, enabled = !actionsLocked, modifier = Modifier.weight(1f).testTag("postpone-task")) {
                     Text(stringResource(R.string.postpone))
                 }
             }
-            TextButton(onClick = onReplace, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onReplace, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth().testTag("replace-task")) {
                 Text(stringResource(R.string.replace_task))
             }
         }
         if (task.status != TaskStatus.REPLACED) {
             OutlinedButton(
                 onClick = onFeedback,
+                enabled = !actionsLocked,
                 modifier = Modifier.fillMaxWidth().testTag("record-feedback"),
             ) {
                 Text(stringResource(R.string.record_feedback))
             }
         }
         if (task.status != TaskStatus.REPLACED) {
-            OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = onEdit, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.edit_task))
             }
         }
@@ -2146,7 +2935,7 @@ private fun DetailActions(
             }
         }
         if (task.status.isActive) {
-            TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onCancel, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth().testTag("cancel-task")) {
                 Text(
                     stringResource(R.string.task_cancel),
                     color = MaterialTheme.colorScheme.error,
@@ -2154,7 +2943,7 @@ private fun DetailActions(
             }
         }
         if (task.status == TaskStatus.COMPLETED || task.status == TaskStatus.CANCELLED) {
-            TextButton(onClick = onRestore, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onRestore, enabled = !actionsLocked, modifier = Modifier.fillMaxWidth().testTag("restore-task")) {
                 Text(stringResource(R.string.restore_task))
             }
         }
@@ -2289,7 +3078,7 @@ private fun AiConsentDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.ai_consent_title)) },
         text = {
-            Text(stringResource(R.string.ai_consent_message))
+            Text(stringResource(R.string.ai_consent_message), modifier = Modifier.verticalScroll(rememberScrollState()))
         },
         confirmButton = {
             TextButton(
@@ -2410,6 +3199,16 @@ private fun AiRequestPreviewDialog(
 
 @Composable
 private fun TimeScreen(
+    snackbarBottomInset: androidx.compose.ui.unit.Dp,
+    state: com.swan1127.repland.ui.time.TimeUiState,
+    busy: Boolean,
+    onAddWeekly: () -> Unit,
+    onEditWeekly: (WeeklyTimeBlock) -> Unit,
+    onDeleteWeekly: (WeeklyTimeBlock) -> Unit,
+    onAddOverride: () -> Unit,
+    onEditOverride: (DateOverride) -> Unit,
+    onDeleteOverride: (DateOverride) -> Unit,
+    onEditSemester: () -> Unit,
     timetableImport: TimetableImportState,
     onImportPdf: (Uri) -> Unit,
     onClearTimetableImport: () -> Unit,
@@ -2419,12 +3218,13 @@ private fun TimeScreen(
         onResult = { uri -> uri?.let(onImportPdf) },
     )
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 24.dp),
+        modifier = Modifier.fillMaxSize().padding(bottom = snackbarBottomInset).verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("导入固定课程", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         Text(
-            "选择课表 PDF 后，识别到的课程会直接进入日与周视图。课程在日轨道上可长按拖动调整时间。",
+            "选择课表 PDF 后先预览识别结果；勾选课程并核对节次时间，确认后才加入固定时间。",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -2445,6 +3245,8 @@ private fun TimeScreen(
                 )
                 Button(
                     onClick = { timetablePicker.launch(arrayOf("application/pdf")) },
+                    enabled = !busy && timetableImport != TimetableImportState.Reading &&
+                        (timetableImport as? TimetableImportState.Review)?.saving != true,
                     modifier = Modifier.fillMaxWidth().testTag("import-timetable-pdf"),
                 ) { Text(stringResource(R.string.import_timetable_pdf)) }
             }
@@ -2454,11 +3256,19 @@ private fun TimeScreen(
             is TimetableImportState.Review -> Unit
 
             TimetableImportState.Reading -> {
-                Text(
-                    "正在导入课表…",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Text("正在识别课表，尚未写入课程…", color = MaterialTheme.colorScheme.primary)
+                TextButton(onClick = onClearTimetableImport) { Text("取消识别") }
+            }
+
+            is TimetableImportState.Completed -> {
+                Card(modifier = Modifier.fillMaxWidth().testTag("timetable-import-receipt")) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("已新增 ${timetableImport.addedCount} 门课程；跳过 ${timetableImport.skippedCount} 项重复课程。",
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                        Text("固定课程已同步到日与周视图，现有任务计划未自动重新安排。")
+                        TextButton(onClick = onClearTimetableImport) { Text("知道了") }
+                    }
+                }
             }
 
             is TimetableImportState.Failed -> {
@@ -2486,6 +3296,24 @@ private fun TimeScreen(
                 }
             }
         }
+        Text("规划时间约束", style = MaterialTheme.typography.titleLarge)
+        Text("可用时间用于制定计划；课程、休息和固定事项会避让。修改后需要重新预览并确认，不自动覆盖现有安排。",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (!state.hasLoaded) {
+            Text(if (state.readError != null) "时间设置暂不可用，请重试读取；未删除现有记录。" else "正在读取时间设置…")
+        } else {
+            SemesterWeekCard(state.semesterFirstWeekMonday, onEditSemester, enabled = !busy)
+            TimeListHeading("每周常用时间", "添加", onAddWeekly, enabled = !busy, tag = "time-add-weekly")
+            if (state.weeklyBlocks.isEmpty()) Text("还没有每周时间；可添加可用时间、课程、休息或固定事项。")
+            state.weeklyBlocks.forEach { block ->
+                key(block.id) { WeeklyBlockCard(block, { onEditWeekly(block) }, { onDeleteWeekly(block) }, enabled = !busy) }
+            }
+            TimeListHeading("单日例外", "添加", onAddOverride, enabled = !busy, tag = "time-add-override")
+            if (state.dateOverrides.isEmpty()) Text("还没有单日例外；可指定某一天临时不可用或增加可用时间。")
+            state.dateOverrides.forEach { item ->
+                key(item.id) { DateOverrideCard(item, { onEditOverride(item) }, { onDeleteOverride(item) }, enabled = !busy) }
+            }
+        }
     }
 }
 
@@ -2493,6 +3321,7 @@ private fun TimeScreen(
 private fun SemesterWeekCard(
     semesterFirstWeekMonday: LocalDate?,
     onEdit: () -> Unit,
+    enabled: Boolean = true,
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -2525,7 +3354,7 @@ private fun SemesterWeekCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            TextButton(onClick = onEdit) {
+            TextButton(onClick = onEdit, enabled = enabled, modifier = Modifier.testTag("time-edit-semester")) {
                 Text(
                     stringResource(
                         if (semesterFirstWeekMonday == null) R.string.set_semester_week
@@ -2542,20 +3371,28 @@ private fun SemesterStartEditorDialog(
     semesterFirstWeekMonday: LocalDate?,
     onDismiss: () -> Unit,
     onSave: (LocalDate) -> Unit,
+    busy: Boolean = false,
+    error: String? = null,
+    canSave: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
 ) {
-    var dateText by remember(semesterFirstWeekMonday) {
+    var dateText by rememberSaveable {
         mutableStateOf(semesterFirstWeekMonday?.toString().orEmpty())
     }
-    var showValidationError by remember { mutableStateOf(false) }
-    AlertDialog(
+    var showValidationError by rememberSaveable { mutableStateOf(false) }
+    EditorSheet(
+        saving = busy,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.semester_week_editor_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                readNotice?.invoke()
                 OutlinedTextField(
                     value = dateText,
                     onValueChange = { dateText = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    isError = showValidationError,
+                    modifier = Modifier.fillMaxWidth().testTag("semester-start-date"),
                     label = { Text(stringResource(R.string.semester_week_date)) },
                     placeholder = { Text(stringResource(R.string.semester_week_editor_hint)) },
                     singleLine = true,
@@ -2566,6 +3403,8 @@ private fun SemesterStartEditorDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("time-mutation-error").semantics { liveRegion = LiveRegionMode.Polite }) }
             }
         },
         confirmButton = {
@@ -2575,10 +3414,12 @@ private fun SemesterStartEditorDialog(
                     if (date?.dayOfWeek == DayOfWeek.MONDAY) onSave(date)
                     else showValidationError = true
                 },
-            ) { Text(stringResource(R.string.save)) }
+                enabled = !busy && canSave,
+                modifier = Modifier.testTag("semester-start-save"),
+            ) { Text(if (busy) "保存中…" else stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
@@ -2588,6 +3429,8 @@ private fun TimeListHeading(
     title: String,
     actionLabel: String,
     onAction: () -> Unit,
+    enabled: Boolean = true,
+    tag: String = "time-add",
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -2595,7 +3438,7 @@ private fun TimeListHeading(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-        TextButton(onClick = onAction) { Text(actionLabel) }
+        TextButton(onClick = onAction, enabled = enabled, modifier = Modifier.testTag(tag)) { Text(actionLabel) }
     }
 }
 
@@ -2627,11 +3470,10 @@ private fun WeeklyBlockCard(
     block: WeeklyTimeBlock,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    enabled: Boolean = true,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onEdit),
+        modifier = Modifier.fillMaxWidth().testTag("weekly-block-${block.id}"),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -2667,7 +3509,8 @@ private fun WeeklyBlockCard(
                     )
                 }
             }
-            TextButton(onClick = onDelete) {
+            TextButton(onClick = onEdit, enabled = enabled, modifier = Modifier.testTag("weekly-edit-${block.id}")) { Text("编辑") }
+            TextButton(onClick = onDelete, enabled = enabled, modifier = Modifier.testTag("weekly-delete-${block.id}")) {
                 Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
             }
         }
@@ -2676,47 +3519,49 @@ private fun WeeklyBlockCard(
 
 @Composable
 private fun TimetableImportReviewDialog(
-    courses: List<ImportedCourse>,
+    review: TimetableImportState.Review,
+    canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
-    onConfirm: (List<ImportedCourse>) -> Unit,
+    onConfirm: () -> Unit,
+    onSelected: (String, Boolean) -> Unit,
+    onEditCourse: (ImportedCourse) -> Unit,
+    onClockAcknowledged: (Boolean) -> Unit,
 ) {
-    var reviewedCourses by remember(courses) { mutableStateOf(courses) }
-    var selectedIds by remember(courses) { mutableStateOf(courses.map(ImportedCourse::id).toSet()) }
-    var editingCourse by remember { mutableStateOf<ImportedCourse?>(null) }
-    val selectedCourses = reviewedCourses.filter { it.id in selectedIds }
+    var editingCourseId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedCourses = review.courses.filter { it.id in review.selectedIds }
     AlertDialog(
-        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("timetable-import-review"),
+        onDismissRequest = { if (!review.saving) onDismiss() },
+        properties = androidx.compose.ui.window.DialogProperties(
+            dismissOnBackPress = !review.saving, dismissOnClickOutside = !review.saving,
+        ),
         title = { Text(stringResource(R.string.timetable_import_review)) },
         text = {
             Column(
                 modifier = Modifier
-                    .height(420.dp)
+                    .heightIn(max = 420.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                readNotice?.invoke()
                 Text(
                     stringResource(R.string.import_default_period_note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                reviewedCourses.forEach { course ->
+                review.courses.forEach { course ->
                     val draft = ClassPeriodClock.toWeeklyTimeBlockDraft(course)
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedIds = if (course.id in selectedIds) {
-                                    selectedIds - course.id
-                                } else {
-                                    selectedIds + course.id
-                                }
-                            },
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top,
                     ) {
                         Checkbox(
-                            checked = course.id in selectedIds,
-                            onCheckedChange = { checked ->
-                                selectedIds = if (checked) selectedIds + course.id else selectedIds - course.id
+                            checked = course.id in review.selectedIds,
+                            onCheckedChange = { onSelected(course.id, it) },
+                            enabled = !review.saving,
+                            modifier = Modifier.testTag("import-course-select-${course.id}").semantics {
+                                contentDescription = "选择课程：${course.title}"
                             },
                         )
                         Spacer(Modifier.width(8.dp))
@@ -2747,35 +3592,47 @@ private fun TimetableImportReviewDialog(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            TextButton(onClick = { editingCourse = course }) {
+                            TextButton(onClick = { editingCourseId = course.id }, enabled = !review.saving,
+                                modifier = Modifier.testTag("import-course-edit-${course.id}")) {
                                 Text(stringResource(R.string.edit_imported_course))
                             }
                         }
                     }
                 }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = review.clockAcknowledged, onCheckedChange = onClockAcknowledged,
+                        enabled = !review.saving, modifier = Modifier.testTag("import-clock-acknowledge").semantics {
+                            contentDescription = "已核对所选课程的默认节次时间"
+                        })
+                    Text("已核对所选课程的默认节次时间", style = MaterialTheme.typography.bodyMedium)
+                }
+                review.error?.let { message ->
+                    Text(message, color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("timetable-import-error").semantics { liveRegion = LiveRegionMode.Polite })
+                }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(selectedCourses) },
-                enabled = selectedCourses.isNotEmpty(),
+                onClick = onConfirm,
+                enabled = canConfirm && !review.saving && selectedCourses.isNotEmpty() && review.clockAcknowledged,
+                modifier = Modifier.testTag("timetable-import-confirm"),
             ) {
-                Text(stringResource(R.string.import_selected_format, selectedCourses.size))
+                Text(if (review.saving) "正在保存…" else stringResource(R.string.import_selected_format, selectedCourses.size))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, enabled = !review.saving,
+                modifier = Modifier.testTag("timetable-import-cancel")) { Text(stringResource(R.string.cancel)) }
         },
     )
-    editingCourse?.let { course ->
+    review.courses.firstOrNull { it.id == editingCourseId }?.let { course ->
         ImportedCourseEditorDialog(
             course = course,
-            onDismiss = { editingCourse = null },
+            onDismiss = { editingCourseId = null },
             onSave = { updated ->
-                reviewedCourses = reviewedCourses.map { current ->
-                    if (current.id == updated.id) updated else current
-                }
-                editingCourse = null
+                onEditCourse(updated)
+                editingCourseId = null
             },
         )
     }
@@ -2787,13 +3644,13 @@ private fun ImportedCourseEditorDialog(
     onDismiss: () -> Unit,
     onSave: (ImportedCourse) -> Unit,
 ) {
-    var title by remember(course) { mutableStateOf(course.title) }
-    var dayOfWeek by remember(course) { mutableStateOf(course.dayOfWeek) }
-    var startPeriodText by remember(course) { mutableStateOf(course.startPeriod.toString()) }
-    var endPeriodText by remember(course) { mutableStateOf(course.endPeriod.toString()) }
-    var weekPattern by remember(course) { mutableStateOf(course.weekPattern.orEmpty()) }
-    var showValidationError by remember { mutableStateOf(false) }
-    AlertDialog(
+    var title by rememberSaveable(course.id) { mutableStateOf(course.title) }
+    var dayOfWeek by rememberSaveable(course.id) { mutableStateOf(course.dayOfWeek) }
+    var startPeriodText by rememberSaveable(course.id) { mutableStateOf(course.startPeriod.toString()) }
+    var endPeriodText by rememberSaveable(course.id) { mutableStateOf(course.endPeriod.toString()) }
+    var weekPattern by rememberSaveable(course.id) { mutableStateOf(course.weekPattern.orEmpty()) }
+    var showValidationError by rememberSaveable { mutableStateOf(false) }
+    EditorSheet(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.edit_imported_course)) },
         text = {
@@ -2804,7 +3661,7 @@ private fun ImportedCourseEditorDialog(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("import-course-name"),
                     label = { Text(stringResource(R.string.time_block_name)) },
                     singleLine = true,
                 )
@@ -2817,16 +3674,16 @@ private fun ImportedCourseEditorDialog(
                 )
                 OutlinedTextField(
                     value = startPeriodText,
-                    onValueChange = { startPeriodText = it.filter(Char::isDigit) },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = { startPeriodText = it },
+                    modifier = Modifier.fillMaxWidth().testTag("import-course-start-period"),
                     label = { Text(stringResource(R.string.start_period)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = endPeriodText,
-                    onValueChange = { endPeriodText = it.filter(Char::isDigit) },
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = { endPeriodText = it },
+                    modifier = Modifier.fillMaxWidth().testTag("import-course-end-period"),
                     label = { Text(stringResource(R.string.end_period)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
@@ -2834,7 +3691,7 @@ private fun ImportedCourseEditorDialog(
                 OutlinedTextField(
                     value = weekPattern,
                     onValueChange = { weekPattern = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("import-course-week-pattern"),
                     label = { Text(stringResource(R.string.week_pattern_optional)) },
                     singleLine = true,
                 )
@@ -2846,9 +3703,9 @@ private fun ImportedCourseEditorDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val startPeriod = startPeriodText.toIntOrNull() ?: -1
-                    val endPeriod = endPeriodText.toIntOrNull() ?: -1
-                    if (title.isNotBlank() && startPeriod in 1..12 && endPeriod in startPeriod..12) {
+                    val startPeriod = com.swan1127.repland.domain.model.UserNumericInput.integerIn(startPeriodText, 1..12)
+                    val endPeriod = com.swan1127.repland.domain.model.UserNumericInput.integerIn(endPeriodText, 1..12)
+                    if (title.isNotBlank() && startPeriod != null && endPeriod != null && endPeriod >= startPeriod) {
                         onSave(
                             course.copy(
                                 title = title.trim(),
@@ -2862,6 +3719,7 @@ private fun ImportedCourseEditorDialog(
                         showValidationError = true
                     }
                 },
+                modifier = Modifier.testTag("import-course-save"),
             ) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
@@ -2878,6 +3736,21 @@ internal fun PlanDraftDialog(
     onDismiss: () -> Unit,
     onUpdateDraft: (PlanDraft) -> Unit,
     onAccept: () -> Unit,
+    tracks: List<RhythmTrack> = emptyList(),
+    onCompleteTaskDetails: (Task) -> Unit = {},
+    onConfigureAvailability: () -> Unit = {},
+    currentPlan: ConfirmedPlan? = null,
+    currentTaskOrder: List<String> = emptyList(),
+    isSaving: Boolean = false,
+    canAccept: Boolean = true,
+    canEdit: Boolean = true,
+    retainOnDismiss: Boolean = false,
+    readNotice: (@Composable () -> Unit)? = null,
+    onCommitSegmentDraft: ((PlanDraft, PlanDraft, String) -> Unit)? = null,
+    segmentSaveReceipt: String? = null,
+    segmentSaveError: String? = null,
+    onClearSegmentSaveFeedback: () -> Unit = {},
+    planningTeamContent: @Composable () -> Unit = {},
 ) {
     val tasksById = tasks.associateBy(Task::id)
     val unknownTaskLabel = stringResource(R.string.unknown_task)
@@ -2886,11 +3759,26 @@ internal fun PlanDraftDialog(
         .filter(tasksById::containsKey)
         .ifEmpty { (draft.segments.map(PlannedSegment::taskId) + draft.pendingTaskIds).distinct() }
     val priorityAssessmentsByTask = draft.priorityAssessments.associateBy(LocalPriorityAssessment::taskId)
-    var editingSegmentId by remember { mutableStateOf<String?>(null) }
-    var showTaskOrder by rememberSaveable { mutableStateOf(false) }
+    var editingSegmentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingSegmentRequest by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(segmentSaveReceipt) {
+        if (pendingSegmentRequest != null && pendingSegmentRequest == segmentSaveReceipt) {
+            editingSegmentId = null
+            pendingSegmentRequest = null
+        }
+    }
+    var showTaskOrder by rememberSaveable { mutableStateOf(draft.orderOnly) }
+    var showChanges by rememberSaveable { mutableStateOf(false) }
+    val changes = PlanDraftReview.changes(draft, currentPlan, currentTaskOrder)
+    val now = java.time.LocalDateTime.now()
+    val protectedCurrent = currentPlan?.segments.orEmpty().filter {
+        it.isLocked || tasksById[it.taskId]?.userPriority == TaskPriority.REQUIRED || it.date < now.toLocalDate() || (it.date == now.toLocalDate() && it.startMinute <= now.hour * 60 + now.minute)
+    }
+    val protectedIds = (protectedCurrent.map { it.id } + draft.segments.filter { candidate -> protectedCurrent.any { it.taskId == candidate.taskId } }.map { it.id }).toSet()
     EditorSheet(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.plan_draft_title)) },
+        saving = isSaving,
+        title = { Text(if (draft.orderOnly) "排序预览" else stringResource(R.string.plan_draft_title)) },
         text = {
             Column(
                 modifier = Modifier
@@ -2898,20 +3786,50 @@ internal fun PlanDraftDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                readNotice?.invoke()
+                planningTeamContent()
                 Text(
-                    stringResource(R.string.plan_draft_notice),
+                    if (draft.orderOnly) "只调整任务列表顺序，不改变日程时段。" else stringResource(R.string.plan_draft_notice),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                PlanDraftTimelinePreview(
+                Text("确认后：${changes.schedules.size} 项日程变化，${changes.order.size} 项顺序变化。取消不会改动当前计划。",
+                    modifier = Modifier.testTag("draft-change-summary"), style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { showChanges = !showChanges }, modifier = Modifier.testTag("draft-show-changes")) {
+                    Text(if (showChanges) "收起变化" else "查看具体变化")
+                }
+                if (showChanges) {
+                    changes.schedules.forEach { change ->
+                        fun placementLabel(segments: List<PlannedSegment>) = if (segments.isEmpty()) "未安排" else segments.joinToString("；") {
+                            "${it.date} ${TimeBlockValidator.formatTime(it.startMinute)}–${TimeBlockValidator.formatTime(it.endMinute)} · ${draftTrackLabel(it.trackId, tracks)}${if (it.isLocked) "（锁定）" else ""}"
+                        }
+                        Text(tasksById[change.taskId]?.displayName ?: unknownTaskLabel, style = MaterialTheme.typography.titleSmall)
+                        Text("原：${placementLabel(change.before)}\n新：${placementLabel(change.after)}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    changes.order.forEach { change ->
+                        Text("${tasksById[change.taskId]?.displayName ?: unknownTaskLabel}：${change.before?.let { "第 $it 位" } ?: "未入排序"} → 第 ${change.after} 位", style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (changes.schedules.isEmpty() && changes.order.isEmpty()) Text("与当前计划和顺序一致。")
+                }
+                draft.numericProfileVersion?.let { version ->
+                    Text("画像依据 ${version.take(12)} · ${draft.numericParameters.joinToString()}", modifier = Modifier.testTag("draft-numeric-version"), style = MaterialTheme.typography.bodySmall)
+                    draft.numericAdvice.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
+                if (!draft.orderOnly && weeklyBlocks.none { it.kind == TimeBlockKind.AVAILABLE } && dateOverrides.none { it.type == DateOverrideType.AVAILABLE }) {
+                    Text("还没有可用时间，系统不会把所有空白都当作可以工作。", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = onConfigureAvailability, enabled = canEdit && !isSaving, modifier = Modifier.testTag("draft-configure-availability")) { Text("补充时间后重新生成") }
+                }
+                if (!draft.orderOnly) PlanDraftTimelinePreview(
                     draft = draft,
                     tasks = tasks,
                     weeklyBlocks = weeklyBlocks,
                     dateOverrides = dateOverrides,
                     semesterFirstWeekMonday = semesterFirstWeekMonday,
-                    onEditSegment = { editingSegmentId = it },
+                    onEditSegment = { pendingSegmentRequest = null; onClearSegmentSaveFeedback(); editingSegmentId = it },
+                    canEdit = canEdit && !isSaving,
+                    tracks = tracks,
                 )
-                draft.pendingTaskIds.takeIf(List<String>::isNotEmpty)?.let { pendingIds ->
+                draft.pendingTaskIds.takeIf { !draft.orderOnly && it.isNotEmpty() }?.let { pendingIds ->
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainerLow,
                         shape = RoundedCornerShape(14.dp),
@@ -2925,6 +3843,9 @@ internal fun PlanDraftDialog(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                            pendingIds.mapNotNull(tasksById::get).filter { it.totalDurationMinutes == null }.forEach { task ->
+                                TextButton(onClick = { onCompleteTaskDetails(task) }, enabled = canEdit && !isSaving, modifier = Modifier.testTag("draft-complete-details-${task.id}")) { Text("补充 ${task.displayName} 的时长后重新生成") }
+                            }
                         }
                     }
                 }
@@ -2935,13 +3856,14 @@ internal fun PlanDraftDialog(
                     ) {
                         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                stringResource(R.string.plan_feasibility_warning),
+                                "未排入 / 暂不安排",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                             )
                             unscheduledTasks.forEach { unscheduled ->
+                                // This is unassigned workload, not a promise of one continuous free slot.
                                 Text(
-                                    stringResource(
+                                    if (unscheduled.reason == UnscheduledReason.USER_DEFERRED && unscheduled.remainingMinutes == 0) "${tasksById[unscheduled.taskId]?.displayName ?: unknownTaskLabel}：本次暂不安排，时长仍待补充。" else stringResource(
                                         R.string.plan_unassigned_task,
                                         tasksById[unscheduled.taskId]?.displayName
                                             ?: stringResource(R.string.unknown_task),
@@ -2950,7 +3872,21 @@ internal fun PlanDraftDialog(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onErrorContainer,
                                 )
+                                Text(when (unscheduled.reason) {
+                                    UnscheduledReason.USER_DEFERRED -> "你选择本次暂不安排；任务不会被删除或标记完成。"
+                                    UnscheduledReason.CAPACITY_BEFORE_DUE_DATE -> "截止日期前的可用时间不足。"
+                                    else -> "本次规划窗口内的可用时间不足。"
+                                }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                                if (unscheduled.reason != UnscheduledReason.USER_DEFERRED) {
+                                    tasksById[unscheduled.taskId]?.let { task ->
+                                        TextButton(onClick = { onCompleteTaskDetails(task) }, enabled = canEdit && !isSaving) { Text("调整 ${task.displayName} 的时长或日期后重新生成") }
+                                    }
+                                }
                             }
+                            val capacityMissing = unscheduledTasks.filter { it.reason != UnscheduledReason.USER_DEFERRED }.sumOf { it.remainingMinutes }
+                            if (capacityMissing > 0) Text("本次未排入工作量合计 $capacityMissing 分钟；补充时间后需重新检查约束。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                            TextButton(onClick = onConfigureAvailability, enabled = canEdit && !isSaving, modifier = Modifier.testTag("draft-capacity-add-time")) { Text("补充可用时间后重新生成") }
+                            Text("也可直接确认已排入部分；未排入任务仍保留在待安排列表。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
                         }
                     }
                 }
@@ -2966,7 +3902,7 @@ internal fun PlanDraftDialog(
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text("候选事项顺序", style = MaterialTheme.typography.titleSmall)
-                                Text("只影响下次自动安排，不会改变上面的时段。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(if (draft.orderOnly) "确认后同步任务列表；不移动已安排的时段。" else "只影响下次自动安排，不会改变上面的时段。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Text(if (showTaskOrder) "收起" else "调整", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
@@ -2979,10 +3915,20 @@ internal fun PlanDraftDialog(
                                     assessment = priorityAssessmentsByTask[taskId],
                                     index = index,
                                     total = orderedTaskIds.size,
+                                    enabled = canEdit && !isSaving,
                                     onMove = { offset ->
                                         onUpdateDraft(PlanDraftEditor.moveTask(draft, taskId, offset))
                                     },
                                 )
+                                if (!draft.orderOnly) {
+                                    val deferred = draft.unscheduledTasks.any { it.taskId == taskId && it.reason == UnscheduledReason.USER_DEFERRED }
+                                    val protected = draft.segments.any { it.taskId == taskId && (it.isLocked || it.id in protectedIds) }
+                                    TextButton(
+                                        enabled = canEdit && !isSaving && !deferred && !protected,
+                                        onClick = { onUpdateDraft(PlanDraftReview.defer(draft, taskId, protectedIds)) },
+                                        modifier = Modifier.testTag("draft-defer-$taskId"),
+                                    ) { Text(if (deferred) "本次已暂不安排" else if (protected) "包含锁定或已开始安排" else "本次暂不安排 ${task.displayName}") }
+                                }
                             }
                         }
                     }
@@ -2993,25 +3939,37 @@ internal fun PlanDraftDialog(
             Button(
                 onClick = onAccept,
                 modifier = Modifier.testTag("accept-plan-draft"),
-                enabled = draft.segments.isNotEmpty() || draft.pendingTaskIds.isNotEmpty(),
+                enabled = canAccept && !isSaving && (draft.segments.isNotEmpty() || draft.pendingTaskIds.isNotEmpty() || (draft.orderOnly && orderedTaskIds.isNotEmpty())),
             ) {
-                Text(stringResource(R.string.accept_plan_draft))
+                Text(if (draft.orderOnly) "应用排序" else stringResource(R.string.accept_plan_draft))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.discard_plan_draft)) }
+            TextButton(onClick = onDismiss, enabled = !isSaving) { Text(if (retainOnDismiss) "保留草案并关闭" else stringResource(R.string.discard_plan_draft)) }
         },
     )
     editingSegmentId?.let { segmentId ->
         draft.segments.firstOrNull { it.id == segmentId }?.let { segment ->
             PlanSegmentEditorDialog(
                 segment = segment,
-                availableTrackIds = (listOf("focus", "parallel-2", "parallel-3") + draft.segments.map(PlannedSegment::trackId)).distinct(),
+                availableTrackIds = (tracks.map { it.id } + listOf("focus", "parallel-2", "parallel-3") + draft.segments.map(PlannedSegment::trackId)).distinct(),
+                tracks = tracks,
                 hasConflict = { candidate -> PlanDraftEditor.overlapsAnotherSegment(draft, candidate) },
-                onDismiss = { editingSegmentId = null },
+                canSave = canEdit && !isSaving,
+                isSaving = isSaving,
+                saveError = segmentSaveError,
+                readNotice = readNotice,
+                onDismiss = { editingSegmentId = null; pendingSegmentRequest = null; onClearSegmentSaveFeedback() },
                 onSave = { updated ->
-                    onUpdateDraft(PlanDraftEditor.moveSegment(draft, updated))
-                    editingSegmentId = null
+                    val changed = PlanDraftEditor.moveSegment(draft, updated)
+                    if (onCommitSegmentDraft != null) {
+                        val requestId = java.util.UUID.randomUUID().toString()
+                        pendingSegmentRequest = requestId
+                        onCommitSegmentDraft(draft, changed, requestId)
+                    } else {
+                        onUpdateDraft(changed)
+                        editingSegmentId = null
+                    }
                 },
             )
         }
@@ -3026,6 +3984,8 @@ private fun PlanDraftTimelinePreview(
     dateOverrides: List<DateOverride>,
     semesterFirstWeekMonday: LocalDate?,
     onEditSegment: (String) -> Unit,
+    tracks: List<RhythmTrack> = emptyList(),
+    canEdit: Boolean = true,
 ) {
     val dates = draft.segments.map(PlannedSegment::date).distinct().sorted()
     var selectedDate by remember(dates) { mutableStateOf(dates.firstOrNull()) }
@@ -3075,7 +4035,17 @@ private fun PlanDraftTimelinePreview(
                     tasks = tasks,
                     semesterFirstWeekMonday = semesterFirstWeekMonday,
                 )
-                DraftDayTrackPreview(entries = entries, onEditSegment = onEditSegment)
+                DraftDayTrackPreview(entries = entries, onEditSegment = onEditSegment, tracks = tracks, canEdit = canEdit)
+                entries.filter { it.id.startsWith("segment:") }.sortedBy { it.startMinute }.forEach { entry ->
+                    TextButton(
+                        onClick = { onEditSegment(entry.id.removePrefix("segment:")) },
+                        enabled = canEdit,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                            .testTag("draft-segment-summary-${entry.id.removePrefix("segment:")}"),
+                    ) {
+                        Text("${entry.title} · ${TimeBlockValidator.formatTime(entry.startMinute)}–${TimeBlockValidator.formatTime(entry.endMinute)} · ${draftTrackLabel(entry.trackId, tracks)}")
+                    }
+                }
             }
         }
     }
@@ -3085,6 +4055,8 @@ private fun PlanDraftTimelinePreview(
 private fun DraftDayTrackPreview(
     entries: List<TimelineEntry>,
     onEditSegment: (String) -> Unit,
+    tracks: List<RhythmTrack> = emptyList(),
+    canEdit: Boolean = true,
 ) {
     val laneCount = (entries.maxOfOrNull(TimelineEntry::lane) ?: 0) + 1
     val laneTracks = (0 until laneCount).associateWith { lane ->
@@ -3093,10 +4065,10 @@ private fun DraftDayTrackPreview(
     val rulerWidth = 38.dp
     val laneWidth = 112.dp
     val headerHeight = 28.dp
-    val dayStart = 7 * 60
-    val dayEnd = 23 * 60
+    val dayStart = minOf(7 * 60, (entries.minOfOrNull { it.startMinute } ?: 7 * 60) / 60 * 60).coerceAtLeast(0)
+    val dayEnd = maxOf(23 * 60, ((entries.maxOfOrNull { it.endMinute } ?: 23 * 60) + 59) / 60 * 60).coerceAtMost(24 * 60)
     val hourHeight = 14.dp
-    val contentHeight = headerHeight + hourHeight * ((dayEnd - dayStart) / 60)
+    val contentHeight = headerHeight + hourHeight * ((dayEnd - dayStart) / 60) + 24.dp
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -3120,7 +4092,7 @@ private fun DraftDayTrackPreview(
                         shape = RoundedCornerShape(8.dp),
                     ) {
                         Text(
-                            draftTrackLabel(trackId),
+                            draftTrackLabel(trackId, tracks),
                             modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall,
                             maxLines = 1,
@@ -3172,6 +4144,7 @@ private fun DraftDayTrackPreview(
                         if (isProposed) {
                             Surface(
                                 onClick = { onEditSegment(entry.id.removePrefix("segment:")) },
+                                enabled = canEdit,
                                 modifier = modifier,
                                 color = MaterialTheme.colorScheme.primaryContainer,
                                 shape = RoundedCornerShape(9.dp),
@@ -3190,7 +4163,7 @@ private fun DraftDayTrackPreview(
     }
 }
 
-private fun draftTrackLabel(trackId: String): String = when (trackId) {
+private fun draftTrackLabel(trackId: String, tracks: List<RhythmTrack> = emptyList()): String = tracks.firstOrNull { it.id == trackId }?.name ?: when (trackId) {
     "focus" -> "主线"
     "course" -> "课程"
     "fixed" -> "固定"
@@ -3205,13 +4178,15 @@ private fun DraftTaskOrderRow(
     index: Int,
     total: Int,
     onMove: (Int) -> Unit,
+    enabled: Boolean = true,
 ) {
     var accumulatedDragY by remember(task.id) { mutableFloatStateOf(0f) }
     var showReason by rememberSaveable(task.id) { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .pointerInput(task.id) {
+            .pointerInput(task.id, enabled) {
+                if (!enabled) return@pointerInput
                 detectDragGesturesAfterLongPress(
                     onDragStart = { accumulatedDragY = 0f },
                     onDrag = { change, amount ->
@@ -3253,10 +4228,10 @@ private fun DraftTaskOrderRow(
                     }
                 }
             }
-            TextButton(onClick = { onMove(-1) }, enabled = index > 0) {
+            TextButton(onClick = { onMove(-1) }, enabled = enabled && index > 0) {
                 Text(stringResource(R.string.move_up))
             }
-            TextButton(onClick = { onMove(1) }, enabled = index < total - 1) {
+            TextButton(onClick = { onMove(1) }, enabled = enabled && index < total - 1) {
                 Text(stringResource(R.string.move_down))
             }
         }
@@ -3270,21 +4245,30 @@ private fun PlanSegmentEditorDialog(
     hasConflict: (PlannedSegment) -> Boolean,
     onDismiss: () -> Unit,
     onSave: (PlannedSegment) -> Unit,
+    tracks: List<RhythmTrack> = emptyList(),
+    canSave: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
+    isSaving: Boolean = false,
+    saveError: String? = null,
 ) {
-    var dateText by remember(segment) { mutableStateOf(segment.date.toString()) }
-    var startTime by remember(segment) { mutableStateOf(TimeBlockValidator.formatTime(segment.startMinute)) }
-    var endTime by remember(segment) { mutableStateOf(TimeBlockValidator.formatTime(segment.endMinute)) }
-    var selectedTrackId by remember(segment) { mutableStateOf(segment.trackId) }
-    var showValidationError by remember { mutableStateOf(false) }
-    var confirmConflict by remember { mutableStateOf(false) }
+    var dateText by rememberSaveable(segment.id) { mutableStateOf(segment.date.toString()) }
+    var startTime by rememberSaveable(segment.id) { mutableStateOf(TimeBlockValidator.formatTime(segment.startMinute)) }
+    var endTime by rememberSaveable(segment.id) { mutableStateOf(TimeBlockValidator.formatTime(segment.endMinute)) }
+    var selectedTrackId by rememberSaveable(segment.id) { mutableStateOf(segment.trackId) }
+    var showValidationError by rememberSaveable(segment.id) { mutableStateOf(false) }
+    var confirmConflict by rememberSaveable(segment.id) { mutableStateOf(false) }
     AlertDialog(
-        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("plan-segment-editor"),
+        onDismissRequest = { if (!isSaving) onDismiss() },
         title = { Text(stringResource(R.string.edit_plan_segment)) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                readNotice?.invoke()
+                saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("plan-segment-save-error").semantics { liveRegion = LiveRegionMode.Polite }) }
                 Text(
                     stringResource(R.string.plan_segment_edit_note),
                     style = MaterialTheme.typography.bodySmall,
@@ -3296,7 +4280,8 @@ private fun PlanSegmentEditorDialog(
                         dateText = it
                         confirmConflict = false
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("plan-segment-date"),
+                    enabled = !isSaving,
                     label = { Text(stringResource(R.string.override_date)) },
                     singleLine = true,
                 )
@@ -3306,7 +4291,8 @@ private fun PlanSegmentEditorDialog(
                         startTime = it
                         confirmConflict = false
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("plan-segment-start"),
+                    enabled = !isSaving,
                     label = { Text(stringResource(R.string.start_time)) },
                     placeholder = { Text(stringResource(R.string.time_hint)) },
                     singleLine = true,
@@ -3317,7 +4303,8 @@ private fun PlanSegmentEditorDialog(
                         endTime = it
                         confirmConflict = false
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("plan-segment-end"),
+                    enabled = !isSaving,
                     label = { Text(stringResource(R.string.end_time)) },
                     placeholder = { Text(stringResource(R.string.time_hint)) },
                     singleLine = true,
@@ -3329,12 +4316,13 @@ private fun PlanSegmentEditorDialog(
                 ) {
                     availableTrackIds.forEach { trackId ->
                         FilterChip(
+                            enabled = !isSaving,
                             selected = selectedTrackId == trackId,
                             onClick = {
                                 selectedTrackId = trackId
                                 confirmConflict = false
                             },
-                            label = { Text(draftTrackLabel(trackId)) },
+                            label = { Text(draftTrackLabel(trackId, tracks)) },
                         )
                     }
                 }
@@ -3360,7 +4348,7 @@ private fun PlanSegmentEditorDialog(
                     val updated = segment.copy(
                         date = parsedDate ?: segment.date,
                         startMinute = TimeBlockValidator.parseTime(startTime) ?: -1,
-                        endMinute = TimeBlockValidator.parseTime(endTime) ?: -1,
+                        endMinute = TimeBlockValidator.parseEndTime(endTime) ?: -1,
                         trackId = selectedTrackId,
                     )
                     if (parsedDate == null || !PlanDraftEditor.isValidSegment(updated)) {
@@ -3371,11 +4359,13 @@ private fun PlanSegmentEditorDialog(
                         onSave(updated)
                     }
                 },
+                enabled = canSave && !isSaving,
+                modifier = Modifier.testTag("plan-segment-save"),
             ) {
-                Text(stringResource(if (confirmConflict) R.string.confirm_anyway else R.string.save))
+                Text(if (isSaving) "保存中…" else stringResource(if (confirmConflict) R.string.confirm_anyway else R.string.save))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !isSaving) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -3383,22 +4373,34 @@ private fun PlanSegmentEditorDialog(
 private fun PlanOverviewDialog(
     plans: List<ConfirmedPlan>,
     tasks: List<Task>,
+    busy: Boolean,
+    error: String?,
     onDismiss: () -> Unit,
     onRestore: (String) -> Unit,
     onClearCurrent: () -> Unit,
     onToggleSegmentLock: (segmentId: String, isLocked: Boolean) -> Unit,
 ) {
     val tasksById = tasks.associateBy(Task::id)
+    var restoringId by rememberSaveable { mutableStateOf<String?>(null) }
+    if (restoringId != null) {
+        AlertDialog(onDismissRequest = { restoringId = null }, title = { Text("恢复这个计划版本？") },
+            text = { Text("只恢复仍活动任务的安排与顺序；已结束任务和执行记录保持不变，过去时段不会重新开始。受保护时段仍会校验；原版本保留。") },
+            confirmButton = { TextButton(onClick = { restoringId?.let(onRestore); restoringId = null },
+                enabled = !busy, modifier = Modifier.testTag("restore-history-confirm")) { Text("确认恢复") } },
+            dismissButton = { TextButton(onClick = { restoringId = null }) { Text("取消") } })
+    }
     EditorSheet(
+        saving = busy,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.plan_overview_title)) },
         text = {
             Column(
                 modifier = Modifier
                     .height(420.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState()).testTag("history-scroll"),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("history-error")) }
                 if (plans.isEmpty()) {
                     Text(stringResource(R.string.no_plan_history))
                 }
@@ -3448,6 +4450,8 @@ private fun PlanOverviewDialog(
                                     )
                                     if (plan.isCurrent) {
                                         TextButton(
+                                            enabled = !busy,
+                                            modifier = Modifier.testTag("history-lock-${segment.id}"),
                                             onClick = {
                                                 onToggleSegmentLock(segment.id, !segment.isLocked)
                                             },
@@ -3465,7 +4469,8 @@ private fun PlanOverviewDialog(
                                 }
                             }
                             if (!plan.isCurrent) {
-                                TextButton(onClick = { onRestore(plan.id) }) {
+                                TextButton(onClick = { restoringId = plan.id }, enabled = !busy,
+                                    modifier = Modifier.testTag("history-restore-${plan.id}")) {
                                     Text(stringResource(R.string.restore_plan))
                                 }
                             }
@@ -3476,7 +4481,7 @@ private fun PlanOverviewDialog(
         },
         confirmButton = {
             if (plans.any { it.isCurrent }) {
-                TextButton(onClick = onClearCurrent) {
+                TextButton(onClick = onClearCurrent, enabled = !busy, modifier = Modifier.testTag("history-clear")) {
                     Text(
                         stringResource(R.string.clear_current_plan),
                         color = MaterialTheme.colorScheme.error,
@@ -3495,11 +4500,10 @@ private fun DateOverrideCard(
     dateOverride: DateOverride,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    enabled: Boolean = true,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onEdit),
+        modifier = Modifier.fillMaxWidth().testTag("date-override-${dateOverride.id}"),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -3527,7 +4531,8 @@ private fun DateOverrideCard(
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            TextButton(onClick = onDelete) {
+            TextButton(onClick = onEdit, enabled = enabled, modifier = Modifier.testTag("override-edit-${dateOverride.id}")) { Text("编辑") }
+            TextButton(onClick = onDelete, enabled = enabled, modifier = Modifier.testTag("override-delete-${dateOverride.id}")) {
                 Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
             }
         }
@@ -3536,25 +4541,24 @@ private fun DateOverrideCard(
 
 @Composable
 private fun MineScreen(
+    onOpenTimeSettings: () -> Unit,
+    onOpenPlanHistory: () -> Unit,
     weights: Map<TaskCategory, Int>,
-    profileEvidence: List<ProfileEvidence>,
+    preferenceState: com.swan1127.repland.ui.preferences.CategoryPreferenceUiState,
     isLoading: Boolean,
     onSave: (Map<TaskCategory, Int>) -> Unit,
     remindersEnabled: Boolean,
     notificationsAllowed: Boolean,
     onRemindersEnabledChange: (Boolean) -> Unit,
-    onGenerateProfileEvidence: () -> Unit,
-    onUpdateProfileEvidence: (String, String) -> Unit,
-    onDeleteProfileEvidence: (String) -> Unit,
     onExportLocalData: () -> Unit,
     onClearLocalData: () -> Unit,
     isDataWorking: Boolean,
     dataResult: DataManagementResult?,
-    hasProfileActionError: Boolean,
     aiEnabled: Boolean,
     aiConsented: Boolean,
     onAiEnabledChange: (Boolean) -> Unit,
     aiProviderConfig: AiProviderConfig,
+    remoteAiSupported: Boolean,
     aiProviderConfigError: String?,
     aiProviderConnectionTest: AiProviderConnectionTest,
     onSaveAiProviderConfig: (String, String, String) -> Unit,
@@ -3562,133 +4566,200 @@ private fun MineScreen(
     onTestAiProviderConnection: () -> Unit,
     engagementMode: EngagementMode,
     onEngagementModeChange: (EngagementMode) -> Unit,
+    summaryContent: @Composable () -> Unit = {},
+    personalProfileContent: @Composable () -> Unit = {},
+    automaticPlanningEnabled: Boolean? = null,
+    onAutomaticPlanningChange: (Boolean) -> Unit = {},
+    showSettings: Boolean = false,
+    onOpenSettings: () -> Unit = {},
+    memoryReferenceEnabled: Boolean = false,
+    memoryPointCount: Int = 0,
+    onMemoryReferenceChange: (Boolean) -> Unit = {},
+    onOpenLearningReview: () -> Unit = {},
 ) {
-    if (isLoading) return
+    if (isLoading && showSettings) return
+    val profileScroll = rememberScrollState()
+    val settingsScroll = rememberScrollState()
     var showPreferences by rememberSaveable { mutableStateOf(false) }
-    var showProfile by rememberSaveable { mutableStateOf(false) }
     var showData by rememberSaveable { mutableStateOf(false) }
-    var editableWeights by remember(weights) {
-        mutableStateOf(TaskCategory.entries.associateWith { weights.getValue(it).toString() })
+    val weightsSaver = remember {
+        mapSaver<Map<TaskCategory, String>>(
+            save = { entries -> entries.mapKeys { it.key.name } },
+            restore = { entries -> TaskCategory.knownEntries.associateWith { entries[it.name] as? String ?: "" } },
+        )
     }
-    var showValidationError by remember { mutableStateOf(false) }
-    val parsedWeights = TaskCategory.entries.associateWith { category ->
+    var preferencesEdited by rememberSaveable { mutableStateOf(false) }
+    var editableWeights by rememberSaveable(stateSaver = weightsSaver) {
+        mutableStateOf(TaskCategory.knownEntries.associateWith { weights.getValue(it).toString() })
+    }
+    LaunchedEffect(weights) {
+        if (!preferencesEdited) editableWeights = TaskCategory.knownEntries.associateWith { weights.getValue(it).toString() }
+    }
+    var showValidationError by rememberSaveable { mutableStateOf(false) }
+    val parsedWeights = TaskCategory.knownEntries.associateWith { category ->
         editableWeights.getValue(category).toIntOrNull() ?: -1
     }
     val valid = parsedWeights.values.all { it in 0..100 } && parsedWeights.values.sum() > 0
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(if (showSettings) settingsScroll else profileScroll)
+            .testTag(if (showSettings) "mine-settings-page" else "mine-profile-page")
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("日常使用", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        EngagementModeSection(engagementMode, onEngagementModeChange)
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(20.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.local_reminders_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Text(
-                            stringResource(R.string.local_reminders_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+        if (!showSettings) {
+            personalProfileContent()
+            Text("用户画像", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            summaryContent()
+            OutlinedButton(
+                onClick = onOpenLearningReview,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("profile-learning-review"),
+            ) { Text(stringResource(R.string.learning_review_open)) }
+            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).testTag("mine-settings")) {
+                Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("设置")
+            }
+        } else {
+            Text("版本 ${com.swan1127.repland.BuildConfig.VERSION_NAME} (${com.swan1127.repland.BuildConfig.VERSION_CODE}) · ${com.swan1127.repland.BuildConfig.BUILD_SOURCE}",
+                style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("app-version"))
+            Text("日常使用", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            automaticPlanningEnabled?.let { enabled ->
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(20.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("自动安排", style = MaterialTheme.typography.titleSmall)
+                            Text("App 打开时维护后续安排，可随时暂停。", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(checked = enabled, onCheckedChange = onAutomaticPlanningChange,
+                            modifier = Modifier.testTag("autonomy-enabled-switch").semantics { contentDescription = "自动安排" })
                     }
-                    Switch(
-                        checked = remindersEnabled,
-                        onCheckedChange = onRemindersEnabledChange,
-                        modifier = Modifier.testTag("local-reminders-switch"),
-                    )
-                }
-                if (!notificationsAllowed) {
-                    Text(
-                        stringResource(R.string.notification_permission_needed),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
                 }
             }
-        }
-        Text("智能与个性化", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        AiSettingsSection(
-            aiEnabled = aiEnabled,
-            aiConsented = aiConsented,
-            onAiEnabledChange = onAiEnabledChange,
-            providerConfig = aiProviderConfig,
-            providerConfigError = aiProviderConfigError,
-            providerConnectionTest = aiProviderConnectionTest,
-            onSaveProviderConfig = onSaveAiProviderConfig,
-            onClearProviderKey = onClearAiProviderKey,
-            onTestConnection = onTestAiProviderConnection,
-        )
-        SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences })
-        if (showPreferences) {
-        Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text(
-            stringResource(R.string.category_preferences_intro),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        TaskCategory.entries.forEach { category ->
-            OutlinedTextField(
-                value = editableWeights.getValue(category),
-                onValueChange = { value ->
-                    editableWeights = editableWeights + (category to value.filter(Char::isDigit))
-                    showValidationError = false
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(category.labelRes())) },
-                suffix = { Text(stringResource(R.string.percent_suffix)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
+            OutlinedButton(onClick = onOpenPlanHistory, modifier = Modifier.fillMaxWidth().testTag("mine-plan-history")) {
+                Text("计划历史与锁定管理")
+            }
+            OutlinedButton(onClick = onOpenTimeSettings, modifier = Modifier.fillMaxWidth().testTag("mine-time-settings")) {
+                Text("时间设置 · 课程、可用时间与学期")
+            }
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = RoundedCornerShape(20.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.local_reminders_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                stringResource(R.string.local_reminders_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = remindersEnabled,
+                            onCheckedChange = onRemindersEnabledChange,
+                            modifier = Modifier.testTag("local-reminders-switch"),
+                        )
+                    }
+                    if (!notificationsAllowed) {
+                        Text(
+                            stringResource(R.string.notification_permission_needed),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+            Text("智能与个性化", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            LearningMemorySettings(
+                enabled = memoryReferenceEnabled,
+                onEnabledChange = onMemoryReferenceChange,
+                pointCount = memoryPointCount,
             )
-        }
-        if (showValidationError) {
+            OutlinedButton(
+                onClick = onOpenLearningReview,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("open-learning-review"),
+            ) { Text(stringResource(R.string.learning_review_open)) }
+            AiSettingsSection(
+                aiEnabled = aiEnabled,
+                aiConsented = aiConsented,
+                onAiEnabledChange = onAiEnabledChange,
+                providerConfig = aiProviderConfig,
+                providerConfigError = aiProviderConfigError,
+                providerConnectionTest = aiProviderConnectionTest,
+                onSaveProviderConfig = onSaveAiProviderConfig,
+                onClearProviderKey = onClearAiProviderKey,
+                onTestConnection = onTestAiProviderConnection,
+                remoteSupported = remoteAiSupported,
+            )
+            SettingsDisclosure("类别偏好", "调整不同事情在计划中的权重", showPreferences, { showPreferences = !showPreferences })
+            MotionDisclosure(showPreferences) {
+            if (!preferenceState.hasLoaded) Text("尚未读取原权重；下面是默认占位，不是已保存的值。恢复读取后才能保存。",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.category_preferences_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
-                stringResource(R.string.category_preferences_error),
-                color = MaterialTheme.colorScheme.error,
+                stringResource(R.string.category_preferences_intro),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        Button(
-            onClick = {
-                if (valid) onSave(parsedWeights) else showValidationError = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(stringResource(R.string.save_category_preferences)) }
-        }
-        SettingsDisclosure("关于你的记录", "${profileEvidence.size} 条画像记录 · 查看、修正与删除", showProfile, { showProfile = !showProfile })
-        if (showProfile) {
-        ProfileEvidenceSection(
-            evidence = profileEvidence,
-            onGenerate = onGenerateProfileEvidence,
-            onUpdate = onUpdateProfileEvidence,
-            onDelete = onDeleteProfileEvidence,
-            hasActionError = hasProfileActionError,
-        )
-        }
-        Text("数据与隐私", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData })
-        if (showData) {
-        LocalDataManagementSection(
-            isWorking = isDataWorking,
-            result = dataResult,
-            onExport = onExportLocalData,
-            onClear = onClearLocalData,
-        )
+            TaskCategory.knownEntries.forEach { category ->
+                OutlinedTextField(
+                    value = editableWeights.getValue(category),
+                    onValueChange = { value ->
+                        editableWeights = editableWeights + (category to value)
+                        preferencesEdited = true
+                        showValidationError = false
+                    },
+                    enabled = !preferenceState.isSaving,
+                    modifier = Modifier.fillMaxWidth().testTag("category-weight-${category.name}"),
+                    label = { Text(stringResource(category.labelRes())) },
+                    suffix = { Text(stringResource(R.string.percent_suffix)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+            }
+            if (showValidationError) {
+                Text(
+                    stringResource(R.string.category_preferences_error),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Button(
+                onClick = {
+                    if (valid) onSave(parsedWeights) else showValidationError = true
+                },
+                enabled = preferenceState.isTrusted && !preferenceState.isSaving,
+                modifier = Modifier.fillMaxWidth().testTag("category-preferences-save"),
+            ) { Text(if (preferenceState.isSaving) "保存中…" else stringResource(R.string.save_category_preferences)) }
+            preferenceState.saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.testTag("category-preferences-error").semantics { liveRegion = LiveRegionMode.Polite }) }
+            preferenceState.saveReceipt?.let { Text(it, color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.testTag("category-preferences-receipt").semantics { liveRegion = LiveRegionMode.Polite }) }
+            }
+            Text("数据与隐私", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            SettingsDisclosure("本地数据", "导出备份与数据管理", showData, { showData = !showData })
+            MotionDisclosure(showData) {
+            LocalDataManagementSection(
+                isWorking = isDataWorking,
+                result = dataResult,
+                onExport = onExportLocalData,
+                onClear = onClearLocalData,
+            )
+            }
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -3713,47 +4784,6 @@ private fun SettingsDisclosure(title: String, description: String, expanded: Boo
 }
 
 @Composable
-private fun EngagementModeSection(
-    selected: EngagementMode,
-    onSelect: (EngagementMode) -> Unit,
-) {
-    Text("你的参与方式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Text("随时切换；只改变信息密度与建议方式，不替你做决定。",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(18.dp)) {
-        Column {
-            listOf(
-                Triple(EngagementMode.CO_PLANNER, "重度参与", "看完整时间轨道，主动编排与复盘"),
-                Triple(EngagementMode.GUIDED, "适度引导", "保留全局视图，在关键节点接受建议"),
-                Triple(EngagementMode.EXECUTOR, "轻量执行", "先看到接下来三项，需要时展开全局"),
-            ).forEachIndexed { index, (mode, label, detail) ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSelect(mode) }
-                        .testTag("engagement-${mode.name.lowercase()}")
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-                        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (selected == mode) {
-                        Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(50)) {
-                            Text("当前", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
-                        }
-                    }
-                }
-                if (index < 2) Spacer(Modifier.height(1.dp))
-            }
-        }
-    }
-}
-
-@Composable
 private fun AiSettingsSection(
     aiEnabled: Boolean,
     aiConsented: Boolean,
@@ -3764,16 +4794,20 @@ private fun AiSettingsSection(
     onSaveProviderConfig: (String, String, String) -> Unit,
     onClearProviderKey: () -> Unit,
     onTestConnection: () -> Unit,
+    remoteSupported: Boolean,
 ) {
     var showProviderSettings by rememberSaveable { mutableStateOf(false) }
     Surface(
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(14.dp),
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            if (!remoteSupported) Text("当前构建使用本地规划，尚不支持远程 AI；保存密钥不会启用联网能力。",
+                style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("ai-build-capability"))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -3787,7 +4821,7 @@ private fun AiSettingsSection(
                     Text(
                         stringResource(R.string.ai_advisor_description),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Switch(
@@ -3802,7 +4836,7 @@ private fun AiSettingsSection(
                     else R.string.ai_advisor_consent_needed,
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Surface(
                 onClick = { showProviderSettings = true },
@@ -3820,7 +4854,7 @@ private fun AiSettingsSection(
                         modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
-                            PlannerIcons.Send,
+                            DesignIcons.Assistant,
                             contentDescription = null,
                             modifier = Modifier.padding(9.dp),
                             tint = if (providerConfig.hasApiKey) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -3828,7 +4862,7 @@ private fun AiSettingsSection(
                     }
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Agnes API", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text("模型服务", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         Text(
                             if (providerConfig.hasApiKey) "密钥已加密保存在本设备 · ${providerConfig.model}"
                             else "尚未添加密钥 · 本地结构化解析仍可使用",
@@ -3845,9 +4879,9 @@ private fun AiSettingsSection(
                 Text(providerConfigError, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             Text(
-                "保存密钥本身不会联网。只有你在助手或任务建议中确认请求后，才会发送本次所需的最小上下文。",
+                "开启 AI 并配置模型后，使用总结会根据近期记录自动更新；任务建议与助手使用本次所需的上下文。关闭 AI 可停止后续请求。",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -3865,7 +4899,7 @@ private fun AiSettingsSection(
 }
 
 @Composable
-private fun AiProviderSettingsDialog(
+internal fun AiProviderSettingsDialog(
     config: AiProviderConfig,
     errorMessage: String?,
     connectionTest: AiProviderConnectionTest,
@@ -3877,17 +4911,22 @@ private fun AiProviderSettingsDialog(
     var baseUrl by remember(config.baseUrl) { mutableStateOf(config.baseUrl) }
     var model by remember(config.model) { mutableStateOf(config.model) }
     var apiKey by remember { mutableStateOf("") }
+    // A successful repository save changes the revision. Failed saves retain the
+    // entered key so the user can correct the fields and retry.
+    LaunchedEffect(config.updatedAtEpochMillis) { apiKey = "" }
+    val hasUnsavedChanges = baseUrl.trim().trimEnd('/') != config.baseUrl ||
+        model.trim() != config.model || apiKey.isNotBlank()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Agnes API 配置") },
+        title = { Text("模型服务配置") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     "用于需要更深层语义理解的可选建议。安排写入仍然必须经过轨道草案与手动确认。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text("服务区", style = MaterialTheme.typography.labelLarge)
+                Text("地址预设（切换服务需重新输入对应密钥）", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = baseUrl.contains("apihub.agnes-ai.com"),
@@ -3900,12 +4939,18 @@ private fun AiProviderSettingsDialog(
                         label = { Text("中国服务") },
                     )
                 }
+                FilterChip(
+                    selected = baseUrl.trimEnd('/') == "https://api.deepseek.com",
+                    onClick = { baseUrl = "https://api.deepseek.com"; model = "deepseek-flash"; apiKey = "" },
+                    label = { Text("DeepSeek 官方") },
+                    modifier = Modifier.testTag("ai-provider-deepseek"),
+                )
                 OutlinedTextField(
                     value = baseUrl,
                     onValueChange = { baseUrl = it },
                     modifier = Modifier.fillMaxWidth().testTag("ai-provider-endpoint"),
                     label = { Text("服务地址") },
-                    supportingText = { Text("默认 Agnes OpenAI 兼容地址") },
+                    supportingText = { Text("填写 HTTPS API 基础地址，不是聊天网站地址；请以服务商文档为准。") },
                     singleLine = true,
                 )
                 OutlinedTextField(
@@ -3913,7 +4958,7 @@ private fun AiProviderSettingsDialog(
                     onValueChange = { model = it },
                     modifier = Modifier.fillMaxWidth().testTag("ai-provider-model"),
                     label = { Text("模型") },
-                    supportingText = { Text("默认 agnes-2.5-flash") },
+                    supportingText = { Text("填写服务商 API 模型 ID，不一定等于产品展示名称。") },
                     singleLine = true,
                 )
                 OutlinedTextField(
@@ -3927,7 +4972,10 @@ private fun AiProviderSettingsDialog(
                     singleLine = true,
                 )
                 if (errorMessage != null) Text(errorMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                when (connectionTest) {
+                if (hasUnsavedChanges) {
+                    Text("配置尚未保存，请先加密保存再测试连接。", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else when (connectionTest) {
                     AiProviderConnectionTest.Idle -> Text("保存密钥后可发送一条不含个人数据的最小请求，验证地址、模型与鉴权。", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     AiProviderConnectionTest.Testing -> Text("正在验证连接…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                     is AiProviderConnectionTest.Connected -> Text("连接成功：${connectionTest.model} 已可用于安排助手。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -3941,11 +4989,11 @@ private fun AiProviderSettingsDialog(
             }
         },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column {
                 TextButton(onClick = { onSave(baseUrl, model, apiKey) }, modifier = Modifier.testTag("ai-provider-save")) { Text("加密保存") }
                 TextButton(
                     onClick = onTestConnection,
-                    enabled = config.hasApiKey && connectionTest !is AiProviderConnectionTest.Testing,
+                    enabled = config.hasApiKey && !hasUnsavedChanges && connectionTest !is AiProviderConnectionTest.Testing,
                     modifier = Modifier.testTag("ai-provider-test"),
                 ) { Text("测试连接") }
             }
@@ -3955,6 +5003,9 @@ private fun AiProviderSettingsDialog(
 }
 
 private fun AiAdvisorFailureReason.connectionTestMessage(): String = when (this) {
+    AiAdvisorFailureReason.SOURCE_CHANGED -> "规划数据已变化，请重试。"
+    AiAdvisorFailureReason.CONTEXT_UNAVAILABLE -> "暂时无法读取规划数据，请重试。"
+    AiAdvisorFailureReason.CONFIGURATION_CHANGED -> "配置已变化，请使用新配置重新测试。"
     AiAdvisorFailureReason.AUTHENTICATION_FAILURE -> "鉴权失败：请检查密钥是否属于当前服务区，以及账户是否可用。"
     AiAdvisorFailureReason.RATE_LIMITED -> "服务已连通，但当前触发请求额度或频率限制。"
     AiAdvisorFailureReason.REMOTE_FAILURE -> "已到达服务网关，但模型服务暂时异常；请稍后再试。"
@@ -4224,34 +5275,40 @@ private fun TaskEditorDialog(
     initialText: String = "",
     @StringRes dialogTitle: Int? = null,
     @StringRes confirmLabel: Int = R.string.save,
-    allowPriorityChange: Boolean = task == null,
+    allowPriorityChange: Boolean = task == null || task.userPriority == TaskPriority.UNSPECIFIED,
+    saving: Boolean = false,
+    saveError: String? = null,
+    canSave: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
     onSave: (TaskDraft) -> Unit,
 ) {
-    var displayName by remember(task, initialText) {
+    var displayName by rememberSaveable(task?.id, initialText) {
         mutableStateOf(task?.displayName ?: TaskName.fromDescription(initialText))
     }
-    var description by remember(task, initialText) {
+    var description by rememberSaveable(task?.id, initialText) {
         mutableStateOf(task?.description.takeIf { it != task?.displayName } ?: initialText)
     }
-    var category by remember(task) { mutableStateOf(task?.category ?: TaskCategory.COURSE) }
-    var priority by remember(task) { mutableStateOf(task?.userPriority ?: TaskPriority.MEDIUM) }
-    var estimatedDaysText by remember(task) { mutableStateOf(task?.estimatedDays?.toString() ?: "1") }
-    var durationText by remember(task) { mutableStateOf(task?.totalDurationMinutes?.toString().orEmpty()) }
-    var scheduledForDate by remember(task) { mutableStateOf(task?.scheduledForDate) }
-    var dueDate by remember(task) { mutableStateOf(task?.dueDate) }
-    var datePickerTarget by remember { mutableStateOf<TaskEditorDateTarget?>(null) }
-    var showValidationError by remember { mutableStateOf(false) }
+    var category by rememberSaveable(task?.id) { mutableStateOf(task?.category ?: TaskCategory.UNSPECIFIED) }
+    var priority by rememberSaveable(task?.id) { mutableStateOf(task?.userPriority ?: TaskPriority.UNSPECIFIED) }
+    var estimatedDaysText by rememberSaveable(task?.id) { mutableStateOf(task?.estimatedDays?.toString() ?: "") }
+    var durationText by rememberSaveable(task?.id) { mutableStateOf(task?.totalDurationMinutes?.toString().orEmpty()) }
+    var scheduledForDate by rememberSaveable(task?.id) { mutableStateOf(task?.scheduledForDate) }
+    var dueDate by rememberSaveable(task?.id) { mutableStateOf(task?.dueDate) }
+    var datePickerTarget by rememberSaveable { mutableStateOf<TaskEditorDateTarget?>(null) }
+    var showValidationError by rememberSaveable { mutableStateOf(false) }
     val estimatedDays = estimatedDaysText.toIntOrNull()
     val durationMinutes = durationText.takeIf(String::isNotBlank)?.toIntOrNull()
-    val estimatedDaysInvalid = estimatedDays !in 1..30
-    val durationInvalid = durationText.isNotBlank() && durationMinutes !in 1..1_440
+    val estimatedDaysInvalid = estimatedDaysText.isNotEmpty() &&
+        (estimatedDaysText.any { it !in '0'..'9' } || estimatedDays !in 1..30)
+    val durationInvalid = durationText.isNotBlank() && (durationText.any { it !in '0'..'9' } || durationMinutes !in 1..1_440)
     val scheduleAfterDeadline = scheduledForDate?.let { scheduled ->
         dueDate?.let { deadline -> scheduled.isAfter(deadline) }
     } == true
 
     EditorSheet(
         onDismissRequest = onDismiss,
+        saving = saving,
         title = {
             Text(stringResource(dialogTitle ?: if (task == null) R.string.add_task else R.string.edit_task))
         },
@@ -4260,8 +5317,10 @@ private fun TaskEditorDialog(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                readNotice?.invoke()
                 OutlinedTextField(
                     value = displayName,
+                    enabled = !saving,
                     onValueChange = { displayName = it },
                     modifier = Modifier.fillMaxWidth().testTag("task-editor-name"),
                     label = { Text(stringResource(R.string.task_name)) },
@@ -4270,6 +5329,7 @@ private fun TaskEditorDialog(
                 )
                 OutlinedTextField(
                     value = description,
+                    enabled = !saving,
                     onValueChange = { description = it },
                     modifier = Modifier.fillMaxWidth().testTag("task-editor-description"),
                     label = { Text("备注 / 说明（可选）") },
@@ -4281,7 +5341,8 @@ private fun TaskEditorDialog(
                     values = TaskCategory.entries.toList(),
                     selected = category,
                     label = { stringResource(it.labelRes()) },
-                    onSelected = { category = it },
+                    onSelected = { if (!saving) category = it },
+                    enabled = !saving,
                 )
                 Text(stringResource(R.string.priority), style = MaterialTheme.typography.labelLarge)
                 if (allowPriorityChange) {
@@ -4289,7 +5350,8 @@ private fun TaskEditorDialog(
                         values = TaskPriority.entries.toList(),
                         selected = priority,
                         label = { stringResource(it.labelRes()) },
-                        onSelected = { priority = it },
+                        onSelected = { if (!saving) priority = it },
+                        enabled = !saving,
                     )
                 } else {
                     Text(
@@ -4300,8 +5362,9 @@ private fun TaskEditorDialog(
                 }
                 OutlinedTextField(
                     value = estimatedDaysText,
-                    onValueChange = { estimatedDaysText = it.filter(Char::isDigit) },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !saving,
+                    onValueChange = { estimatedDaysText = it },
+                    modifier = Modifier.fillMaxWidth().testTag("task-editor-days"),
                     label = { Text(stringResource(R.string.estimated_days)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
@@ -4312,7 +5375,8 @@ private fun TaskEditorDialog(
                 )
                 OutlinedTextField(
                     value = durationText,
-                    onValueChange = { durationText = it.filter(Char::isDigit) },
+                    enabled = !saving,
+                    onValueChange = { durationText = it },
                     modifier = Modifier.fillMaxWidth().testTag("task-editor-duration"),
                     label = { Text(stringResource(R.string.duration_minutes_optional)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -4326,19 +5390,21 @@ private fun TaskEditorDialog(
                     label = "安排在哪一天？",
                     description = "只决定它在“今天 / 待安排”中的位置；不会被当作截止时间。",
                     selectedDate = scheduledForDate,
-                    onSelectDate = { scheduledForDate = it },
-                    onChooseDate = { datePickerTarget = TaskEditorDateTarget.SCHEDULED_FOR },
-                    onClear = { scheduledForDate = null },
+                    onSelectDate = { if (!saving) scheduledForDate = it },
+                    onChooseDate = { if (!saving) datePickerTarget = TaskEditorDateTarget.SCHEDULED_FOR },
+                    onClear = { if (!saving) scheduledForDate = null },
                     tag = "task-editor-scheduled-date",
+                    enabled = !saving,
                 )
                 TaskDateField(
                     label = stringResource(R.string.due_date_optional),
                     description = "用于截止提醒、优先级和逾期判断；可自由选择任意日期。",
                     selectedDate = dueDate,
-                    onSelectDate = { dueDate = it },
-                    onChooseDate = { datePickerTarget = TaskEditorDateTarget.DEADLINE },
-                    onClear = { dueDate = null },
+                    onSelectDate = { if (!saving) dueDate = it },
+                    onChooseDate = { if (!saving) datePickerTarget = TaskEditorDateTarget.DEADLINE },
+                    onClear = { if (!saving) dueDate = null },
                     tag = "task-editor-due-date",
+                    enabled = !saving,
                 )
                 if (scheduleAfterDeadline) {
                     Text(
@@ -4353,6 +5419,8 @@ private fun TaskEditorDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+                saveError?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("task-editor-error").semantics { liveRegion = LiveRegionMode.Polite }) }
             }
         },
         confirmButton = {
@@ -4364,18 +5432,19 @@ private fun TaskEditorDialog(
                         description = description,
                         category = category,
                         userPriority = priority,
-                        estimatedDays = estimatedDays ?: 0,
+                        estimatedDays = estimatedDays,
                         totalDurationMinutes = durationMinutes,
                         dueDate = dueDate,
                         scheduledForDate = scheduledForDate,
                     )
-                    if (TaskDraftValidator.isValid(draft)) onSave(draft) else showValidationError = true
+                    if (!estimatedDaysInvalid && !durationInvalid && TaskDraftValidator.isValid(draft)) onSave(draft) else showValidationError = true
                 },
+                enabled = !saving && canSave,
                 modifier = Modifier.testTag("task-editor-save"),
-            ) { Text(stringResource(confirmLabel)) }
+            ) { Text(if (saving) "保存中…" else stringResource(confirmLabel)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(R.string.cancel)) }
         },
     )
     datePickerTarget?.let { target ->
@@ -4407,6 +5476,7 @@ private fun TaskDateField(
     onChooseDate: () -> Unit,
     onClear: () -> Unit,
     tag: String,
+    enabled: Boolean = true,
 ) {
     val today = LocalDate.now()
     Surface(
@@ -4424,7 +5494,7 @@ private fun TaskDateField(
                     Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 selectedDate?.let {
-                    TextButton(onClick = onClear, modifier = Modifier.testTag("$tag-clear")) { Text("清除") }
+                    TextButton(onClick = onClear, enabled = enabled, modifier = Modifier.testTag("$tag-clear")) { Text("清除") }
                 }
             }
             Text(
@@ -4438,16 +5508,19 @@ private fun TaskDateField(
             ) {
                 FilterChip(
                     selected = selectedDate == today,
+                    enabled = enabled,
                     onClick = { onSelectDate(today) },
                     label = { Text("今天") },
                 )
                 FilterChip(
                     selected = selectedDate == today.plusDays(1),
+                    enabled = enabled,
                     onClick = { onSelectDate(today.plusDays(1)) },
                     label = { Text("明天") },
                 )
                 OutlinedButton(
                     onClick = onChooseDate,
+                    enabled = enabled,
                     modifier = Modifier.testTag("$tag-picker"),
                 ) {
                     Icon(Icons.Outlined.DateRange, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -4465,6 +5538,7 @@ private fun <T> ChoiceRow(
     selected: T,
     label: @Composable (T) -> String,
     onSelected: (T) -> Unit,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier
@@ -4475,6 +5549,7 @@ private fun <T> ChoiceRow(
         values.forEach { value ->
             FilterChip(
                 selected = value == selected,
+                enabled = enabled,
                 onClick = { onSelected(value) },
                 label = { Text(label(value)) },
             )
@@ -4487,20 +5562,26 @@ private fun WeeklyTimeBlockEditorDialog(
     block: WeeklyTimeBlock?,
     onDismiss: () -> Unit,
     onSave: (WeeklyTimeBlockDraft) -> Unit,
+    initialKind: TimeBlockKind = TimeBlockKind.COURSE,
+    busy: Boolean = false,
+    error: String? = null,
+    canSave: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
 ) {
-    var title by remember(block) { mutableStateOf(block?.title.orEmpty()) }
-    var kind by remember(block) { mutableStateOf(block?.kind ?: TimeBlockKind.COURSE) }
-    var dayOfWeek by remember(block) { mutableStateOf(block?.dayOfWeek ?: DayOfWeek.MONDAY) }
-    var startTime by remember(block) {
+    var title by rememberSaveable(block?.id) { mutableStateOf(block?.title.orEmpty()) }
+    var kind by rememberSaveable(block?.id) { mutableStateOf(block?.kind ?: initialKind) }
+    var dayOfWeek by rememberSaveable(block?.id) { mutableStateOf(block?.dayOfWeek ?: if (initialKind == TimeBlockKind.AVAILABLE) LocalDate.now().dayOfWeek else DayOfWeek.MONDAY) }
+    var startTime by rememberSaveable(block?.id) {
         mutableStateOf(block?.startMinute?.let(TimeBlockValidator::formatTime) ?: "09:00")
     }
-    var endTime by remember(block) {
+    var endTime by rememberSaveable(block?.id) {
         mutableStateOf(block?.endMinute?.let(TimeBlockValidator::formatTime) ?: "10:00")
     }
-    var note by remember(block) { mutableStateOf(block?.note.orEmpty()) }
-    var showValidationError by remember { mutableStateOf(false) }
+    var note by rememberSaveable(block?.id) { mutableStateOf(block?.note.orEmpty()) }
+    var showValidationError by rememberSaveable(block?.id) { mutableStateOf(false) }
 
     EditorSheet(
+        saving = busy,
         onDismissRequest = onDismiss,
         title = {
             Text(stringResource(if (block == null) R.string.add_weekly_block else R.string.edit_weekly_block))
@@ -4510,10 +5591,13 @@ private fun WeeklyTimeBlockEditorDialog(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                readNotice?.invoke()
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    isError = showValidationError && title.isBlank(),
+                    modifier = Modifier.fillMaxWidth().testTag("weekly-block-title"),
                     label = { Text(stringResource(R.string.time_block_name)) },
                     placeholder = { Text(stringResource(R.string.time_block_name_hint)) },
                     singleLine = true,
@@ -4524,6 +5608,7 @@ private fun WeeklyTimeBlockEditorDialog(
                     selected = kind,
                     label = { stringResource(it.labelRes()) },
                     onSelected = { kind = it },
+                    enabled = !busy,
                 )
                 Text(stringResource(R.string.day_of_week), style = MaterialTheme.typography.labelLarge)
                 ChoiceRow(
@@ -4531,11 +5616,14 @@ private fun WeeklyTimeBlockEditorDialog(
                     selected = dayOfWeek,
                     label = { stringResource(it.labelRes()) },
                     onSelected = { dayOfWeek = it },
+                    enabled = !busy,
                 )
                 OutlinedTextField(
                     value = startTime,
                     onValueChange = { startTime = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    isError = showValidationError && TimeBlockValidator.parseTime(startTime) == null,
+                    modifier = Modifier.fillMaxWidth().testTag("weekly-block-start"),
                     label = { Text(stringResource(R.string.start_time)) },
                     placeholder = { Text(stringResource(R.string.time_hint)) },
                     singleLine = true,
@@ -4543,7 +5631,9 @@ private fun WeeklyTimeBlockEditorDialog(
                 OutlinedTextField(
                     value = endTime,
                     onValueChange = { endTime = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    isError = showValidationError && TimeBlockValidator.parseEndTime(endTime) == null,
+                    modifier = Modifier.fillMaxWidth().testTag("weekly-block-end"),
                     label = { Text(stringResource(R.string.end_time)) },
                     placeholder = { Text(stringResource(R.string.time_hint)) },
                     singleLine = true,
@@ -4551,6 +5641,7 @@ private fun WeeklyTimeBlockEditorDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
+                    enabled = !busy,
                     modifier = Modifier.fillMaxWidth().testTag("weekly-block-note"),
                     label = { Text("备注（可选）") },
                     placeholder = { Text("地点、准备物、老师或上课提醒") },
@@ -4562,6 +5653,8 @@ private fun WeeklyTimeBlockEditorDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("time-mutation-error").semantics { liveRegion = LiveRegionMode.Polite }) }
             }
         },
         confirmButton = {
@@ -4573,17 +5666,19 @@ private fun WeeklyTimeBlockEditorDialog(
                         kind = kind,
                         dayOfWeek = dayOfWeek,
                         startMinute = TimeBlockValidator.parseTime(startTime) ?: -1,
-                        endMinute = TimeBlockValidator.parseTime(endTime) ?: -1,
+                        endMinute = TimeBlockValidator.parseEndTime(endTime) ?: -1,
                         weekPattern = block?.weekPattern,
                         trackId = block?.trackId ?: "course",
                         note = note,
                     )
                     if (TimeBlockValidator.isValid(draft)) onSave(draft) else showValidationError = true
                 },
-            ) { Text(stringResource(R.string.save)) }
+                enabled = !busy && canSave,
+                modifier = Modifier.testTag("weekly-block-save"),
+            ) { Text(if (busy) "保存中…" else stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
@@ -4593,24 +5688,29 @@ private fun DateOverrideEditorDialog(
     dateOverride: DateOverride?,
     onDismiss: () -> Unit,
     onSave: (DateOverrideDraft) -> Unit,
+    busy: Boolean = false,
+    error: String? = null,
+    canSave: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
 ) {
-    var title by remember(dateOverride) { mutableStateOf(dateOverride?.title.orEmpty()) }
-    var type by remember(dateOverride) {
+    var title by rememberSaveable(dateOverride?.id) { mutableStateOf(dateOverride?.title.orEmpty()) }
+    var type by rememberSaveable(dateOverride?.id) {
         mutableStateOf(dateOverride?.type ?: DateOverrideType.BLOCKED)
     }
-    var dateText by remember(dateOverride) {
+    var dateText by rememberSaveable(dateOverride?.id) {
         mutableStateOf(dateOverride?.date?.toString() ?: LocalDate.now().toString())
     }
-    var startTime by remember(dateOverride) {
+    var startTime by rememberSaveable(dateOverride?.id) {
         mutableStateOf(dateOverride?.startMinute?.let(TimeBlockValidator::formatTime) ?: "09:00")
     }
-    var endTime by remember(dateOverride) {
+    var endTime by rememberSaveable(dateOverride?.id) {
         mutableStateOf(dateOverride?.endMinute?.let(TimeBlockValidator::formatTime) ?: "10:00")
     }
-    var note by remember(dateOverride) { mutableStateOf(dateOverride?.note.orEmpty()) }
-    var showValidationError by remember { mutableStateOf(false) }
+    var note by rememberSaveable(dateOverride?.id) { mutableStateOf(dateOverride?.note.orEmpty()) }
+    var showValidationError by rememberSaveable(dateOverride?.id) { mutableStateOf(false) }
 
     EditorSheet(
+        saving = busy,
         onDismissRequest = onDismiss,
         title = {
             Text(stringResource(if (dateOverride == null) R.string.add_date_override else R.string.edit_date_override))
@@ -4620,10 +5720,13 @@ private fun DateOverrideEditorDialog(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                readNotice?.invoke()
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    isError = showValidationError && title.isBlank(),
+                    modifier = Modifier.fillMaxWidth().testTag("date-override-title"),
                     label = { Text(stringResource(R.string.time_block_name)) },
                     placeholder = { Text(stringResource(R.string.time_block_name_hint)) },
                     singleLine = true,
@@ -4634,18 +5737,21 @@ private fun DateOverrideEditorDialog(
                     selected = type,
                     label = { stringResource(it.labelRes()) },
                     onSelected = { type = it },
+                    enabled = !busy,
                 )
                 OutlinedTextField(
                     value = dateText,
                     onValueChange = { dateText = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().testTag("date-override-date"),
                     label = { Text(stringResource(R.string.override_date)) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = startTime,
                     onValueChange = { startTime = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().testTag("date-override-start"),
                     label = { Text(stringResource(R.string.start_time)) },
                     placeholder = { Text(stringResource(R.string.time_hint)) },
                     singleLine = true,
@@ -4653,7 +5759,8 @@ private fun DateOverrideEditorDialog(
                 OutlinedTextField(
                     value = endTime,
                     onValueChange = { endTime = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().testTag("date-override-end"),
                     label = { Text(stringResource(R.string.end_time)) },
                     placeholder = { Text(stringResource(R.string.time_hint)) },
                     singleLine = true,
@@ -4661,6 +5768,7 @@ private fun DateOverrideEditorDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
+                    enabled = !busy,
                     modifier = Modifier.fillMaxWidth().testTag("date-override-note"),
                     label = { Text("备注（可选）") },
                     placeholder = { Text("地点、准备物或本次调整的原因") },
@@ -4672,6 +5780,8 @@ private fun DateOverrideEditorDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("time-mutation-error").semantics { liveRegion = LiveRegionMode.Polite }) }
             }
         },
         confirmButton = {
@@ -4679,7 +5789,7 @@ private fun DateOverrideEditorDialog(
                 onClick = {
                     val date = runCatching { LocalDate.parse(dateText.trim()) }.getOrNull()
                     val startMinute = TimeBlockValidator.parseTime(startTime)
-                    val endMinute = TimeBlockValidator.parseTime(endTime)
+                    val endMinute = TimeBlockValidator.parseEndTime(endTime)
                     val draft = date?.let {
                         DateOverrideDraft(
                             id = dateOverride?.id,
@@ -4694,10 +5804,12 @@ private fun DateOverrideEditorDialog(
                     if (draft != null && TimeBlockValidator.isValid(draft)) onSave(draft)
                     else showValidationError = true
                 },
-            ) { Text(stringResource(R.string.save)) }
+                enabled = !busy && canSave,
+                modifier = Modifier.testTag("date-override-save"),
+            ) { Text(if (busy) "保存中…" else stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
@@ -4707,18 +5819,25 @@ private fun DeleteTimeEntryDialog(
     title: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    busy: Boolean = false,
+    error: String? = null,
+    canSave: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
 ) {
     AlertDialog(
+        properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = !busy, dismissOnClickOutside = !busy),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.delete_time_entry)) },
-        text = { Text(stringResource(R.string.delete_time_entry_message, title)) },
+        text = { Column { Text(stringResource(R.string.delete_time_entry_message, title));
+            readNotice?.invoke()
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("time-mutation-error")) } } },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = onConfirm, enabled = !busy && canSave, modifier = Modifier.testTag("time-delete-confirm")) {
+                Text(if (busy) "删除中…" else stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
@@ -4804,11 +5923,17 @@ private fun CompleteTaskDialog(
 @Composable
 private fun PartialCompletionDialog(
     task: Task,
+    busy: Boolean,
+    error: String?,
+    canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
     onConfirm: (TaskFeedback) -> Unit,
 ) = FeedbackDialog(
     title = stringResource(R.string.partial_completion),
     task = task,
+    busy = busy, error = error,
+    canConfirm = canConfirm, readNotice = readNotice,
     requireContent = true,
     requirePartialProgress = true,
     onDismiss = onDismiss,
@@ -4818,11 +5943,17 @@ private fun PartialCompletionDialog(
 @Composable
 private fun ExecutionFeedbackDialog(
     task: Task,
+    busy: Boolean,
+    error: String?,
+    canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
     onConfirm: (TaskFeedback) -> Unit,
 ) = FeedbackDialog(
     title = stringResource(R.string.record_feedback),
     task = task,
+    busy = busy, error = error,
+    canConfirm = canConfirm, readNotice = readNotice,
     requireContent = false,
     requirePartialProgress = false,
     notice = stringResource(R.string.feedback_does_not_change_status),
@@ -4833,11 +5964,17 @@ private fun ExecutionFeedbackDialog(
 @Composable
 private fun CorrectExecutionLogDialog(
     log: TaskExecutionLog,
+    busy: Boolean,
+    error: String?,
+    canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
     onConfirm: (TaskFeedback) -> Unit,
 ) = FeedbackDialog(
     title = stringResource(R.string.correct_log),
     task = null,
+    identity = log.id, busy = busy, error = error,
+    canConfirm = canConfirm, readNotice = readNotice,
     initialFeedback = log.feedback,
     requireContent = false,
     requirePartialProgress = false,
@@ -4851,43 +5988,56 @@ private fun CorrectExecutionLogDialog(
 private fun FeedbackDialog(
     title: String,
     task: Task?,
+    identity: String = task?.id.orEmpty(),
+    busy: Boolean = false,
+    error: String? = null,
     initialFeedback: TaskFeedback = TaskFeedback(),
     requireContent: Boolean,
     requirePartialProgress: Boolean,
+    canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     showPostponeReason: Boolean = false,
     notice: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (TaskFeedback) -> Unit,
 ) {
-    var completedContent by remember(task, initialFeedback) {
+    var completedContent by rememberSaveable(identity) {
         mutableStateOf(initialFeedback.completedContent.orEmpty())
     }
-    var completionResult by remember(task, initialFeedback) {
+    var completionResult by rememberSaveable(identity) {
         mutableStateOf(initialFeedback.completionResult.orEmpty())
     }
-    var actualDurationText by remember(task, initialFeedback) {
+    var actualDurationText by rememberSaveable(identity) {
         mutableStateOf(initialFeedback.actualDurationMinutes?.toString().orEmpty())
     }
-    var progressText by remember(task, initialFeedback) {
+    var progressText by rememberSaveable(identity) {
         mutableStateOf(initialFeedback.progressPercent?.toString().orEmpty())
     }
-    var postponeReason by remember(task, initialFeedback) {
+    var postponeReason by rememberSaveable(identity) {
         mutableStateOf(initialFeedback.postponeReason.orEmpty())
     }
-    var showValidationError by remember { mutableStateOf(false) }
+    var showValidationError by rememberSaveable(identity) { mutableStateOf(false) }
+    val validActual = FeedbackFormValidation.validNumber(actualDurationText, 1..1440)
+    val validProgress = FeedbackFormValidation.validNumber(progressText,
+        if (requirePartialProgress) 1..99 else 0..100, required = requirePartialProgress)
     EditorSheet(
         onDismissRequest = onDismiss,
+        saving = busy,
         title = { Text(title) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                readNotice?.invoke()
                 notice?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 OutlinedTextField(
                     value = completedContent,
+                    enabled = !busy,
+                    isError = showValidationError && requireContent && completedContent.isBlank(),
+                    supportingText = { if (showValidationError && requireContent && completedContent.isBlank()) Text("请填写本次完成的内容") },
                     onValueChange = { completedContent = it },
                     modifier = Modifier.fillMaxWidth().testTag("feedback-content"),
                     label = {
@@ -4897,6 +6047,7 @@ private fun FeedbackDialog(
                 )
                 OutlinedTextField(
                     value = completionResult,
+                    enabled = !busy,
                     onValueChange = { completionResult = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.completion_result_optional)) },
@@ -4904,7 +6055,10 @@ private fun FeedbackDialog(
                 )
                 OutlinedTextField(
                     value = actualDurationText,
-                    onValueChange = { actualDurationText = it.filter(Char::isDigit) },
+                    enabled = !busy,
+                    onValueChange = { actualDurationText = it },
+                    isError = actualDurationText.isNotBlank() && !validActual,
+                    supportingText = { Text("实际时长应为 1–1440 分钟；留空表示未知") },
                     modifier = Modifier.fillMaxWidth().testTag("feedback-actual-duration"),
                     label = { Text(stringResource(R.string.actual_duration_optional)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -4912,7 +6066,10 @@ private fun FeedbackDialog(
                 )
                 OutlinedTextField(
                     value = progressText,
-                    onValueChange = { progressText = it.filter(Char::isDigit) },
+                    enabled = !busy,
+                    onValueChange = { progressText = it },
+                    isError = (progressText.isNotBlank() || showValidationError) && !validProgress,
+                    supportingText = { Text(if (requirePartialProgress) "部分完成进度应为 1–99%" else "进度应为 0–100%；留空表示未知") },
                     modifier = Modifier.fillMaxWidth().testTag("feedback-progress"),
                     label = {
                         Text(stringResource(if (requirePartialProgress) R.string.partial_progress_required else R.string.progress_optional))
@@ -4923,6 +6080,7 @@ private fun FeedbackDialog(
                 if (showPostponeReason) {
                     OutlinedTextField(
                         value = postponeReason,
+                        enabled = !busy,
                         onValueChange = { postponeReason = it },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text(stringResource(R.string.postpone_reason_optional)) },
@@ -4932,13 +6090,15 @@ private fun FeedbackDialog(
                 if (showValidationError) {
                     Text(stringResource(R.string.feedback_validation_error), color = MaterialTheme.colorScheme.error)
                 }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("feedback-save-error").semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite }) }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    val actual = actualDurationText.takeIf(String::isNotBlank)?.toIntOrNull()
-                    val progress = progressText.takeIf(String::isNotBlank)?.toIntOrNull()
+                    val actual = actualDurationText.trim().takeIf(String::isNotBlank)?.toIntOrNull()
+                    val progress = progressText.trim().takeIf(String::isNotBlank)?.toIntOrNull()
                     val feedback = TaskFeedback(
                         completedContent = completedContent,
                         completionResult = completionResult,
@@ -4948,38 +6108,45 @@ private fun FeedbackDialog(
                     )
                     val hasFeedback = actual != null || progress != null || completedContent.isNotBlank() ||
                         completionResult.isNotBlank() || postponeReason.isNotBlank()
-                    val validProgress = if (requirePartialProgress) progress in 1..99 else progress == null || progress in 0..100
-                    if (hasFeedback && (actual == null || actual in 1..1_440) && validProgress &&
+                    if (hasFeedback && validActual && validProgress &&
                         (!requireContent || completedContent.isNotBlank())
                     ) onConfirm(feedback) else showValidationError = true
                 },
                 modifier = Modifier.testTag("feedback-confirm"),
-            ) { Text(stringResource(R.string.confirm)) }
+                enabled = !busy && canConfirm,
+            ) { Text(if (busy) "保存中…" else stringResource(R.string.confirm)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
 @Composable
-private fun PostponeTaskDialog(onDismiss: () -> Unit, onConfirm: (String?) -> Unit) {
-    var reason by remember { mutableStateOf("") }
-    AlertDialog(
+private fun PostponeTaskDialog(taskId: String, busy: Boolean, error: String?, canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null, onDismiss: () -> Unit, onConfirm: (String?) -> Unit) {
+    var reason by rememberSaveable(taskId) { mutableStateOf("") }
+    EditorSheet(
         onDismissRequest = onDismiss,
+        saving = busy,
         title = { Text(stringResource(R.string.postpone)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                readNotice?.invoke()
                 Text(stringResource(R.string.postpone_notice), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = reason,
+                    enabled = !busy,
                     onValueChange = { reason = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("postpone-reason"),
                     label = { Text(stringResource(R.string.postpone_reason_optional)) },
                     minLines = 2,
                 )
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("feedback-save-error").semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite }) }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(reason) }) { Text(stringResource(R.string.confirm)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        confirmButton = { TextButton(onClick = { onConfirm(reason) }, enabled = !busy && canConfirm,
+            modifier = Modifier.testTag("postpone-confirm")) { Text(if (busy) "保存中…" else stringResource(R.string.confirm)) } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -4988,17 +6155,22 @@ private fun ConfirmTaskStatusDialog(
     title: String,
     message: String,
     confirmLabel: String,
+    busy: Boolean = false,
+    error: String? = null,
+    canConfirm: Boolean = true,
+    readNotice: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = !busy, dismissOnClickOutside = !busy),
         title = { Text(title) },
-        text = { Text(message) },
+        text = { Column { readNotice?.invoke(); Text(message); error?.let { Text(it, color = MaterialTheme.colorScheme.error) } } },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text(confirmLabel, color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = onConfirm, enabled = !busy && canConfirm, modifier = Modifier.testTag("cancel-task-confirm")) { Text(if (busy) "保存中…" else confirmLabel, color = MaterialTheme.colorScheme.error) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -5039,6 +6211,9 @@ private fun ProfileEvidenceScope.labelRes(): Int = when (this) {
 
 @StringRes
 private fun AiAdvisorFailureReason.labelRes(): Int = when (this) {
+    AiAdvisorFailureReason.SOURCE_CHANGED -> R.string.ai_failure_source_changed
+    AiAdvisorFailureReason.CONTEXT_UNAVAILABLE -> R.string.ai_failure_context_unavailable
+    AiAdvisorFailureReason.CONFIGURATION_CHANGED -> R.string.ai_failure_configuration_changed
     AiAdvisorFailureReason.DISABLED -> R.string.ai_failure_disabled
     AiAdvisorFailureReason.SERVICE_NOT_CONFIGURED -> R.string.ai_failure_not_configured
     AiAdvisorFailureReason.TRANSPORT_FAILURE -> R.string.ai_failure_transport
@@ -5055,13 +6230,13 @@ private fun formatExecutionLogTime(epochMillis: Long): String =
         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
 @Composable
-private fun priorityReasonText(reason: PriorityReason): String = when (reason.kind) {
-    PriorityReasonKind.INITIAL_PRIORITY -> stringResource(
+internal fun priorityReasonText(reason: PriorityReason): String = when (reason.kind) {
+    PriorityReasonKind.INITIAL_PRIORITY -> if (reason.value == null) "优先级未设置，使用中性排序值" else stringResource(
         R.string.priority_reason_initial,
         reason.value ?: 0,
     )
 
-    PriorityReasonKind.CATEGORY_PREFERENCE -> stringResource(
+    PriorityReasonKind.CATEGORY_PREFERENCE -> if (reason.value == null) "未分类，类别因子使用中性值" else stringResource(
         R.string.priority_reason_category,
         reason.value ?: 0,
     )
@@ -5073,11 +6248,13 @@ private fun priorityReasonText(reason: PriorityReason): String = when (reason.ki
     }
 
     PriorityReasonKind.POSTPONEMENTS -> stringResource(R.string.priority_reason_postponed, reason.value ?: 0)
-    PriorityReasonKind.LOCAL_AI_NEUTRAL -> stringResource(R.string.priority_reason_ai_neutral)
+    PriorityReasonKind.PLANNED_DATE -> "计划日期距今天 ${reason.value ?: 0} 天"
+    PriorityReasonKind.LOCAL_AI_NEUTRAL -> "本地排序：AI 修正为 0"
 }
 
 @StringRes
 private fun UnscheduledReason.labelRes(): Int = when (this) {
+    UnscheduledReason.USER_DEFERRED -> R.string.plan_user_deferred_reason
     UnscheduledReason.TOTAL_CAPACITY_IN_ROLLING_WINDOW -> R.string.capacity_total_window_reason
     UnscheduledReason.CAPACITY_BEFORE_DUE_DATE -> R.string.capacity_before_due_reason
     UnscheduledReason.CAPACITY_IN_ROLLING_WINDOW -> R.string.capacity_rolling_window_reason
@@ -5085,6 +6262,7 @@ private fun UnscheduledReason.labelRes(): Int = when (this) {
 
 @StringRes
 private fun TaskPriority.labelRes(): Int = when (this) {
+    TaskPriority.UNSPECIFIED -> R.string.priority_unspecified
     TaskPriority.REQUIRED -> R.string.priority_required
     TaskPriority.HIGH -> R.string.priority_high
     TaskPriority.MEDIUM -> R.string.priority_medium
@@ -5093,6 +6271,7 @@ private fun TaskPriority.labelRes(): Int = when (this) {
 
 @StringRes
 private fun TaskCategory.labelRes(): Int = when (this) {
+    TaskCategory.UNSPECIFIED -> R.string.category_unspecified
     TaskCategory.COURSE -> R.string.category_course
     TaskCategory.EXTRACURRICULAR -> R.string.category_extracurricular
     TaskCategory.OFFICE -> R.string.category_office

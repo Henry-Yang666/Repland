@@ -3,59 +3,75 @@ package com.swan1127.repland.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = DeepMoss,
-    onPrimary = NightPaper,
-    primaryContainer = Color(0xFF24463C),
-    onPrimaryContainer = Color(0xFFC5F2DB),
-    secondary = Color(0xFFB5C9B8),
-    secondaryContainer = Color(0xFF283A32),
+    primary = CalmAccentDark,
+    onPrimary = Color(0xFF173B44),
+    primaryContainer = Color(0xFF263F46),
+    onPrimaryContainer = Color(0xFFCBE7ED),
+    secondary = Color(0xFFD4C4F0),
+    secondaryContainer = Color(0xFF383149),
+    onSecondaryContainer = Color(0xFFEFE7FA),
     tertiary = Color(0xFFDCC0A0),
     tertiaryContainer = Color(0xFF483929),
-    background = NightPaper,
-    onBackground = Color(0xFFE4ECE4),
-    surface = NightPaper,
-    surfaceContainerLow = Color(0xFF1D2824),
-    surfaceContainer = Color(0xFF222F29),
-    surfaceContainerHigh = Color(0xFF2B3832),
-    surfaceContainerHighest = Color(0xFF34413B),
-    outline = Color(0xFF82958A),
-    outlineVariant = Color(0xFF3B4B42),
-    onSurface = Color(0xFFE4ECE4),
-    onSurfaceVariant = Color(0xFFB1C1B7),
+    onTertiaryContainer = Color(0xFFF3E8D8),
+    background = Palette.NightPage,
+    onBackground = Palette.NightInk,
+    surface = Palette.NightPage,
+    surfaceContainerLowest = Palette.NightPage,
+    surfaceContainerLow = Palette.NightPaper,
+    surfaceContainer = Palette.NightRaised,
+    surfaceContainerHigh = Palette.NightHigh,
+    surfaceContainerHighest = Palette.NightHighest,
+    outline = Palette.NightInkFaint,
+    outlineVariant = Palette.NightHairline,
+    onSurface = Palette.NightInk,
+    onSurfaceVariant = Palette.NightInkSoft,
+    error = Palette.NightError,
+    onError = Color(0xFF601410),
+    errorContainer = Palette.NightErrorContainer,
+    onErrorContainer = Color(0xFFF9DEDC),
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Moss,
+    primary = CalmAccent,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD6EDE1),
-    onPrimaryContainer = Color(0xFF174739),
-    secondary = Color(0xFF51675A),
-    secondaryContainer = Color(0xFFE3ECE2),
-    onSecondaryContainer = Color(0xFF293F33),
+    primaryContainer = Color(0xFFE8F3F5),
+    onPrimaryContainer = Color(0xFF234B55),
+    secondary = Color(0xFF666079),
+    secondaryContainer = Color(0xFFF1EEF8),
+    onSecondaryContainer = Color(0xFF494158),
     tertiary = Color(0xFF80613E),
-    tertiaryContainer = Color(0xFFF3E8D8),
+    tertiaryContainer = Color(0xFFFFF5DC),
     onTertiaryContainer = Color(0xFF574225),
-    background = WarmPaper,
-    onBackground = Color(0xFF192821),
-    surface = WarmPaper,
-    surfaceContainerLow = Color(0xFFFFFFFF),
-    surfaceContainer = Color(0xFFF0F2ED),
-    surfaceContainerHigh = Color(0xFFE9EDE6),
-    surfaceContainerHighest = Color(0xFFE1E7DD),
-    outline = Color(0xFF758278),
-    outlineVariant = Color(0xFFD9E0D7),
-    onSurface = Color(0xFF192821),
-    onSurfaceVariant = Color(0xFF52665B),
+    background = Palette.Page,
+    onBackground = Palette.Ink,
+    surface = Palette.Page,
+    surfaceContainerLowest = Palette.Paper,
+    surfaceContainerLow = Palette.Paper,
+    surfaceContainer = Palette.PageDeep,
+    surfaceContainerHigh = Palette.PageDeepest,
+    surfaceContainerHighest = Palette.PageHighest,
+    outline = Palette.InkFaint,
+    outlineVariant = Palette.Hairline,
+    onSurface = Palette.Ink,
+    onSurfaceVariant = Palette.InkSoft,
+    error = Palette.Error,
+    onError = Color.White,
+    errorContainer = Palette.ErrorLight,
+    onErrorContainer = Color(0xFF5C1610),
 )
+
+fun replandColorScheme(darkTheme: Boolean): ColorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
 @Composable
 fun ReplandTheme(
@@ -70,13 +86,17 @@ fun ReplandTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        else -> replandColorScheme(darkTheme)
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    ReplandMotionProvider {
+        CompositionLocalProvider(LocalReplandVisuals provides if (darkTheme) DarkVisuals else LightVisuals) {
+            MaterialTheme(
+                colorScheme = colorScheme,
+                typography = Typography,
+                shapes = ReplandShapes,
+                content = content
+            )
+        }
+    }
 }

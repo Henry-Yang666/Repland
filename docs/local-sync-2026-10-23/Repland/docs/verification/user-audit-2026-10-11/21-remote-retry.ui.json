@@ -1,0 +1,194 @@
+[
+  {
+    "text": "语音输入",
+    "content-desc": "",
+    "bounds": "[184,201][330,254]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "发送给助手",
+    "content-desc": "",
+    "bounds": "[739,201][922,254]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "新增事项：确认后只保存任务，不自动排入时段。",
+    "content-desc": "",
+    "bounds": "[53,374][758,420]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今天的安排预览",
+    "content-desc": "",
+    "bounds": "[95,504][403,568]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "识别为：收进事项库",
+    "content-desc": "",
+    "bounds": "[95,568][384,614]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0 已落位 · 1 待决定",
+    "content-desc": "",
+    "bounds": "[706,538][959,580]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "浅色块是已占用时段，彩色块是本次草案。AI 建议的时段会明确标出；点彩色块可改时间、时长或轨道。",
+    "content-desc": "",
+    "bounds": "[95,646][985,734]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "重新用 AI 校对计划",
+    "content-desc": "",
+    "bounds": "[190,792][498,845]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "发送输入、当日占用/可用时段、当前草案、类别偏好与最多 50 项未完成任务事实；仅提及或草案引用的最多 5 项任务附最近 3 条有效反馈，文字各限 200 字。不发送任务备注或密钥；仍需确认写入。",
+    "content-desc": "",
+    "bounds": "[190,845][953,1013]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "继续修改这份草案",
+    "content-desc": "",
+    "bounds": "[137,1134][473,1197]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "补充指令只修改当前预览，不直接新增任务。AI 返回整份替换草案，仍需确认。",
+    "content-desc": "",
+    "bounds": "[95,1271][985,1359]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "应用修改",
+    "content-desc": "",
+    "bounds": "[158,1428][304,1481]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "调整已有「QA-final-AI-reading」：未安排 → 已有任务 · 时间待定 · 30 分钟 · 待决定。仅替换所选日期的未保护安排，不改任务状态、优先级或总时长。",
+    "content-desc": "",
+    "bounds": "[95,1549][985,1679]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "专注",
+    "content-desc": "",
+    "bounds": "[242,1748][494,1789]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "并行 2",
+    "content-desc": "",
+    "bounds": "[552,1748][804,1789]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "15",
+    "content-desc": "",
+    "bounds": "[121,1795][221,1837]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "16",
+    "content-desc": "",
+    "bounds": "[121,1910][221,1952]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "17",
+    "content-desc": "",
+    "bounds": "[121,2026][221,2068]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "QA-final-AI-review",
+    "content-desc": "",
+    "bounds": "[237,1947][492,1989]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "16:00",
+    "content-desc": "",
+    "bounds": "[237,1989][315,2031]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日",
+    "content-desc": "",
+    "bounds": "[95,2251][160,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务",
+    "content-desc": "",
+    "bounds": "[370,2251][435,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "助手",
+    "content-desc": "",
+    "bounds": "[645,2251][710,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的",
+    "content-desc": "",
+    "bounds": "[920,2251][985,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

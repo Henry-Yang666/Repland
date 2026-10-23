@@ -47,6 +47,8 @@ data class ArrangementCandidate(
     val needsClarification: Set<ArrangementClarification>,
     val placementSource: ArrangementPlacementSource = ArrangementPlacementSource.UNSCHEDULED,
     val preferredTrackId: String? = null,
+    val existingTaskId: String? = null,
+    val proposalId: String? = null,
 )
 
 data class ArrangementInterpretation(
@@ -203,6 +205,6 @@ object ArrangementAssistantInterpreter {
         listOf("课", "复习", "作业", "考试", "背", "论文", "实验").any(text::contains) -> TaskCategory.COURSE
         listOf("会议", "工作", "报告", "邮件", "客户").any(text::contains) -> TaskCategory.OFFICE
         listOf("跑步", "运动", "吃", "家", "休息", "医生").any(text::contains) -> TaskCategory.LEISURE
-        else -> TaskCategory.EXTRACURRICULAR
+        else -> TaskCategory.UNSPECIFIED
     }
 }

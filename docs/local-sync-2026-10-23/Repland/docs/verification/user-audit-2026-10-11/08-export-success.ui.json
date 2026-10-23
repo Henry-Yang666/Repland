@@ -1,0 +1,178 @@
+[
+  {
+    "text": "保存密钥本身不会联网。只有你在助手或任务建议中确认请求后，才会发送本次所需的最小上下文。",
+    "content-desc": "",
+    "bounds": "[100,296][980,321]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "类别偏好",
+    "content-desc": "",
+    "bounds": "[100,452][246,505]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "调整不同事情在计划中的权重",
+    "content-desc": "",
+    "bounds": "[100,516][517,562]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "展开",
+    "content-desc": "",
+    "bounds": "[915,484][980,530]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "个人规划画像 · 数值与来源",
+    "content-desc": "",
+    "bounds": "[326,683][755,736]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "关于你的记录",
+    "content-desc": "",
+    "bounds": "[100,856][319,909]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0 条历史文字记录 · 不作为数值统计",
+    "content-desc": "",
+    "bounds": "[100,920][603,966]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "展开",
+    "content-desc": "",
+    "bounds": "[915,888][980,934]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "数据与隐私",
+    "content-desc": "",
+    "bounds": "[53,1050][236,1103]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "本地数据",
+    "content-desc": "",
+    "bounds": "[100,1187][246,1240]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "导出备份与数据管理",
+    "content-desc": "",
+    "bounds": "[100,1251][389,1297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "收起",
+    "content-desc": "",
+    "bounds": "[915,1219][980,1265]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "本地数据",
+    "content-desc": "",
+    "bounds": "[53,1381][280,1463]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "可导出当前本机数据为 JSON。清除仅影响本机任务、计划、时间约束、日志、画像和设置；已经导出的文件不会受影响。",
+    "content-desc": "",
+    "bounds": "[53,1500][1027,1659]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "导出本地 JSON",
+    "content-desc": "",
+    "bounds": "[415,1733][665,1786]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "清除全部本地数据",
+    "content-desc": "",
+    "bounds": "[395,1896][686,1949]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "本地 JSON 已导出。",
+    "content-desc": "",
+    "bounds": "[53,2022][346,2068]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的设置",
+    "content-desc": "",
+    "bounds": "[43,171][270,253]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "今日",
+    "content-desc": "",
+    "bounds": "[95,2251][160,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "任务",
+    "content-desc": "",
+    "bounds": "[370,2251][435,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "助手",
+    "content-desc": "",
+    "bounds": "[645,2251][710,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "我的",
+    "content-desc": "",
+    "bounds": "[920,2251][985,2297]",
+    "class": "android.widget.TextView",
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

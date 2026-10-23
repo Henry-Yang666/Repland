@@ -1,0 +1,907 @@
+{
+  "summary": {
+    "passed": 150
+  },
+  "cases": [
+    {
+      "class": "com.swan1127.repland.AiAdvisorContractTest",
+      "test": "validator_accepts_a_matching_bounded_task_advice_but_rejects_wrong_request_id",
+      "seconds": "0.024",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.AiAdvisorContractTest",
+      "test": "task_request_is_scoped_to_the_current_task_and_at_most_five_feedback_records",
+      "seconds": "0.033",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.AiAdvisorContractTest",
+      "test": "validator_accepts_only_matching_typed_responses_and_rejects_unrelated_plan_tasks",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.AiAdvisorContractTest",
+      "test": "request_uses_a_correction_instead_of_the_corrected_feedback",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.AiAdvisorContractTest",
+      "test": "default_advisor_makes_no_network_request_and_reports_unconfigured_service",
+      "seconds": "0.038",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.AiAdvisorContractTest",
+      "test": "validator_rejects_plan_segments_that_overlap_hard_or_user_locked_time",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "invalid_remote_items_are_dropped_before_they_reach_a_track_preview",
+      "seconds": "0.008",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "draft_reference_is_preserved_during_follow_up",
+      "seconds": "0.017",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "invented_draft_reference_is_rejected",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "duplicate_reference_rejects_the_entire_reply",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "duplicate_draft_reference_is_rejected",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "malformed_follow_up_does_not_silently_drop_part_of_the_draft",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "draft_reference_cannot_change_its_existing_task_target",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "unknown_reference_rejects_the_entire_reply",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantAdviceValidatorTest",
+      "test": "known_existing_reference_is_preserved",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantInterpreterTest",
+      "test": "conjunction_splits_independent_actions_but_not_a_compound_subject",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantInterpreterTest",
+      "test": "explicit_times_become_a_real_preview_anchor_not_an_invented_slot",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantInterpreterTest",
+      "test": "a_spoken_time_range_derives_duration_without_inventing_another_time",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantInterpreterTest",
+      "test": "soft_time_without_duration_asks_only_for_the_missing_decision",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantInterpreterTest",
+      "test": "capture_without_time_or_duration_never_fakes_a_day_timeline",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAssistantInterpreterTest",
+      "test": "ascii_minute_suffix_is_parsed_as_an_explicit_duration",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAvailabilityTest",
+      "test": "model_cannot_label_an_invented_time_as_a_user_fact",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAvailabilityTest",
+      "test": "explicit_user_time_is_not_confused_with_automatic_scheduling",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAvailabilityTest",
+      "test": "explicit_availability_excludes_past_minutes_and_global_blockers",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAvailabilityTest",
+      "test": "ai_cannot_cross_the_edge_of_an_available_interval",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAvailabilityTest",
+      "test": "ai_time_without_declared_availability_becomes_an_unplaced_question",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementAvailabilityTest",
+      "test": "absence_of_occupancy_is_not_all_day_availability",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "explanation_requires_one_existing_task_reference",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "formulate_cannot_smuggle_query_scope_or_reference",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "offline_query_grammar_does_not_turn_questions_into_new_tasks",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "operation_not_allowed_by_current_workflow_is_rejected",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "follow_up_cannot_switch_out_of_current_proposal",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "query_has_no_candidates_and_only_allowlisted_scope",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ArrangementOperationContractTest",
+      "test": "mixed_query_and_creation_is_rejected",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ExecutionSessionTest",
+      "test": "background_time_is_counted_but_pause_time_is_not",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ExecutionSessionTest",
+      "test": "timer_expiry_does_not_end_the_session_or_mark_task_complete",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ExecutionSessionTest",
+      "test": "elapsed_does_not_become_negative_on_backward_clock_and_is_bounded",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ScheduleTimelineTest",
+      "test": "clockDistinguishesPlanTimeFromRealCompletion",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ScheduleTimelineTest",
+      "test": "closedTaskIsNotPresentedAsStillOverrunning",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ScheduleTimelineTest",
+      "test": "overlappingCourseAndWorkUseSeparateLanes",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ScheduleTimelineTest",
+      "test": "overlappingItemsOnTheSameNamedTrackAreAlsoSeparated",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ScheduleTimelineTest",
+      "test": "offWeekCourseIsNotShown",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.domain.model.ScheduleTimelineTest",
+      "test": "timelineEntriesCarryUserNotesWithoutChangingCompletionState",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.FeedbackFormValidationTest",
+      "test": "empty_is_unknown_but_nonempty_invalid_input_is_not",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.FeedbackFormValidationTest",
+      "test": "partial_progress_is_required_and_cannot_be_zero_or_complete",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalDataJsonExporterTest",
+      "test": "writes_versioned_json_and_escapes_user_text",
+      "seconds": "0.007",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "today scheduling preserves other days and lock state",
+      "seconds": "0.017",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "confirmed partial progress schedules only the remaining work",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "overdue deadline and postponement evidence raise local rank with explanations",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "planned day affects rank while unconnected AI contributes zero",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "unconfirmed one hundred percent feedback does not silently remove active work",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "same inputs rank identically regardless of incoming list order",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "insufficient capacity retains the task with a concrete explanation",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "manual draft order takes precedence over automatic local rank",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "planner output is identical for identical inputs",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalPriorityRankerTest",
+      "test": "category preferences affect otherwise equal ranking without modifying initial priority",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalReminderPlannerTest",
+      "test": "only a confirmed current plan produces local reminder candidates",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalReminderPlannerTest",
+      "test": "daily review summarises recorded evidence without changing active task state",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.LocalReminderPlannerTest",
+      "test": "no confirmed plan means no start deadline or review reminder",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericNarrationValidatorTest",
+      "test": "reference_only_can_describe_facts_but_cannot_recommend_estimation_or_splitting",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericNarrationValidatorTest",
+      "test": "stale_versions_ids_values_duplicates_missing_and_nonfinite_are_rejected",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericNarrationValidatorTest",
+      "test": "exact_snapshot_facts_are_accepted",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfilePresentationTest",
+      "test": "tiny_positive_execution_minutes_do_not_become_a_zero_minute_reference",
+      "seconds": "0.004",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfileTest",
+      "test": "one_or_two_samples_are_reference_only_and_cannot_produce_task_advice",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfileTest",
+      "test": "duplicate_ids_cannot_double_count_and_disabled_retains_inspectable_statistics",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfileTest",
+      "test": "round_distribution_excludes_pauses_active_and_duplicate_sessions_and_uses_r7_quartiles",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfileTest",
+      "test": "ratios_use_median_not_sum_and_category_samples_never_borrow_global_count",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfileTest",
+      "test": "suggested_duration_is_relative_to_original_and_unknown_stays_unknown",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.NumericProfileTest",
+      "test": "missing_unconfirmed_zero_incomplete_and_excluded_data_do_not_turn_into_default_scores",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlacementValidatorTest",
+      "test": "available_time_is_not_a_blocker",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlacementValidatorTest",
+      "test": "hard_constraints_reject_new_work_even_on_another_track",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlacementValidatorTest",
+      "test": "blocked_date_exception_is_checked",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlacementValidatorTest",
+      "test": "locked_work_blocks_all_tracks",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlacementValidatorTest",
+      "test": "adjacent_placement_is_valid_but_same_track_overlap_is_not",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftEditorTest",
+      "test": "draft task order can be moved without changing scheduled times",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftEditorTest",
+      "test": "segment split merge and lock remain draft-only operations",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftEditorTest",
+      "test": "adjacent segments with the same lock state can merge",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftEditorTest",
+      "test": "segment can be moved and a collision is explicitly detectable",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftEditorTest",
+      "test": "same time is valid on a different track and blocked on the same track",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftReviewTest",
+      "test": "locked_and_protected_placements_cannot_be_deferred",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftReviewTest",
+      "test": "defer_is_idempotent_and_preserves_source_order_and_current",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftReviewTest",
+      "test": "order_only_never_reports_plan_removal",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftReviewTest",
+      "test": "moved_and_removed_placements_are_visible",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanDraftReviewTest",
+      "test": "regenerated_ids_are_not_schedule_changes",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanningAgentWorkflowTest",
+      "test": "all_supported_request_types_are_typed_and_a_proposal_outside_availability_is_rejected",
+      "seconds": "0.039",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanningAgentWorkflowTest",
+      "test": "valid_task_advice_is_shown_but_marking_it_accepted_has_no_write_capability",
+      "seconds": "0.004",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanningAgentWorkflowTest",
+      "test": "consent_preview_cancel_never_calls_advisor_and_preserves_a_user_dismissal_state",
+      "seconds": "0.003",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanningAgentWorkflowTest",
+      "test": "disabled_agent_immediately_returns_a_local_unconfirmed_replan_draft_without_provider_call",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanningAgentWorkflowTest",
+      "test": "cancelling_an_inflight_request_leaves_the_user_dismissed_state_and_never_applies_advice",
+      "seconds": "0.026",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.PlanningAgentWorkflowTest",
+      "test": "unavailable_timeout_and_invalid_output_all_degrade_to_the_local_draft",
+      "seconds": "0.004",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ProfileEvidenceGeneratorTest",
+      "test": "uses_confirmed_feedback_and_uses_correction_instead_of_the_corrected_log",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ProfileEvidenceGeneratorTest",
+      "test": "non_course_feedback_does_not_create_learning_evidence",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ProfileEvidenceGeneratorTest",
+      "test": "ambiguous_round_and_cumulative_feedback_are_not_summed_into_a_competing_total",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.ProfileEvidenceGeneratorTest",
+      "test": "legacy_category_does_not_create_learning_profile_evidence",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RecoverableReadTest",
+      "test": "unrelated_ui_changes_cannot_clear_read_failure_or_restart_source",
+      "seconds": "0.036",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RecoverableReadTest",
+      "test": "synchronous_source_factory_failure_is_recoverable",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RecoverableReadTest",
+      "test": "explicit_retry_recreates_source_and_preserves_value_while_loading",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RecoverableReadTest",
+      "test": "initial_failure_is_not_a_successful_empty_collection",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RecoverableReadTest",
+      "test": "cancellation_closes_source_without_reporting_business_failure",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RecoverableReadTest",
+      "test": "later_failure_retains_last_complete_value",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RhythmTracksTest",
+      "test": "entry lanes use stable ids instead of arrival order",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RhythmTracksTest",
+      "test": "legacy overlapping placements remain visible without changing their ids",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.RhythmTracksTest",
+      "test": "empty tracks retain stable definitions and labels",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskCaptureDraftTest",
+      "test": "custom_duration_rejects_non_ascii_integer_without_rewriting_raw_input",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskCaptureDraftTest",
+      "test": "unknown_duration_and_dates_stay_unknown",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskCaptureDraftTest",
+      "test": "minimal_capture_does_not_invent_optional_user_choices",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskCaptureDraftTest",
+      "test": "custom_duration_is_preserved_and_validated",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskCaptureDraftTest",
+      "test": "description_alone_is_a_valid_task_input",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskCaptureDraftTest",
+      "test": "backing_out_of_duration_does_not_implicitly_schedule_today",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "plan skips fixed class time and rounds duration to planning quantum",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "description becomes a compact display name",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "course week pattern recognizes ranges and alternating weeks",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "duration remains optional but provided duration must be positive",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "weekly time block requires a valid non-empty time range",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "imported course uses the documented default period clock",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskDraftValidatorTest",
+      "test": "plan releases a course outside its configured teaching weeks",
+      "seconds": "0.005",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskInputSourcesTest",
+      "test": "unknown_and_explicit_choices_are_distinct_and_round_trip",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskInputSourcesTest",
+      "test": "unknown_days_are_valid_but_invalid_numbers_are_not_unknown",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskInputSourcesTest",
+      "test": "neutral_sorting_is_explainable_without_creating_a_medium_choice_or_category",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskLifecycleValidatorTest",
+      "test": "only user lifecycle transitions preserve all supported task states",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskLifecycleValidatorTest",
+      "test": "completion and partial feedback enforce their respective confirmations",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskPlanMembershipTest",
+      "test": "user_dates_still_work_without_a_confirmed_plan",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskPlanMembershipTest",
+      "test": "past_only_plan_does_not_make_task_currently_arranged",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskPlanMembershipTest",
+      "test": "confirmed_today_is_not_unarranged",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TaskPlanMembershipTest",
+      "test": "confirmed_future_is_not_today_or_inbox",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "missing_availability_keeps_existing_manual_placements_instead_of_silently_clearing_them",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "explicit_early_and_late_availability_is_not_cut_off_by_an_invented_workday",
+      "seconds": "0.002",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "capacity_gap_reports_actual_remaining_work_not_rounded_slot_work",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "locked confirmed segments are retained and reserved during a new draft",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "missing explicit availability yields a list-only plan instead of invented time slots",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "replan_preserves_past_without_deducting_it_twice_from_confirmed_remaining_work",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "partial_overlap_with_non_aligned_lock_reserves_the_whole_candidate_slot",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "late_availability_still_respects_hard_blocks_and_never_schedules_past_minutes",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "an available override cannot silently cancel a recurring course",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeConstraintPlannerTest",
+      "test": "started_segment_is_preserved_without_turning_it_into_a_user_lock",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeEndBoundaryTest",
+      "test": "invalid_day_end_and_clock_values_are_rejected",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TimeEndBoundaryTest",
+      "test": "day_end_round_trips_only_as_an_end",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TodayFocusTest",
+      "test": "selects_current_before_future_and_ignores_closed_or_ended",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TodayFocusTest",
+      "test": "only_real_active_task_segments_can_start",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TodayFocusTest",
+      "test": "pending_counts_tasks_not_slots_and_excludes_execution_and_closed",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.TodayFocusTest",
+      "test": "future_day_is_upcoming_even_when_its_hour_is_earlier",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UnavoidablePlanningTest",
+      "test": "an_unplaced_unavoidable_task_is_considered_before_a_higher_soft_score",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UnavoidablePlanningTest",
+      "test": "disabled_unconfigured_and_timeout_fallbacks_keep_the_same_confirmed_unavoidable_position",
+      "seconds": "0.009",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UnavoidablePlanningTest",
+      "test": "missing_availability_never_invents_a_time_for_an_unplaced_unavoidable_task",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UnavoidablePlanningTest",
+      "test": "direct_generation_reserves_unavoidable_confirmed_segments_even_when_their_lock_flag_is_false",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UnavoidablePlanningTest",
+      "test": "completed_unavoidable_work_is_not_reintroduced_by_remaining_planning",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UnavoidablePlanningTest",
+      "test": "remaining_and_today_keep_confirmed_unavoidable_interval_without_converting_it_to_a_lock",
+      "seconds": "0.0",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UserNumericInputTest",
+      "test": "placement_chunk_keeps_existing_policy_and_rejects_invalid_task_facts",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UserNumericInputTest",
+      "test": "raw_input_is_never_filtered_trimmed_clamped_or_overflowed",
+      "seconds": "0.001",
+      "result": "passed"
+    },
+    {
+      "class": "com.swan1127.repland.UserNumericInputTest",
+      "test": "clock_parts_cannot_carry_or_borrow",
+      "seconds": "0.0",
+      "result": "passed"
+    }
+  ]
+}
